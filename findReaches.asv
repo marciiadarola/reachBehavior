@@ -1,0 +1,512 @@
+function varargout = findReaches(varargin)
+% FINDREACHES MATLAB code for findReaches.fig
+%      FINDREACHES, by itself, creates a new FINDREACHES or raises the existing
+%      singleton*.
+%
+%      H = FINDREACHES returns the handle to a new FINDREACHES or the handle to
+%      the existing singleton*.
+%
+%      FINDREACHES('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in FINDREACHES.M with the given input arguments.
+%
+%      FINDREACHES('Property','Value',...) creates a new FINDREACHES or raises the
+%      existing singleton*.  Starting from the left, property value pairs are
+%      applied to the GUI before findReaches_OpeningFcn gets called.  An
+%      unrecognized property name or invalid value makes property application
+%      stop.  All inputs are passed to findReaches_OpeningFcn via varargin.
+%
+%      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
+%      instance to run (singleton)".
+%
+% See also: GUIDE, GUIDATA, GUIHANDLES
+
+% Edit the above text to modify the response to help findReaches
+
+% Last Modified by GUIDE v2.5 20-Apr-2017 18:27:30
+
+% Begin initialization code - DO NOT EDIT
+gui_Singleton = 1;
+gui_State = struct('gui_Name',       mfilename, ...
+                   'gui_Singleton',  gui_Singleton, ...
+                   'gui_OpeningFcn', @findReaches_OpeningFcn, ...
+                   'gui_OutputFcn',  @findReaches_OutputFcn, ...
+                   'gui_LayoutFcn',  [] , ...
+                   'gui_Callback',   []);
+if nargin && ischar(varargin{1})
+    gui_State.gui_Callback = str2func(varargin{1});
+end
+
+if nargout
+    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+else
+    gui_mainfcn(gui_State, varargin{:});
+end
+% End initialization code - DO NOT EDIT
+
+
+% --- Executes just before findReaches is made visible.
+function findReaches_OpeningFcn(hObject, eventdata, handles, varargin)
+% This function has no output args, see OutputFcn.
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% varargin   command line arguments to findReaches (see VARARGIN)
+
+% Define some global variables for communication with perchZoneGUI
+global zoneVertices
+global continueAnalysis
+
+continueAnalysis=0;
+
+% Settings
+framesPerChunk=500;
+n_consec=3;
+frames_before_firstReachFrame=10;
+frames_after_firstReachFrame=50;
+nFramesBetweenReaches=10;
+
+% Choose default command line output for findReaches
+handles.output = hObject;
+
+% Close all open figures except findReaches GUI
+set(hObject, 'HandleVisibility', 'off');
+close all;
+set(hObject, 'HandleVisibility', 'on');
+
+% Get file name of video with reaches
+filename=varargin{1};
+
+% Instructions to user
+continuebutton=questdlg('Pause movie at a frame with both paws on perch. Then press "enter" at command line. Understood?','Instructions 1','Yes','Cancel','Cancel');
+switch continuebutton
+    case 'Yes'
+    case 'Cancel'
+        return
+end
+
+% Read beginning of movie
+videoFReader = vision.VideoFileReader(filename);
+n=framesPerChunk; % How many frames to read initially
+for i=1:n
+    frame=step(videoFReader);
+    if i==1
+        allframes=nan([size(frame,1) size(frame,2) size(frame,3) n]);
+    end
+    allframes(:,:,:,i)=frame;
+end
+
+% Play movie until both hands are on perch
+fig=implay(allframes);
+fig.Parent.Position=[100 100 800 800];
+pause;
+currentFrameNumber=fig.data.Controls.CurrentFrame;
+
+% Close implay fig, reopen an image so user can draw in perch area
+disp('Stopped at frame number');
+disp(currentFrameNumber);
+close(fig);
+perchFig=perchZoneGUI(allframes(:,:,:,currentFrameNumber));
+disp('Press "enter" once have defined perch zone.');
+pause;
+perchVertices=zoneVertices;
+
+if continueAnalysis==1
+    disp('Perch zone succesfully defined.');
+else
+    disp('Failed to define perch zone.');
+end
+
+close(perchFig);
+
+% Clean up global variables
+clear continueAnalysis
+clear zoneVertices
+
+% Check that current movie segment includes a reach
+% Instructions to user
+continuebutton=questdlg('Check whether video segment contains a reach. Then press "enter" at command line. Understood?','Instructions 2','Yes','Cancel','Cancel');
+switch continuebutton
+    case 'Yes'
+    case 'Cancel'
+        return
+end
+
+currentSegment=[1 size(allframes,4)];
+gotReach=0;
+for i=1:6
+    fig=implay(allframes(:,:,:,currentSegment(1):currentSegment(2)));
+    fig.Parent.Position=[100 100 800 800];
+    fig.Parent.Name='Check whether video segment contains a reach.';
+    disp('Check whether video segment contains a reach.');
+    pause;
+    
+    reachbutton=MFquestdlg([500 100],'Does this video segment contain a reach?','Enter yes or no','Yes','No','No');
+    if isempty(reachbutton)
+        error('Exit in looking for reach');
+    end
+    switch reachbutton
+        case 'Yes'
+            close(fig);
+            gotReach=1;
+            break
+        case 'No'
+            close(fig);
+            gotReach=0;
+            % Read a movie segment
+            n=framesPerChunk; % How many frames to read now
+            currentSegment=[1 n];
+            for j=1:n
+                frame=step(videoFReader);
+                allframes(:,:,:,j)=frame;
+            end
+    end
+end
+
+% Get distribution of intensity in perch zone over beginning of movie 
+[k,v]=convhull(perchVertices(:,1),perchVertices(:,2));
+[cols,rows]=find(ones(size(allframes,1),size(allframes,2))>0);
+isin=inpolygon(rows,cols,perchVertices(:,1),perchVertices(:,2));
+summedIntensity=nan(1,n);
+for i=1:n
+    temp=intensityFromRGB(allframes(:,:,:,i));
+    summedIntensity(i)=sum(temp(isin));
+end
+
+% Calibrate reach detection
+% Start by using threshold 1 standard deviation below the mean
+% If frame defined as containing paws on perch is within 1 std of the mean
+if abs(summedIntensity(currentFrameNumber)-mean(summedIntensity))<std(summedIntensity)
+    useAsMean=mean(summedIntensity);
+else
+    useAsMean=summedIntensity(currentFrameNumber);
+end
+useAsThresh=useAsMean-1.5*std(summedIntensity);
+rng shuffle;
+works=0;
+counter=1;
+while works==0
+    if counter>10
+        break
+    end
+    [useAsThresh,works,isUserApprovedReach]=calibrateReachDetection(summedIntensity,allframes,useAsThresh,counter);
+    counter=counter+1;
+end
+    
+if works==0
+    error('Check reach detection');
+elseif works==1
+    % Continue
+end
+
+% Then look for changes in paw zone to identify potential reach
+% Have user indicate start of reach, time when paw contacts pellet, and
+% whether reach was succesful
+
+% Find reaches in current movie chunk, then move to next movie chunk, etc.
+disp('Find the frame associated with each of the following events for this reach and press matching button while movie is stopped at that frame.'); 
+reachingStretch=findCurrentReaches(n,allframes,useAsThresh,n_consec,isin);
+
+% Display current reach
+fig=implay(allframes(:,:,:,reachingStretch(1)-frames_before_firstReachFrame:reachingStretch(1)+frames_after_firstReachFrame));
+fig.Parent.Position=[100 100 800 800];
+
+% Set up handles
+handles.fig=fig;
+handles.reachStarts=[];
+handles.pelletTouched=[];
+handles.pelletTime=[];
+handles.atePellet=[];
+handles.eatTime=[];
+handles.reachIsDone=false;
+handles.curr_start_done=false;
+handles.curr_pellet_done=false;
+handles.curr_eat_done=false; 
+handles.current_reachingStretch=reachingStretch;
+handles.current_reachN=1;
+handles.current_allframes=allframes;
+handles.frames_before_firstReachFrame=frames_before_firstReachFrame;
+handles.frames_after_firstReachFrame=frames_after_firstReachFrame;
+handles.nFramesBetweenReaches=nFramesBetweenReaches;
+
+% Update handles structure
+guidata(hObject, handles);
+
+% UIWAIT makes findReaches wait for user response (see UIRESUME)
+% uiwait(handles.figure1);
+
+function updateMovie()
+
+% Read a movie segment
+n=framesPerChunk; % How many frames to read now
+currentSegment=[1 n];
+for j=1:n
+    frame=step(videoFReader);
+    allframes(:,:,:,j)=frame;
+end
+
+function updateReach(handles)
+
+% Close current reach movie
+close(handles.fig);
+
+% Display next reach movie
+reachingStretch=handles.current_reachingStretch;
+reachN=handles.current_reachN;
+allframes=handles.current_allframes;
+frames_before_firstReachFrame=handles.frames_before_firstReachFrame;
+frames_after_firstReachFrame=handles.frames_after_firstReachFrame;
+
+% Check whether next detected reach frames are within nFramesBetweenReaches
+% of current reach frame
+nFramesBetweenReaches=handles.nFramesBetweenReaches;
+reachingStretch=reachingStretch(reachingStretch>reachingStretch(reachN)+nFramesBetweenReaches);
+handles.reachingStretch=reachingStretch;
+
+% Increment reachN
+reachN=reachN+1;
+handles.current_reachN=reachN;
+
+% If reachingStretch is now empty, read next movie segment
+if isempty(reachingStretch)
+    updateMovie();
+else
+    % Else update implay
+    fig=implay(allframes(:,:,:,reachingStretch(reachN)-frames_before_firstReachFrame:reachingStretch(reachN)+frames_after_firstReachFrame));
+    fig.Parent.Position=[100 100 800 800];
+    handles.fig=fig;
+end
+
+guidata(handles.output, handles);
+
+function resetGUI(handles)
+
+% Set button to waiting
+set(handles.text3,'String','Waiting');
+set(handles.text3,'ForegroundColor','r');
+set(handles.text3,'String','Waiting');
+set(handles.text3,'ForegroundColor','r');
+
+
+% Reset reach progress variables
+handles.reachIsDone=false;
+handles.curr_start_done=false;
+handles.curr_pellet_done=false;
+handles.curr_eat_done=false;
+
+function reachingStretch=findCurrentReaches(n,allframes,useAsThresh,n_consec,isin)
+
+summedIntensity=nan(1,n);
+for i=1:n
+    temp=intensityFromRGB(allframes(:,:,:,i));
+    summedIntensity(i)=sum(temp(isin));
+end
+reachFrames=summedIntensity<useAsThresh;
+
+% Real reach should be at least n_consec consecutive reach frames
+runningSum=zeros(size(reachFrames));
+for i=1:n_consec
+    runningSum(1:end-(i-1))=runningSum(1:end-(i-1))+reachFrames(i:end);
+end
+reachingStretch=find(runningSum>=n_consec);
+
+function [useAsThresh,works,isUserApprovedReach]=calibrateReachDetection(summedIntensity,allframes,useAsThresh,counter)
+
+% Show user candidate reach frames -- iterate threshold
+candidateFrames=find(summedIntensity<useAsThresh);
+if length(candidateFrames)<7
+    useAsThresh=useAsThresh+0.25*std(summedIntensity);
+end
+n=length(candidateFrames);
+testInOrder=randperm(length(candidateFrames));
+candidateFrames=candidateFrames(testInOrder);
+isUserApprovedReach=nan(1,length(candidateFrames));
+triedNMore=0;
+tryingMore=0;
+works=0;
+for i=1:n
+    if i>length(candidateFrames)
+        break
+    end
+    f=figure();
+    imagesc(allframes(:,:,:,candidateFrames(i)));
+    colormap(gray); 
+    if tryingMore==1
+        triedNMore=triedNMore+1;
+    end
+    reachbutton=MFquestdlg([100 100],'Mouse is reaching?','Enter yes or no','Yes','No','No');
+    if isempty(reachbutton)
+        error('Exit in calibration of reach detection');
+    end
+    switch reachbutton
+        case 'Yes'
+            isUserApprovedReach(i)=1;
+        case 'No'
+            isUserApprovedReach(i)=0;
+    end
+    close(f);
+    % Test whether reach detection threshold is working
+    if ((tryingMore==1 && triedNMore>5) || (nansum(isUserApprovedReach==1)>=5 && counter>5)) && nansum(isUserApprovedReach==1)/sum(~isnan(isUserApprovedReach))>5/7
+        % Works at least 5 out of 7 times
+        % Working well enough
+        works=1;
+        break
+    elseif ((tryingMore==1 && triedNMore>5) || nansum(isUserApprovedReach==1)>=7) && nansum(isUserApprovedReach==1)/sum(~isnan(isUserApprovedReach))>5/7
+        % Works at least 5 out of 7 times
+        % Working well enough
+        works=1;
+        break
+    elseif nansum(isUserApprovedReach==0)>5 && nansum(isUserApprovedReach==1)/sum(~isnan(isUserApprovedReach))<5/7
+        % Too many non-reach, try lowering threshold by 1/4 of std 
+        if tryingMore==0 || triedNMore>5
+            useAsThresh=useAsThresh-0.25*std(summedIntensity)-rand*0.125*std(summedIntensity);
+            disp('Decreasing reach threshold');
+            tryingMore=1;
+            triedNMore=0;
+            isUserApprovedReach(1:i-1)=nan;
+        end
+    elseif nansum(isUserApprovedReach)>4 && nansum(isUserApprovedReach==1)/sum(~isnan(isUserApprovedReach))>5/7
+        % Threshold might be too low
+        if tryingMore==0 || triedNMore>5
+            useAsThresh=useAsThresh+0.25*std(summedIntensity)+rand*0.125*std(summedIntensity);
+            disp('Increasing reach threshold');
+            tryingMore=1;
+            triedNMore=0;
+            isUserApprovedReach(1:i-1)=nan;
+        end
+    end
+end
+
+function intensity=intensityFromRGB(frame)
+
+intensity=0.299*frame(:,:,1)+0.587*frame(:,:,2)+0.114*frame(:,:,3);
+
+% --- Outputs from this function are returned to the command line.
+function varargout = findReaches_OutputFcn(hObject, eventdata, handles) 
+% varargout  cell array for returning output args (see VARARGOUT);
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get default command line output from handles structure
+varargout{1} = handles.output;
+
+
+% --- Executes on button press in startbutton.
+function startbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to startbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get current frame number in movie player
+currFrame=handles.fig.data.Controls.CurrentFrame;
+handles.reachStarts=[handles.reachStarts currFrame];
+
+% Set start button to done
+set(handles.text3,'String','Done');
+set(handles.text3,'ForegroundColor','g');
+handles.curr_start_done=true;
+
+% Check whether this reach is done
+if reachIsDone(handles)==true
+    updateReach(handles);
+end
+
+guidata(hObject, handles);
+
+function out=reachIsDone(handles)
+
+if handles.curr_start_done==true && handles.curr_pellet_done==true && handles.curr_eat_done==true
+    out=true;
+    return
+else
+    out=false;
+    return
+end
+
+% --- Executes on button press in pelletbutton.
+function pelletbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to pelletbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get current frame number in movie player
+currFrame=handles.fig.data.Controls.CurrentFrame;
+handles.pelletTouched=[handles.pelletTouched 1];
+handles.pelletTime=[handles.pelletTime currFrame];
+
+% Set pellet button to done
+set(handles.text4,'String','Done');
+set(handles.text4,'ForegroundColor','g');
+handles.curr_pellet_done=true;
+
+% Check whether this reach is done
+if reachIsDone(handles)==true
+    updateReach(handles);
+end
+
+guidata(hObject, handles);
+
+% --- Executes on button press in missbutton.
+function missbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to missbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get current frame number in movie player
+handles.pelletTouched=[handles.pelletTouched 0];
+
+% Set pellet button to done
+set(handles.text4,'String','Done');
+set(handles.text4,'ForegroundColor','g');
+handles.curr_pellet_done=true;
+
+% Check whether this reach is done
+if reachIsDone(handles)==true
+    updateReach(handles);
+end
+
+guidata(hObject, handles);
+
+% --- Executes on button press in eatbutton.
+function eatbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to eatbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get current frame number in movie player
+currFrame=handles.fig.data.Controls.CurrentFrame;
+handles.atePellet=[handles.atePellet 1];
+handles.eatTime=[handles.eatTime currFrame];
+
+% Set eat button to done
+set(handles.text5,'String','Done');
+set(handles.text5,'ForegroundColor','g');
+handles.curr_eat_done=true;
+
+% Check whether this reach is done
+if reachIsDone(handles)==true
+    updateReach(handles);
+end
+
+guidata(hObject, handles);
+
+% --- Executes on button press in dropbutton.
+function dropbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to dropbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get current frame number in movie player
+handles.atePellet=[handles.atePellet 0];
+
+% Set eat button to done
+set(handles.text5,'String','Done');
+set(handles.text5,'ForegroundColor','g');
+handles.curr_eat_done=true;
+
+% Check whether this reach is done
+if reachIsDone(handles)==true
+    updateReach(handles);
+end
+
+guidata(hObject, handles);
