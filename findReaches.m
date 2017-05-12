@@ -64,6 +64,7 @@ n_consec=3;
 frames_before_firstReachFrame=2;
 frames_after_firstReachFrame=50;
 nFramesBetweenReaches=10;
+sizeoneback=100;
 
 % Choose default command line output for findReaches
 handles.output = hObject;
@@ -120,6 +121,7 @@ for i=1:n
 end
 startsAtFrame=[startsAtFrame n+1];
 movieChunk=[movieChunk movieChunk(end)+1];
+handles.oneback=allframes(:,:,end-sizeoneback);
 
 if isempty(perchdata)
     % Play movie until both hands are on perch
@@ -193,6 +195,7 @@ if isempty(perchdata)
                 end
                 startsAtFrame=[startsAtFrame startsAtFrame(end)+n];
                 movieChunk=[movieChunk movieChunk(end)+1];
+                handles.oneback=allframes(:,:,end-sizeoneback);
         end
         if EOF==true
             error('Not enough frames to get a reach in this movie');
@@ -273,6 +276,7 @@ handles.EOF=[];
 handles.startedOver=[];
 handles.sizeOfLastChunk=[];
 handles.endoffname=regexp(filename,'\.');
+handles.sizeoneback=sizeoneback;
 
 % Find reaches in current movie chunk, then move to next movie chunk, etc.
 disp('Find the frame associated with each of the following events for this reach and press matching button while movie is stopped at that frame.'); 
@@ -329,6 +333,7 @@ allframes=handles.allframes;
 startsAtFrame=handles.startsAtFrame;
 movieChunk=handles.movieChunk;
 didReachForThisChunk=handles.didReachForThisChunk;
+sizeoneback=handles.sizeoneback;
 
 % If reached end of file, check whether have gotten reaches in all movie
 % chunks, if so, end, otherwise, start over
@@ -369,6 +374,7 @@ for j=1:n
     end
     allframes(:,:,j)=frame;
 end
+handles.oneback=allframes(:,:,end-sizeoneback+1);
 if ~isempty(startedOver)
     if startedOver==true
         startsAtFrame=[startsAtFrame startsAtFrame(end)+sizeOfLastChunk];
@@ -383,6 +389,7 @@ else
     startsAtFrame=[startsAtFrame startsAtFrame(end)+n];
     movieChunk=[movieChunk movieChunk(end)+1]; 
 end
+handles.oneback=allframes(:,:,end-sizeoneback);
 
 % Update handles
 handles.videoFReader=videoFReader;
@@ -751,3 +758,44 @@ function morevideobutton_Callback(hObject, eventdata, handles)
 % hObject    handle to morevideobutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+more_framesBeforeReach=50;
+more_framesAfterReach=100;
+
+allframes=handles.allframes;
+reachingStretch=handles.reachingStretch;
+reachN=handles.reachN;
+frames_before_firstReachFrame=handles.frames_before_firstReachFrame; 
+sizeoneback=handles.sizeoneback;
+oneback=handles.oneback;
+
+close(handles.fig);
+
+% Update implay
+if reachingStretch(reachN)-more_framesBeforeReach<1
+    % This movie chunk started in the middle of the reach
+    % Add end of last movie chunk
+    temp=nan(size(allframes,1),size(allframes,2),size(allframes,3)+sizeoneback);
+    temp(:,:,end-size(allframes,3)+1:end)=allframes;
+    temp(:,:,1:end-size(allframes,3))=oneback(:,:,end-sizeoneback+1:end);
+    allframes=temp;
+    reachingStretch=reachingStretch+sizeoneback;
+    if more_framesBeforeReach>sizeoneback
+        error('more_framesBeforeReach should be less than sizeoneback');
+    end
+end
+startInd=reachingStretch(reachN)-more_framesBeforeReach;
+if reachingStretch(reachN)+more_framesAfterReach>size(allframes,3)
+    endInd=size(allframes,3);
+else
+    endInd=reachingStretch(reachN)+more_framesAfterReach;
+end
+disp(reachingStretch(reachN));
+fig=implay(allframes(:,:,startInd:endInd));
+fig.Parent.Position=[100 100 800 800];
+handles.fig=fig;
+    
+% Reset GUI
+handles=resetGUI(handles);
+
+guidata(hObject, handles);
