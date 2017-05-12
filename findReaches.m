@@ -22,7 +22,7 @@ function varargout = findReaches(varargin)
 
 % Edit the above text to modify the response to help findReaches
 
-% Last Modified by GUIDE v2.5 04-May-2017 13:40:36
+% Last Modified by GUIDE v2.5 12-May-2017 15:57:55
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -250,6 +250,7 @@ end
 
 % Set up handles
 handles.useAsThresh=useAsThresh;
+handles.filename=filename;
 handles.n_consec=n_consec;
 handles.isin=isin;
 handles.reachStarts=[];
@@ -317,10 +318,37 @@ guidata(hObject, handles);
 
 function finishFunction(handles)
 
+% Choose what to save
+savehandles.useAsThresh=handles.useAsThresh;
+savehandles.filename=handles.filename;
+savehandles.n_consec=handles.n_consec;
+savehandles.isin=handles.isin;
+savehandles.reachStarts=handles.reachStarts;
+savehandles.pelletTouched=handles.pelletTouched;
+savehandles.pelletTime=handles.pelletTime;
+savehandles.atePellet=handles.atePellet;
+savehandles.eatTime=handles.eatTime;
+savehandles.reachIsDone=handles.reachIsDone;
+savehandles.curr_start_done=handles.curr_start_done;
+savehandles.curr_pellet_done=handles.curr_pellet_done;
+savehandles.curr_eat_done=handles.curr_eat_done; 
+savehandles.frames_before_firstReachFrame=handles.frames_before_firstReachFrame;
+savehandles.frames_after_firstReachFrame=handles.frames_after_firstReachFrame;
+savehandles.nFramesBetweenReaches=handles.nFramesBetweenReaches;
+savehandles.didReachForThisChunk=handles.didReachForThisChunk;
+savehandles.movieChunk=handles.movieChunk;
+savehandles.startsAtFrame=handles.startsAtFrame;
+savehandles.framesPerChunk=handles.framesPerChunk;
+savehandles.allReachesTally=handles.allReachesTally;
+savehandles.startedOver=handles.startedOver;
+savehandles.sizeOfLastChunk=handles.sizeOfLastChunk;
+savehandles.sizeoneback=handles.sizeoneback;
+
 endoffname=handles.endoffname;
+filename=handles.filename;
 
 % To execute once have found reaches in all of movie
-save([filename(1:endoffname(end)-1) '_handles.mat'],'handles');
+save([filename(1:endoffname(end)-1) '_savehandles.mat'],'savehandles');
 
 function handles=updateMovie(handles)
 
@@ -831,3 +859,17 @@ handles.fig=fig;
 handles=resetGUI(handles);
 
 guidata(hObject, handles);
+
+
+% --- Executes when user attempts to close figure1.
+function figure1_CloseRequestFcn(hObject, eventdata, handles)
+% hObject    handle to figure1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: delete(hObject) closes the figure
+
+% Saves data before closing figure
+finishFunction(handles);
+
+delete(hObject);
