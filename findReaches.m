@@ -456,9 +456,16 @@ didReachForThisChunk=handles.didReachForThisChunk;
 movieChunk=handles.movieChunk;
 
 % Check whether next detected reach frames are within nFramesBetweenReaches
-% of current reach frame
+% of current reach frame or within scope of just detected reach
 nFramesBetweenReaches=handles.nFramesBetweenReaches;
-reachingStretch=reachingStretch(reachingStretch>reachingStretch(reachN)+nFramesBetweenReaches);
+timeOfLastEat=handles.eatTime(end);
+timeOfLastPellet=handles.pelletTime(end);
+if timeOfLastEat~=-10 || timeOfLastPellet~=-10
+    loseAllReachesBefore=max([timeOfLastEat timeOfLastPellet reachingStretch(reachN)+nFramesBetweenReaches]);
+else
+    loseAllReachesBefore=reachingStretch(reachN)+nFramesBetweenReaches;
+end
+reachingStretch=reachingStretch(reachingStretch>loseAllReachesBefore);
 handles.reachingStretch=reachingStretch;
 reachN=1;
 handles.reachN=reachN;
@@ -621,6 +628,11 @@ function startbutton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+% If already hit this button, ignore second press
+if handles.curr_start_done==true
+    return
+end
+
 % Get current frame number in movie player
 currFrame=handles.fig.data.Controls.CurrentFrame;
 handles.reachStarts=[handles.reachStarts currFrame];
@@ -653,6 +665,11 @@ function pelletbutton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+% If already hit this button, ignore second press
+if handles.curr_pellet_done==true
+    return
+end
+
 % Get current frame number in movie player
 currFrame=handles.fig.data.Controls.CurrentFrame;
 handles.pelletTouched=[handles.pelletTouched 1];
@@ -676,6 +693,11 @@ function missbutton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+% If already hit this button, ignore second press
+if handles.curr_pellet_done==true
+    return
+end
+
 handles.pelletTouched=[handles.pelletTouched 0];
 handles.pelletTime=[handles.pelletTime -10];
 
@@ -696,6 +718,11 @@ function eatbutton_Callback(hObject, eventdata, handles)
 % hObject    handle to eatbutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+% If already hit this button, ignore second press
+if handles.curr_eat_done==true
+    return
+end
 
 % Get current frame number in movie player
 currFrame=handles.fig.data.Controls.CurrentFrame;
@@ -719,6 +746,11 @@ function dropbutton_Callback(hObject, eventdata, handles)
 % hObject    handle to dropbutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+% If already hit this button, ignore second press
+if handles.curr_eat_done==true
+    return
+end
 
 handles.atePellet=[handles.atePellet 0];
 handles.eatTime=[handles.eatTime -10];
