@@ -53,7 +53,7 @@ function alignmentGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % varargin   command line arguments to alignmentGUI (see VARARGIN)
 
 % Set up variables
-framesPerChunk=3000;
+framesPerChunk=1000;
 
 % Choose default command line output for findReaches
 handles.output = hObject;
@@ -101,9 +101,9 @@ movieChunk=[movieChunk movieChunk(end)+1];
 % Play movie
 fig=implay(allframes);
 fig.Parent.Position=[100 100 800 800];
-pause;
 
 % Set up handles
+handles.fig=fig;
 handles.filename=filename;
 handles.allframes=allframes;
 handles.videoFReader=videoFReader;
@@ -114,6 +114,11 @@ handles.EOF=[];
 handles.startedOver=[];
 handles.sizeOfLastChunk=[];
 handles.endoffname=regexp(filename,'\.');
+handles.on=[];
+handles.off=[];
+handles.LEDstartson=0;
+handles.LEDstartsoff=1;
+handles.didFirstButton=0;
 
 % Update handles structure
 guidata(hObject, handles);
@@ -144,6 +149,12 @@ currFrame=handles.fig.data.Controls.CurrentFrame;
 
 handles.on=[handles.on currFrame];
 
+if handles.didFirstButton==0
+    handles.didFirstButton=1;
+    handles.LEDstartsoff=1;
+    handles.LEDstartson=0;
+end
+
 % Update handles structure
 guidata(hObject, handles);
 
@@ -159,6 +170,12 @@ currFrame=handles.fig.data.Controls.CurrentFrame;
 
 handles.off=[handles.off currFrame];
 
+if handles.didFirstButton==0
+    handles.didFirstButton=1;
+    handles.LEDstartsoff=0;
+    handles.LEDstartson=1;
+end
+
 % Update handles structure
 guidata(hObject, handles);
 
@@ -169,6 +186,8 @@ filename=handles.filename;
 
 LEDsavehandles.on=handles.on;
 LEDsavehandles.off=handles.off;
+LEDsavehandles.LEDstartson=handles.LEDstartson;
+LEDsavehandles.LEDstartsoff=handles.LEDstartsoff;
 
 % To execute once have found reaches in all of movie
 save([filename(1:endoffname(end)-1) '_distractorLED.mat'],'LEDsavehandles');
