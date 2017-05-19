@@ -562,7 +562,7 @@ movieChunk=handles.movieChunk;
 nFramesBetweenReaches=handles.nFramesBetweenReaches;
 timeOfLastEat=handles.eatTime(end);
 timeOfLastPellet=handles.pelletTime(end);
-if isnan(handles.atePellet) % Last movie frame was a "no reach"
+if isnan(handles.atePellet(end)) % Last movie frame was a "no reach"
     % so skip all the way to end of this movie frame
     lastFrameDisplayed=handles.lastFrameDisplayed;
     loseAllReachesBefore=lastFrameDisplayed;
