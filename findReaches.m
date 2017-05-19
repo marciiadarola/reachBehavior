@@ -69,6 +69,34 @@ sizeoneback=100;
 % Choose default command line output for findReaches
 handles.output = hObject;
 
+% Set up handles
+handles.useAsThresh=[];
+handles.filename=[];
+handles.n_consec=[];
+handles.isin=[];
+handles.reachStarts=[];
+handles.pelletTouched=[];
+handles.pelletTime=[];
+handles.atePellet=[];
+handles.eatTime=[];
+handles.reachIsDone=[];
+handles.curr_start_done=[];
+handles.curr_pellet_done=[];
+handles.curr_eat_done=[]; 
+handles.frames_before_firstReachFrame=[];
+handles.frames_after_firstReachFrame=[];
+handles.nFramesBetweenReaches=[];
+handles.didReachForThisChunk=[];
+handles.movieChunk=[];
+handles.startsAtFrame=[];
+handles.framesPerChunk=[];
+handles.allReachesTally=[];
+handles.startedOver=[];
+handles.sizeOfLastChunk=[];
+handles.sizeoneback=[];
+handles.isin2=[];
+handles.LEDvals=[];
+
 % Close all open figures except findReaches GUI
 set(hObject, 'HandleVisibility', 'off');
 close all;
@@ -123,12 +151,14 @@ startsAtFrame=[startsAtFrame n+1];
 movieChunk=[movieChunk movieChunk(end)+1];
 handles.oneback=allframes(:,:,end-sizeoneback);
 
+handles.LEDvals=[];
 if isempty(perchdata)
     % Play movie until both hands are on perch
     fig=implay(allframes);
     fig.Parent.Position=[100 100 800 800];
     pause;
     currentFrameNumber=fig.data.Controls.CurrentFrame;
+    lastFrameDisplayed=startsAtFrame(end-1)+size(allframes,3)-1;
     
     % Close implay fig, reopen an image so user can draw in perch area
     disp('Stopped at frame number');
@@ -147,9 +177,31 @@ if isempty(perchdata)
     
     close(perchFig);
     
+    % Get distractor LED zone
+    LEDFig=perchZoneGUI(allframes(:,:,currentFrameNumber));
+    disp('Press "enter" once have defined LED zone.');
+    pause;
+    LEDVertices=zoneVertices;
+    
+    if continueAnalysis==1
+        disp('LED zone succesfully defined.');
+    else
+        disp('Failed to define LED zone.');
+    end
+    
+    close(LEDFig);
+    
     % Clean up global variables
     clear continueAnalysis
     clear zoneVertices
+    
+    % Get LED zone intensity over all frames 
+    [k2,v2]=convhull(LEDVertices(:,1),LEDVertices(:,2));
+    [cols2,rows2]=find(ones(size(allframes,1),size(allframes,2))>0);
+    isin2=inpolygon(rows2,cols2,LEDVertices(:,1),LEDVertices(:,2));
+    temp=reshape(allframes,size(allframes,1)*size(allframes,2),size(allframes,3));
+    summedIntensityLED=sum(temp(isin2,:),1);
+    handles.LEDvals=[handles.LEDvals summedIntensityLED];
     
     % Check that current movie segment includes a reach
     % Instructions to user
@@ -168,6 +220,7 @@ if isempty(perchdata)
         fig.Parent.Name='Check whether video segment contains a reach.';
         disp('Check whether video segment contains a reach.');
         pause;
+        lastFrameDisplayed=startsAtFrame(end-1)+currentSegment(2)-1;
         
         reachbutton=MFquestdlg([500 100],'Does this video segment contain a reach?','Enter yes or no','Yes','No','No');
         if isempty(reachbutton)
@@ -196,6 +249,11 @@ if isempty(perchdata)
                 startsAtFrame=[startsAtFrame startsAtFrame(end)+n];
                 movieChunk=[movieChunk movieChunk(end)+1];
                 handles.oneback=allframes(:,:,end-sizeoneback);
+                
+                % Get LED zone intensity over all frames
+                temp=reshape(allframes,size(allframes,1)*size(allframes,2),size(allframes,3));
+                summedIntensityLED=sum(temp(isin2,:),1);
+                handles.LEDvals=[handles.LEDvals summedIntensityLED];
         end
         if EOF==true
             error('Not enough frames to get a reach in this movie');
@@ -216,7 +274,7 @@ if isempty(perchdata)
     else
         useAsMean=summedIntensity(currentFrameNumber);
     end
-    useAsThresh=useAsMean-1.5*std(summedIntensity);
+    useAsThresh=useAsMean-1*std(summedIntensity);
     rng shuffle;
     works=0;
     counter=1;
@@ -233,6 +291,9 @@ if isempty(perchdata)
     elseif works==1
         % Continue
     end
+else
+    isin2=perch.isin2;
+    handles.LEDvals=perch.LEDvals;
 end
 
 % Save perch data
@@ -240,6 +301,8 @@ if isempty(perchdata)
     perch.useAsThresh=useAsThresh;
     perch.n_consec=n_consec;
     perch.isin=isin;
+    perch.LEDisin=isin2;
+    perch.LEDvals=handles.LEDvals;
     endoffname=regexp(filename,'\.');
     save([filename(1:endoffname(end)-1) '_perch.mat'],'perch');
 end
@@ -278,6 +341,7 @@ handles.startedOver=[];
 handles.sizeOfLastChunk=[];
 handles.endoffname=regexp(filename,'\.');
 handles.sizeoneback=sizeoneback;
+handles.isin2=isin2;
 
 % Find reaches in current movie chunk, then move to next movie chunk, etc.
 disp('Find the frame associated with each of the following events for this reach and press matching button while movie is stopped at that frame.'); 
@@ -306,9 +370,11 @@ else
 end
 fig=implay(allframes(:,:,startInd:endInd));
 fig.Parent.Position=[100 100 800 800];
+lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
 
 handles.fig=fig;
 handles.reachingStretch=reachingStretch;
+handles.lastFrameDisplayed=lastFrameDisplayed;
 
 % Update handles structure
 guidata(hObject, handles);
@@ -343,6 +409,8 @@ savehandles.allReachesTally=handles.allReachesTally;
 savehandles.startedOver=handles.startedOver;
 savehandles.sizeOfLastChunk=handles.sizeOfLastChunk;
 savehandles.sizeoneback=handles.sizeoneback;
+savehandles.isin2=handles.isin2;
+savehandles.LEDvals=handles.LEDvals;
 
 endoffname=handles.endoffname;
 filename=handles.filename;
@@ -362,6 +430,8 @@ startsAtFrame=handles.startsAtFrame;
 movieChunk=handles.movieChunk;
 didReachForThisChunk=handles.didReachForThisChunk;
 sizeoneback=handles.sizeoneback;
+isin2=handles.isin2;
+LEDvals=handles.LEDvals;
 
 % If reached end of file, check whether have gotten reaches in all movie
 % chunks, if so, end, otherwise, start over
@@ -403,6 +473,10 @@ for j=1:n
     allframes(:,:,j)=frame;
 end
 handles.oneback=allframes(:,:,end-sizeoneback+1);
+% Get LED zone intensity over all frames
+temp=reshape(allframes,size(allframes,1)*size(allframes,2),size(allframes,3));
+summedIntensityLED=sum(temp(isin2,:),1);
+handles.LEDvals=[handles.LEDvals summedIntensityLED];
 if ~isempty(startedOver)
     if startedOver==true
         startsAtFrame=[startsAtFrame startsAtFrame(end)+sizeOfLastChunk];
@@ -488,7 +562,11 @@ movieChunk=handles.movieChunk;
 nFramesBetweenReaches=handles.nFramesBetweenReaches;
 timeOfLastEat=handles.eatTime(end);
 timeOfLastPellet=handles.pelletTime(end);
-if timeOfLastEat~=-10 || timeOfLastPellet~=-10
+if isnan(handles.atePellet) % Last movie frame was a "no reach"
+    % so skip all the way to end of this movie frame
+    lastFrameDisplayed=handles.lastFrameDisplayed;
+    loseAllReachesBefore=lastFrameDisplayed;
+elseif timeOfLastEat~=-10 || timeOfLastPellet~=-10
     loseAllReachesBefore=max([timeOfLastEat timeOfLastPellet reachingStretch(reachN)+nFramesBetweenReaches]);
 else
     loseAllReachesBefore=reachingStretch(reachN)+nFramesBetweenReaches;
@@ -527,6 +605,9 @@ disp(reachingStretch(reachN));
 fig=implay(allframes(:,:,startInd:endInd));
 fig.Parent.Position=[100 100 800 800];
 handles.fig=fig;
+startsAtFrame=handles.startsAtFrame;
+lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
+handles.lastFrameDisplayed=lastFrameDisplayed;
     
 % Reset GUI for next reach
 handles=resetGUI(handles);
@@ -854,6 +935,8 @@ disp(reachingStretch(reachN));
 fig=implay(allframes(:,:,startInd:endInd));
 fig.Parent.Position=[100 100 800 800];
 handles.fig=fig;
+lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
+handles.lastFrameDisplayed=lastFrameDisplayed;
     
 % Reset GUI
 handles=resetGUI(handles);

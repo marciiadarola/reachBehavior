@@ -53,7 +53,7 @@ function alignmentGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % varargin   command line arguments to alignmentGUI (see VARARGIN)
 
 % Set up variables
-framesPerChunk=1000;
+framesPerChunk=1500;
 
 % Choose default command line output for findReaches
 handles.output = hObject;
