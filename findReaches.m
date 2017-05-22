@@ -159,6 +159,7 @@ if isempty(perchdata)
     pause;
     currentFrameNumber=fig.data.Controls.CurrentFrame;
     lastFrameDisplayed=startsAtFrame(end-1)+size(allframes,3)-1;
+    firstFrameDisplayed=startsAtFrame(end-1);
     
     % Close implay fig, reopen an image so user can draw in perch area
     disp('Stopped at frame number');
@@ -221,6 +222,7 @@ if isempty(perchdata)
         disp('Check whether video segment contains a reach.');
         pause;
         lastFrameDisplayed=startsAtFrame(end-1)+currentSegment(2)-1;
+        firstFrameDisplayed=startsAtFrame(end-1)+currentSegment(1)-1;
         
         reachbutton=MFquestdlg([500 100],'Does this video segment contain a reach?','Enter yes or no','Yes','No','No');
         if isempty(reachbutton)
@@ -292,7 +294,7 @@ if isempty(perchdata)
         % Continue
     end
 else
-    isin2=perch.isin2;
+    isin2=perch.LEDisin;
     handles.LEDvals=perch.LEDvals;
 end
 
@@ -371,10 +373,12 @@ end
 fig=implay(allframes(:,:,startInd:endInd));
 fig.Parent.Position=[100 100 800 800];
 lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
+firstFrameDisplayed=startsAtFrame(end-1)+startInd-1;
 
 handles.fig=fig;
 handles.reachingStretch=reachingStretch;
 handles.lastFrameDisplayed=lastFrameDisplayed;
+handles.firstFrameDisplayed=firstFrameDisplayed;
 
 % Update handles structure
 guidata(hObject, handles);
@@ -562,12 +566,13 @@ movieChunk=handles.movieChunk;
 nFramesBetweenReaches=handles.nFramesBetweenReaches;
 timeOfLastEat=handles.eatTime(end);
 timeOfLastPellet=handles.pelletTime(end);
+lastFrameDisplayed=handles.lastFrameDisplayed;
+firstFrameDisplayed=handles.firstFrameDisplayed;
 if isnan(handles.atePellet(end)) % Last movie frame was a "no reach"
     % so skip all the way to end of this movie frame
-    lastFrameDisplayed=handles.lastFrameDisplayed;
-    loseAllReachesBefore=lastFrameDisplayed;
-elseif timeOfLastEat~=-10 || timeOfLastPellet~=-10
-    loseAllReachesBefore=max([timeOfLastEat timeOfLastPellet reachingStretch(reachN)+nFramesBetweenReaches]);
+    loseAllReachesBefore=lastFrameDisplayed-firstFrameDisplayed+2;
+elseif ~isnan(timeOfLastEat) || ~isnan(timeOfLastPellet)
+    loseAllReachesBefore=max([timeOfLastEat-firstFrameDisplayed+1 timeOfLastPellet-firstFrameDisplayed+1 reachingStretch(reachN)+nFramesBetweenReaches]);
 else
     loseAllReachesBefore=reachingStretch(reachN)+nFramesBetweenReaches;
 end
@@ -607,7 +612,9 @@ fig.Parent.Position=[100 100 800 800];
 handles.fig=fig;
 startsAtFrame=handles.startsAtFrame;
 lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
+firstFrameDisplayed=startsAtFrame(end-1)+startInd-1;
 handles.lastFrameDisplayed=lastFrameDisplayed;
+handles.firstFrameDisplayed=firstFrameDisplayed;
     
 % Reset GUI for next reach
 handles=resetGUI(handles);
@@ -743,8 +750,9 @@ if handles.curr_start_done==true
 end
 
 % Get current frame number in movie player
+firstFrameDisplayed=handles.firstFrameDisplayed;
 currFrame=handles.fig.data.Controls.CurrentFrame;
-handles.reachStarts=[handles.reachStarts currFrame];
+handles.reachStarts=[handles.reachStarts firstFrameDisplayed+currFrame-1];
 
 % Set start button to done
 set(handles.text3,'String','Done');
@@ -780,9 +788,10 @@ if handles.curr_pellet_done==true
 end
 
 % Get current frame number in movie player
+firstFrameDisplayed=handles.firstFrameDisplayed;
 currFrame=handles.fig.data.Controls.CurrentFrame;
 handles.pelletTouched=[handles.pelletTouched 1];
-handles.pelletTime=[handles.pelletTime currFrame];
+handles.pelletTime=[handles.pelletTime firstFrameDisplayed+currFrame-1];
 
 % Set pellet button to done
 set(handles.text4,'String','Done');
@@ -807,8 +816,11 @@ if handles.curr_pellet_done==true
     return
 end
 
+% Get current frame number in movie player
+firstFrameDisplayed=handles.firstFrameDisplayed;
+currFrame=handles.fig.data.Controls.CurrentFrame;
 handles.pelletTouched=[handles.pelletTouched 0];
-handles.pelletTime=[handles.pelletTime -10];
+handles.pelletTime=[handles.pelletTime firstFrameDisplayed+currFrame-1];
 
 % Set pellet button to done
 set(handles.text4,'String','Done');
@@ -834,9 +846,10 @@ if handles.curr_eat_done==true
 end
 
 % Get current frame number in movie player
+firstFrameDisplayed=handles.firstFrameDisplayed;
 currFrame=handles.fig.data.Controls.CurrentFrame;
 handles.atePellet=[handles.atePellet 1];
-handles.eatTime=[handles.eatTime currFrame];
+handles.eatTime=[handles.eatTime firstFrameDisplayed+currFrame-1];
 
 % Set eat button to done
 set(handles.text5,'String','Done');
@@ -861,8 +874,11 @@ if handles.curr_eat_done==true
     return
 end
 
+% Get current frame number in movie player
+firstFrameDisplayed=handles.firstFrameDisplayed;
+currFrame=handles.fig.data.Controls.CurrentFrame;
 handles.atePellet=[handles.atePellet 0];
-handles.eatTime=[handles.eatTime -10];
+handles.eatTime=[handles.eatTime firstFrameDisplayed+currFrame-1];
 
 % Set eat button to done
 set(handles.text5,'String','Done');
@@ -909,6 +925,7 @@ reachN=handles.reachN;
 frames_before_firstReachFrame=handles.frames_before_firstReachFrame; 
 sizeoneback=handles.sizeoneback;
 oneback=handles.oneback;
+startsAtFrame=handles.startsAtFrame;
 
 close(handles.fig);
 
@@ -936,7 +953,9 @@ fig=implay(allframes(:,:,startInd:endInd));
 fig.Parent.Position=[100 100 800 800];
 handles.fig=fig;
 lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
+firstFrameDisplayed=startsAtFrame(end-1)+startInd-1;
 handles.lastFrameDisplayed=lastFrameDisplayed;
+handles.firstFrameDisplayed=firstFrameDisplayed;
     
 % Reset GUI
 handles=resetGUI(handles);
