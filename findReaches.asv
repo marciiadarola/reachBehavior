@@ -22,7 +22,7 @@ function varargout = findReaches(varargin)
 
 % Edit the above text to modify the response to help findReaches
 
-% Last Modified by GUIDE v2.5 12-May-2017 15:57:55
+% Last Modified by GUIDE v2.5 22-May-2017 17:17:59
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -96,6 +96,12 @@ handles.sizeOfLastChunk=[];
 handles.sizeoneback=[];
 handles.isin2=[];
 handles.LEDvals=[];
+handles.addIn=0;
+handles.reachStarts_belongToReach=[];
+handles.pelletTouched_belongToReach=[];
+handles.pelletTime_belongToReach=[];
+handles.atePellet_belongToReach=[];
+handles.eatTime_belongToReach=[];
 
 % Close all open figures except findReaches GUI
 set(hObject, 'HandleVisibility', 'off');
@@ -545,10 +551,12 @@ handles.reachN=reachN;
 
 function handles=updateReach(handles)
 
-disp('Reach detected');
+if handles.addIn==0
+    disp('Reach detected');
 
-% Increment total reaches
-handles.allReachesTally=handles.allReachesTally+1;
+    % Increment total reaches
+    handles.allReachesTally=handles.allReachesTally+1;
+end
 
 % Display next reach movie
 
@@ -569,53 +577,68 @@ firstFrameDisplayed=handles.firstFrameDisplayed;
 nFramesBetweenReaches=handles.nFramesBetweenReaches;
 timeOfLastEat=handles.eatTime(end);
 timeOfLastPellet=handles.pelletTime(end);
-% Note that reachingStretch is an index into allframes
-% first index of allframes is startsAtFrame(end-1) wrt whole movie
-% and firstFrameDisplayed=startsAtFrame(end-1)+startInd-1
-if isnan(handles.atePellet(end)) % Last movie frame was a "no reach"
-    % so skip all the way to end of this movie frame
-    loseAllReachesBefore=lastFrameDisplayed-startsAtFrame(end-1)+2;
-elseif ~isnan(timeOfLastEat) || ~isnan(timeOfLastPellet)
-    loseAllReachesBefore=max([timeOfLastEat-startsAtFrame(end-1)+1 timeOfLastPellet-startsAtFrame(end-1)+1 reachingStretch(reachN)+nFramesBetweenReaches]);
-else
-    loseAllReachesBefore=reachingStretch(reachN)+nFramesBetweenReaches;
+if handles.addIn==0
+    % Note that reachingStretch is an index into allframes
+    % first index of allframes is startsAtFrame(end-1) wrt whole movie
+    % and firstFrameDisplayed=startsAtFrame(end-1)+startInd-1
+    if isnan(handles.atePellet(end)) % Last movie frame was a "no reach"
+        % so skip all the way to end of this movie frame
+        loseAllReachesBefore=lastFrameDisplayed-startsAtFrame(end-1)+2;
+    elseif ~isnan(timeOfLastEat) || ~isnan(timeOfLastPellet)
+        loseAllReachesBefore=max([timeOfLastEat-startsAtFrame(end-1)+1 timeOfLastPellet-startsAtFrame(end-1)+1 reachingStretch(reachN)+nFramesBetweenReaches]);
+    else
+        loseAllReachesBefore=reachingStretch(reachN)+nFramesBetweenReaches;
+    end
+    reachingStretch=reachingStretch(reachingStretch>loseAllReachesBefore);
+    handles.reachingStretch=reachingStretch;
+    reachN=1;
+    handles.reachN=reachN;
 end
-reachingStretch=reachingStretch(reachingStretch>loseAllReachesBefore);
-handles.reachingStretch=reachingStretch;
-reachN=1;
-handles.reachN=reachN;
 
 % If reachingStretch is now empty, read next movie segment
-if isempty(reachingStretch)
+if isempty(reachingStretch) || handles.addIn==1
     containsReach=0;
     while containsReach==0
         [handles,containsReach]=findMovieChunkWithReach(handles);
+        if handles.addIn==1
+            containsReach=1; % this chunk contains end of reach from previous movie chunk
+        end
     end
 end
 
 allframes=handles.allframes;
 reachingStretch=handles.reachingStretch;
 reachN=handles.reachN;
+startsAtFrame=handles.startsAtFrame;
 
 close(handles.fig);
 
 % Update implay
-if reachingStretch(reachN)-frames_before_firstReachFrame<1
-    startInd=1;
+if handles.addIn==0
+    if reachingStretch(reachN)-frames_before_firstReachFrame<1
+        startInd=1;
+    else
+        startInd=reachingStretch(reachN)-frames_before_firstReachFrame;
+    end
+    if reachingStretch(reachN)+frames_after_firstReachFrame>size(allframes,3)
+        endInd=size(allframes,3);
+    else
+        endInd=reachingStretch(reachN)+frames_after_firstReachFrame;
+    end
+    disp(reachingStretch(reachN));
+    fig=implay(allframes(:,:,startInd:endInd));
+    lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
+    firstFrameDisplayed=startsAtFrame(end-1)+startInd-1;
 else
-    startInd=reachingStretch(reachN)-frames_before_firstReachFrame;
+    % add in reach from former movie chunk
+    more_framesAfterReach=100;
+    fig=implay(cat(3,handles.whatToAddIn,allframes(:,:,1:more_framesAfterReach)));
+    firstFrameDisplayed=-size(handles.whatToAddIn,3)+1;
+    lastFrameDisplayed=1+more_framesAfterReach-1;
+    handles.addIn=0;
 end
-if reachingStretch(reachN)+frames_after_firstReachFrame>size(allframes,3)
-    endInd=size(allframes,3);
-else
-    endInd=reachingStretch(reachN)+frames_after_firstReachFrame;
-end
-disp(reachingStretch(reachN));
-fig=implay(allframes(:,:,startInd:endInd));
 fig.Parent.Position=[100 100 800 800];
 handles.fig=fig;
-lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
-firstFrameDisplayed=startsAtFrame(end-1)+startInd-1;
 handles.lastFrameDisplayed=lastFrameDisplayed;
 handles.firstFrameDisplayed=firstFrameDisplayed;
     
@@ -756,6 +779,7 @@ end
 firstFrameDisplayed=handles.firstFrameDisplayed;
 currFrame=handles.fig.data.Controls.CurrentFrame;
 handles.reachStarts=[handles.reachStarts firstFrameDisplayed+currFrame-1];
+handles.reachStarts_belongToReach=[handles.reachStarts_belongToReach handles.allReachesTally];
 
 % Set start button to done
 set(handles.text3,'String','Done');
@@ -795,6 +819,8 @@ firstFrameDisplayed=handles.firstFrameDisplayed;
 currFrame=handles.fig.data.Controls.CurrentFrame;
 handles.pelletTouched=[handles.pelletTouched 1];
 handles.pelletTime=[handles.pelletTime firstFrameDisplayed+currFrame-1];
+handles.pelletTouched_belongToReach=[handles.pelletTouched_belongToReach handles.allReachesTally];
+handles.pelletTime_belongToReach=[handles.pelletTime_belongToReach handles.allReachesTally];
 
 % Set pellet button to done
 set(handles.text4,'String','Done');
@@ -824,6 +850,8 @@ firstFrameDisplayed=handles.firstFrameDisplayed;
 currFrame=handles.fig.data.Controls.CurrentFrame;
 handles.pelletTouched=[handles.pelletTouched 0];
 handles.pelletTime=[handles.pelletTime firstFrameDisplayed+currFrame-1];
+handles.pelletTouched_belongToReach=[handles.pelletTouched_belongToReach handles.allReachesTally];
+handles.pelletTime_belongToReach=[handles.pelletTime_belongToReach handles.allReachesTally];
 
 % Set pellet button to done
 set(handles.text4,'String','Done');
@@ -853,6 +881,8 @@ firstFrameDisplayed=handles.firstFrameDisplayed;
 currFrame=handles.fig.data.Controls.CurrentFrame;
 handles.atePellet=[handles.atePellet 1];
 handles.eatTime=[handles.eatTime firstFrameDisplayed+currFrame-1];
+handles.atePellet_belongToReach=[handles.atePellet_belongToReach handles.allReachesTally];
+handles.eatTime_belongToReach=[handles.eatTime_belongToReach handles.allReachesTally];
 
 % Set eat button to done
 set(handles.text5,'String','Done');
@@ -882,6 +912,8 @@ firstFrameDisplayed=handles.firstFrameDisplayed;
 currFrame=handles.fig.data.Controls.CurrentFrame;
 handles.atePellet=[handles.atePellet 0];
 handles.eatTime=[handles.eatTime firstFrameDisplayed+currFrame-1];
+handles.atePellet_belongToReach=[handles.atePellet_belongToReach handles.allReachesTally];
+handles.eatTime_belongToReach=[handles.eatTime_belongToReach handles.allReachesTally];
 
 % Set eat button to done
 set(handles.text5,'String','Done');
@@ -930,38 +962,61 @@ sizeoneback=handles.sizeoneback;
 oneback=handles.oneback;
 startsAtFrame=handles.startsAtFrame;
 
-close(handles.fig);
-
 % Update implay
 if reachingStretch(reachN)-more_framesBeforeReach<1
-    % This movie chunk started in the middle of the reach
-    % Add end of last movie chunk
-    temp=nan(size(allframes,1),size(allframes,2),size(allframes,3)+sizeoneback);
-    temp(:,:,end-size(allframes,3)+1:end)=allframes;
-    temp(:,:,1:end-size(allframes,3))=oneback(:,:,end-sizeoneback+1:end);
-    allframes=temp;
-    reachingStretch=reachingStretch+sizeoneback;
-    if more_framesBeforeReach>sizeoneback
-        error('more_framesBeforeReach should be less than sizeoneback');
+    if isempty(oneback)
+    else
+        % This movie chunk started in the middle of the reach
+        % Add end of last movie chunk
+        temp=nan(size(allframes,1),size(allframes,2),size(allframes,3)+sizeoneback);
+        temp(:,:,end-size(allframes,3)+1:end)=allframes;
+        temp(:,:,1:end-size(allframes,3))=oneback(:,:,end-sizeoneback+1:end);
+        allframes=temp;
+        reachingStretch=reachingStretch+sizeoneback;
+        if more_framesBeforeReach>sizeoneback
+            error('more_framesBeforeReach should be less than sizeoneback');
+        end
     end
 end
 startInd=reachingStretch(reachN)-more_framesBeforeReach;
 if reachingStretch(reachN)+more_framesAfterReach>size(allframes,3)
-    endInd=size(allframes,3);
+    didEndInd=0;
+    % Reach extends beyond end of movie chunk 
+    % Move on to next movie chunk, keeping track of fact that need to add
+    % in frames from current movie chunk
+    EOF=handles.EOF;
+    if ~isempty(EOF)
+        if EOF==true
+            % Already read to end of file
+            endInd=size(allframes,3);
+            didEndInd=1;
+        end
+    end
+    if didEndInd==0 
+        handles.addIn=1;
+        handles.whatToAddIn=allframes(:,:,startInd:end);
+    end
 else
     endInd=reachingStretch(reachN)+more_framesAfterReach;
 end
-disp(reachingStretch(reachN));
-fig=implay(allframes(:,:,startInd:endInd));
-fig.Parent.Position=[100 100 800 800];
-handles.fig=fig;
-lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
-firstFrameDisplayed=startsAtFrame(end-1)+startInd-1;
-handles.lastFrameDisplayed=lastFrameDisplayed;
-handles.firstFrameDisplayed=firstFrameDisplayed;
+
+if handles.addIn==0
+    close(handles.fig);
     
-% Reset GUI
-handles=resetGUI(handles);
+    disp(reachingStretch(reachN));
+    fig=implay(allframes(:,:,startInd:endInd));
+    fig.Parent.Position=[100 100 800 800];
+    handles.fig=fig;
+    lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
+    firstFrameDisplayed=startsAtFrame(end-1)+startInd-1;
+    handles.lastFrameDisplayed=lastFrameDisplayed;
+    handles.firstFrameDisplayed=firstFrameDisplayed;
+    
+    % Reset GUI
+    handles=resetGUI(handles);
+else
+    handles=updateReach(handles);
+end
 
 guidata(hObject, handles);
 
@@ -978,3 +1033,22 @@ function figure1_CloseRequestFcn(hObject, eventdata, handles)
 finishFunction(handles);
 
 delete(hObject);
+
+
+% --- Executes on button press in retrybutton.
+function retrybutton_Callback(hObject, eventdata, handles)
+% hObject    handle to retrybutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% reset to beginning of coding this reach
+currReachN=handles.allReachesTally;
+
+handles.reachStarts(handles.reachStarts_belongToReach==currReachN)=[];
+handles.pelletTouched(handles.pelletTouched_belongToReach==currReachN)=[];
+handles.pelletTime(handles.pelletTime_belongToReach==currReachN)=[];
+handles.atePellet(handles.atePellet_belongToReach==currReachN)=[];
+handles.eatTime(handles.eatTime_belongToReach==currReachN)=[];
+
+% Reset GUI 
+handles=resetGUI(handles);
