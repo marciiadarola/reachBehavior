@@ -102,6 +102,7 @@ handles.pelletTouched_belongToReach=[];
 handles.pelletTime_belongToReach=[];
 handles.atePellet_belongToReach=[];
 handles.eatTime_belongToReach=[];
+handles.showedMoreVideo=0;
 
 % Close all open figures except findReaches GUI
 set(hObject, 'HandleVisibility', 'off');
@@ -647,6 +648,9 @@ handles=resetGUI(handles);
 
 function handles=resetGUI(handles)
 
+% Reset
+handles.showedMoreVideo
+
 % Set button to waiting
 set(handles.text3,'String','Waiting');
 set(handles.text3,'ForegroundColor','r');
@@ -656,7 +660,7 @@ set(handles.text5,'String','Waiting');
 set(handles.text5,'ForegroundColor','r');
 
 % Increment reach detected count
-set(handles.reachTallyBox,'String',['Reach ' num2str(handles.allReachesTally)+1]);
+set(handles.reachTallyBox,'String',['Reach ' num2str(handles.allReachesTally+1)]);
 
 % Reset reach progress variables
 handles.reachIsDone=false;
@@ -950,6 +954,14 @@ function morevideobutton_Callback(hObject, eventdata, handles)
 % hObject    handle to morevideobutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+if handles.showedMoreVideo==0
+    handles.showedMoreVideo=1; % pressed this button once for this reach
+else
+    % user only gets to press this button once per reach
+    disp('Cannot further expand the video segment -- please indicate reach in this segment or No Reach.');
+    return
+end
 
 more_framesBeforeReach=50;
 more_framesAfterReach=100;
