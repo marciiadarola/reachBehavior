@@ -1063,5 +1063,9 @@ handles.pelletTime(handles.pelletTime_belongToReach==currReachN)=[];
 handles.atePellet(handles.atePellet_belongToReach==currReachN)=[];
 handles.eatTime(handles.eatTime_belongToReach==currReachN)=[];
 
+handles.curr_eat_done=false;
+handles.curr_pellet_done=false;
+handles.curr_start_done=false;
+
 % Reset GUI 
 handles=resetGUI(handles);
