@@ -22,7 +22,7 @@ function varargout = findReaches(varargin)
 
 % Edit the above text to modify the response to help findReaches
 
-% Last Modified by GUIDE v2.5 22-May-2017 17:17:59
+% Last Modified by GUIDE v2.5 22-May-2017 18:05:16
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -103,6 +103,8 @@ handles.pelletTime_belongToReach=[];
 handles.atePellet_belongToReach=[];
 handles.eatTime_belongToReach=[];
 handles.showedMoreVideo=0;
+handles.pelletIsMissing=0;
+handles.pelletPresent=[];
 
 % Close all open figures except findReaches GUI
 set(hObject, 'HandleVisibility', 'off');
@@ -557,6 +559,11 @@ if handles.addIn==0
 
     % Increment total reaches
     handles.allReachesTally=handles.allReachesTally+1;
+    
+    % Log whether pellet was present
+    handles.pelletPresent=[handles.pelletPresent handles.pelletIsMissing];
+    % Reset pellet present to default
+    handles.pelletIsMissing=0;
 end
 
 % Display next reach movie
@@ -578,7 +585,8 @@ firstFrameDisplayed=handles.firstFrameDisplayed;
 nFramesBetweenReaches=handles.nFramesBetweenReaches;
 timeOfLastEat=handles.eatTime(end);
 timeOfLastPellet=handles.pelletTime(end);
-if handles.addIn==0
+if isempty(reachingStretch)
+elseif handles.addIn==0
     % Note that reachingStretch is an index into allframes
     % first index of allframes is startsAtFrame(end-1) wrt whole movie
     % and firstFrameDisplayed=startsAtFrame(end-1)+startInd-1
@@ -1067,5 +1075,18 @@ handles.curr_eat_done=false;
 handles.curr_pellet_done=false;
 handles.curr_start_done=false;
 
+handles.pelletIsMissing=0;
+
 % Reset GUI 
 handles=resetGUI(handles);
+
+
+% --- Executes on button press in pelletmissingbutton.
+function pelletmissingbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to pelletmissingbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+handles.pelletIsMissing=1;
+
+guidata(hObject, handles);
