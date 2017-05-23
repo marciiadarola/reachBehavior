@@ -140,7 +140,7 @@ startsAtFrame=[];
 didReachForThisChunk=[];
 
 % Read beginning of movie
-videoFReader = vision.VideoFileReader(filename,'PlayCount',2,'ImageColorSpace','YCbCr 4:2:2');
+videoFReader = vision.VideoFileReader(filename,'PlayCount',1,'ImageColorSpace','YCbCr 4:2:2');
 n=framesPerChunk; % How many frames to read initially
 movieChunk=[movieChunk 1];
 startsAtFrame=[startsAtFrame 1];
@@ -347,7 +347,7 @@ handles.movieChunk=movieChunk;
 handles.startsAtFrame=startsAtFrame;
 handles.framesPerChunk=framesPerChunk;
 handles.allReachesTally=0;
-handles.EOF=[];
+handles.EOF=EOF;
 handles.startedOver=[];
 handles.sizeOfLastChunk=[];
 handles.endoffname=regexp(filename,'\.');
@@ -987,15 +987,19 @@ startsAtFrame=handles.startsAtFrame;
 if reachingStretch(reachN)-more_framesBeforeReach<1
     if isempty(oneback)
     else
-        % This movie chunk started in the middle of the reach
-        % Add end of last movie chunk
-        temp=nan(size(allframes,1),size(allframes,2),size(allframes,3)+sizeoneback);
-        temp(:,:,end-size(allframes,3)+1:end)=allframes;
-        temp(:,:,1:end-size(allframes,3))=oneback(:,:,end-sizeoneback+1:end);
-        allframes=temp;
-        reachingStretch=reachingStretch+sizeoneback;
-        if more_framesBeforeReach>sizeoneback
-            error('more_framesBeforeReach should be less than sizeoneback');
+        if length(size(oneback))<3
+            disp('oneback wrong size');
+        else
+            % This movie chunk started in the middle of the reach
+            % Add end of last movie chunk
+            temp=nan(size(allframes,1),size(allframes,2),size(allframes,3)+sizeoneback);
+            temp(:,:,end-size(allframes,3)+1:end)=allframes;
+            temp(:,:,1:end-size(allframes,3))=oneback(:,:,end-sizeoneback+1:end);
+            allframes=temp;
+            reachingStretch=reachingStretch+sizeoneback;
+            if more_framesBeforeReach>sizeoneback
+                error('more_framesBeforeReach should be less than sizeoneback');
+            end
         end
     end
 end
@@ -1079,6 +1083,8 @@ handles.pelletIsMissing=0;
 
 % Reset GUI 
 handles=resetGUI(handles);
+
+guidata(hObject, handles);
 
 
 % --- Executes on button press in pelletmissingbutton.
