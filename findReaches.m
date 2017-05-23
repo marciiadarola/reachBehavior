@@ -951,7 +951,7 @@ function pushbutton9_Callback(hObject, eventdata, handles)
 % last frame
 currFrame=handles.fig.data.Controls.CurrentFrame;
 
-if currFrame==size(handles.allframes,3)
+if currFrame==(handles.lastFrameDisplayed-handles.firstFrameDisplayed+1)
     handles.atePellet=[handles.atePellet nan];
     handles.eatTime=[handles.eatTime nan];
     handles.pelletTouched=[handles.pelletTouched nan];
