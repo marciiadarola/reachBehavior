@@ -947,15 +947,23 @@ function pushbutton9_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-handles.atePellet=[handles.atePellet nan];
-handles.eatTime=[handles.eatTime nan];
-handles.pelletTouched=[handles.pelletTouched nan];
-handles.pelletTime=[handles.pelletTime nan];
-handles.reachStarts=[handles.reachStarts nan];
+% Only accept this "No Reach" classification if movie player is stopped at
+% last frame
+currFrame=handles.fig.data.Controls.CurrentFrame;
 
-handles=updateReach(handles);
-
-guidata(hObject, handles);
+if currFrame==size(handles.allframes,3)
+    handles.atePellet=[handles.atePellet nan];
+    handles.eatTime=[handles.eatTime nan];
+    handles.pelletTouched=[handles.pelletTouched nan];
+    handles.pelletTime=[handles.pelletTime nan];
+    handles.reachStarts=[handles.reachStarts nan];
+    
+    handles=updateReach(handles);
+    
+    guidata(hObject, handles);
+else
+    disp('Will only accept No Reach classification if movie is stopped at last frame');
+end
 
 
 % --- Executes on button press in morevideobutton.
