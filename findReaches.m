@@ -450,18 +450,21 @@ LEDvals=handles.LEDvals;
 % chunks, if so, end, otherwise, start over
 if ~isempty(EOF)
     if EOF==true
-        finishFunction(handles);
-%         noReachesYet=movieChunk(~ismember(movieChunk,didReachForThisChunk));
-%         if isempty(noReachesYet)
-%             % Done with all of movie -- finish
-%             finishFunction(handles);
-%         else
-%             % Start over at beginning of movie
-%             % Because set PlayCount to 2 for videoFReader, continuing stepping
-%             % should start over at beginning of movie
-%             startedOver=true;
-%         end
+%         finishFunction(handles);
+        noReachesYet=movieChunk(~ismember(movieChunk,didReachForThisChunk));
+        if isempty(noReachesYet)
+            % Done with all of movie -- finish
+            finishFunction(handles);
+        else
+            % Start over at beginning of movie
+            % Because set PlayCount to 2 for videoFReader, continuing stepping
+            % should start over at beginning of movie
+            startedOver=true;
+        end
     end
+end
+if EOF==true
+    finishFunction(handles);
 end
         
 % Check whether we've already looked for reaches in this movie chunk
@@ -479,13 +482,15 @@ for j=1:n
     [frame,~,~,EOF]=step(videoFReader);
 %     disp(toc);
     if EOF==true
-        finishFunction(handles);
-%         n=j-1;
-%         allframes=allframes(:,:,j-1);
-%         sizeOfLastChunk=j-1;
-%         break
+        n=j-1;
+        allframes=allframes(:,:,j-1);
+        sizeOfLastChunk=j-1;
+        break
     end
     allframes(:,:,j)=frame;
+end
+if EOF==true
+    finishFunction(handles);
 end
 handles.oneback=allframes(:,:,end-sizeoneback+1);
 % Get LED zone intensity over all frames
