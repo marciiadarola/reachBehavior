@@ -22,7 +22,7 @@ function varargout = findReaches(varargin)
 
 % Edit the above text to modify the response to help findReaches
 
-% Last Modified by GUIDE v2.5 22-May-2017 17:17:59
+% Last Modified by GUIDE v2.5 22-May-2017 18:05:16
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -103,6 +103,8 @@ handles.pelletTime_belongToReach=[];
 handles.atePellet_belongToReach=[];
 handles.eatTime_belongToReach=[];
 handles.showedMoreVideo=0;
+handles.pelletIsMissing=0;
+handles.pelletPresent=[];
 
 % Close all open figures except findReaches GUI
 set(hObject, 'HandleVisibility', 'off');
@@ -138,7 +140,7 @@ startsAtFrame=[];
 didReachForThisChunk=[];
 
 % Read beginning of movie
-videoFReader = vision.VideoFileReader(filename,'PlayCount',2,'ImageColorSpace','YCbCr 4:2:2');
+videoFReader = vision.VideoFileReader(filename,'PlayCount',1,'ImageColorSpace','YCbCr 4:2:2');
 n=framesPerChunk; % How many frames to read initially
 movieChunk=[movieChunk 1];
 startsAtFrame=[startsAtFrame 1];
@@ -345,7 +347,7 @@ handles.movieChunk=movieChunk;
 handles.startsAtFrame=startsAtFrame;
 handles.framesPerChunk=framesPerChunk;
 handles.allReachesTally=0;
-handles.EOF=[];
+handles.EOF=EOF;
 handles.startedOver=[];
 handles.sizeOfLastChunk=[];
 handles.endoffname=regexp(filename,'\.');
@@ -473,7 +475,7 @@ n=framesPerChunk; % How many frames to read now
 currentSegment=[1 n];
 % tic
 for j=1:n
-    [frame,EOF]=step(videoFReader);
+    [frame,~,~,EOF]=step(videoFReader);
 %     disp(toc);
     if EOF==true
         n=j-1;
@@ -557,6 +559,11 @@ if handles.addIn==0
 
     % Increment total reaches
     handles.allReachesTally=handles.allReachesTally+1;
+    
+    % Log whether pellet was present
+    handles.pelletPresent=[handles.pelletPresent handles.pelletIsMissing];
+    % Reset pellet present to default
+    handles.pelletIsMissing=0;
 end
 
 % Display next reach movie
@@ -578,7 +585,8 @@ firstFrameDisplayed=handles.firstFrameDisplayed;
 nFramesBetweenReaches=handles.nFramesBetweenReaches;
 timeOfLastEat=handles.eatTime(end);
 timeOfLastPellet=handles.pelletTime(end);
-if handles.addIn==0
+if isempty(reachingStretch)
+elseif handles.addIn==0
     % Note that reachingStretch is an index into allframes
     % first index of allframes is startsAtFrame(end-1) wrt whole movie
     % and firstFrameDisplayed=startsAtFrame(end-1)+startInd-1
@@ -648,8 +656,9 @@ handles=resetGUI(handles);
 
 function handles=resetGUI(handles)
 
-% Reset
-handles.showedMoreVideo
+if handles.addIn==0
+    handles.showedMoreVideo=0;
+end
 
 % Set button to waiting
 set(handles.text3,'String','Waiting');
@@ -938,15 +947,23 @@ function pushbutton9_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-handles.atePellet=[handles.atePellet nan];
-handles.eatTime=[handles.eatTime nan];
-handles.pelletTouched=[handles.pelletTouched nan];
-handles.pelletTime=[handles.pelletTime nan];
-handles.reachStarts=[handles.reachStarts nan];
+% Only accept this "No Reach" classification if movie player is stopped at
+% last frame
+currFrame=handles.fig.data.Controls.CurrentFrame;
 
-handles=updateReach(handles);
-
-guidata(hObject, handles);
+if currFrame==(handles.lastFrameDisplayed-handles.firstFrameDisplayed+1)
+    handles.atePellet=[handles.atePellet nan];
+    handles.eatTime=[handles.eatTime nan];
+    handles.pelletTouched=[handles.pelletTouched nan];
+    handles.pelletTime=[handles.pelletTime nan];
+    handles.reachStarts=[handles.reachStarts nan];
+    
+    handles=updateReach(handles);
+    
+    guidata(hObject, handles);
+else
+    disp('Will only accept No Reach classification if movie is stopped at last frame');
+end
 
 
 % --- Executes on button press in morevideobutton.
@@ -978,15 +995,19 @@ startsAtFrame=handles.startsAtFrame;
 if reachingStretch(reachN)-more_framesBeforeReach<1
     if isempty(oneback)
     else
-        % This movie chunk started in the middle of the reach
-        % Add end of last movie chunk
-        temp=nan(size(allframes,1),size(allframes,2),size(allframes,3)+sizeoneback);
-        temp(:,:,end-size(allframes,3)+1:end)=allframes;
-        temp(:,:,1:end-size(allframes,3))=oneback(:,:,end-sizeoneback+1:end);
-        allframes=temp;
-        reachingStretch=reachingStretch+sizeoneback;
-        if more_framesBeforeReach>sizeoneback
-            error('more_framesBeforeReach should be less than sizeoneback');
+        if length(size(oneback))<3
+            disp('oneback wrong size');
+        else
+            % This movie chunk started in the middle of the reach
+            % Add end of last movie chunk
+            temp=nan(size(allframes,1),size(allframes,2),size(allframes,3)+sizeoneback);
+            temp(:,:,end-size(allframes,3)+1:end)=allframes;
+            temp(:,:,1:end-size(allframes,3))=oneback(:,:,end-sizeoneback+1:end);
+            allframes=temp;
+            reachingStretch=reachingStretch+sizeoneback;
+            if more_framesBeforeReach>sizeoneback
+                error('more_framesBeforeReach should be less than sizeoneback');
+            end
         end
     end
 end
@@ -1062,5 +1083,24 @@ handles.pelletTime(handles.pelletTime_belongToReach==currReachN)=[];
 handles.atePellet(handles.atePellet_belongToReach==currReachN)=[];
 handles.eatTime(handles.eatTime_belongToReach==currReachN)=[];
 
+handles.curr_eat_done=false;
+handles.curr_pellet_done=false;
+handles.curr_start_done=false;
+
+handles.pelletIsMissing=0;
+
 % Reset GUI 
 handles=resetGUI(handles);
+
+guidata(hObject, handles);
+
+
+% --- Executes on button press in pelletmissingbutton.
+function pelletmissingbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to pelletmissingbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+handles.pelletIsMissing=1;
+
+guidata(hObject, handles);

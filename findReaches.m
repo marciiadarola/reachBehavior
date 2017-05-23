@@ -249,7 +249,7 @@ if isempty(perchdata)
                 n=framesPerChunk; % How many frames to read now
                 currentSegment=[1 n];
                 for j=1:n
-                    [frame,EOF]=step(videoFReader);
+                    [frame,~,~,EOF]=step(videoFReader);
                     if EOF==true
                         n=j-1;
                         allframes=allframes(:,:,j-1);
@@ -450,16 +450,17 @@ LEDvals=handles.LEDvals;
 % chunks, if so, end, otherwise, start over
 if ~isempty(EOF)
     if EOF==true
-        noReachesYet=movieChunk(~ismember(movieChunk,didReachForThisChunk));
-        if isempty(noReachesYet)
-            % Done with all of movie -- finish
-            finishFunction(handles);
-        else
-            % Start over at beginning of movie
-            % Because set PlayCount to 2 for videoFReader, continuing stepping
-            % should start over at beginning of movie
-            startedOver=true;
-        end
+        finishFunction(handles);
+%         noReachesYet=movieChunk(~ismember(movieChunk,didReachForThisChunk));
+%         if isempty(noReachesYet)
+%             % Done with all of movie -- finish
+%             finishFunction(handles);
+%         else
+%             % Start over at beginning of movie
+%             % Because set PlayCount to 2 for videoFReader, continuing stepping
+%             % should start over at beginning of movie
+%             startedOver=true;
+%         end
     end
 end
         
@@ -475,13 +476,14 @@ n=framesPerChunk; % How many frames to read now
 currentSegment=[1 n];
 % tic
 for j=1:n
-    [frame,EOF]=step(videoFReader);
+    [frame,~,~,EOF]=step(videoFReader);
 %     disp(toc);
     if EOF==true
-        n=j-1;
-        allframes=allframes(:,:,j-1);
-        sizeOfLastChunk=j-1;
-        break
+        finishFunction(handles);
+%         n=j-1;
+%         allframes=allframes(:,:,j-1);
+%         sizeOfLastChunk=j-1;
+%         break
     end
     allframes(:,:,j)=frame;
 end
@@ -642,8 +644,8 @@ else
     % add in reach from former movie chunk
     more_framesAfterReach=100;
     fig=implay(cat(3,handles.whatToAddIn,allframes(:,:,1:more_framesAfterReach)));
-    firstFrameDisplayed=-size(handles.whatToAddIn,3)+1;
-    lastFrameDisplayed=1+more_framesAfterReach-1;
+    firstFrameDisplayed=(startsAtFrame(end-1)+1-1)-size(handles.whatToAddIn,3)+1;
+    lastFrameDisplayed=(startsAtFrame(end-1)+more_framesAfterReach-1)+1+more_framesAfterReach-1;
     handles.addIn=0;
 end
 fig.Parent.Position=[100 100 800 800];
@@ -979,6 +981,21 @@ else
     disp('Cannot further expand the video segment -- please indicate reach in this segment or No Reach.');
     return
 end
+
+% reset to beginning of coding this reach
+currReachN=handles.allReachesTally;
+
+handles.reachStarts(handles.reachStarts_belongToReach==currReachN)=[];
+handles.pelletTouched(handles.pelletTouched_belongToReach==currReachN)=[];
+handles.pelletTime(handles.pelletTime_belongToReach==currReachN)=[];
+handles.atePellet(handles.atePellet_belongToReach==currReachN)=[];
+handles.eatTime(handles.eatTime_belongToReach==currReachN)=[];
+
+handles.curr_eat_done=false;
+handles.curr_pellet_done=false;
+handles.curr_start_done=false;
+
+handles.pelletIsMissing=0;
 
 more_framesBeforeReach=50;
 more_framesAfterReach=100;
