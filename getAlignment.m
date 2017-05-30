@@ -19,7 +19,7 @@ movie_LED=temp_LED>threshForOnVsOff;
 % Find best alignment of distractor LED in movie and Arduino output -- note
 % different sampling rates
 temp=out.distractorOn';
-arduino_timestep=out.allTrialTimes(1,2)-out.allTrialTimes(1,1); % in ms
+% arduino_timestep=out.allTrialTimes(1,2)-out.allTrialTimes(1,1); % in ms
 temptimes=(out.allTrialTimes+repmat(out.trialStartTimes',1,size(out.allTrialTimes,2)))';
 temptimes=temptimes(1:end);
 temp=temp(1:end);
@@ -48,14 +48,12 @@ backup_arduino_LED=arduino_LED;
 for j=1:length(tryscales)
     disp(j);
     currscale=tryscales(j);
-%     movie_LED=resample(backup_movie_LED,currscale*10,10);
     movie_LED=resample(backup_movie_LED,currscale*(1/tryinc),(1/tryinc));
     for i=1:maxDelay
         if mod(i,500)==0
 %             disp(i);
         end
         temp_movie=[nan(1,i) movie_LED];
-%         temp_arduino=arduino_LED(1:length(temp_movie));
         temp_arduino=[arduino_LED nan(1,length(temp_movie)-length(arduino_LED))];
         if length(temp_arduino)>length(temp_movie)
             temp_movie=[temp_movie nan(1,length(temp_arduino)-length(temp_movie))];
@@ -70,8 +68,13 @@ figure();
 imagesc(sumdiffs);
 title('Finding best alignment');
 
+frontShift=mi_col;
+scaleBy=tryscales(mi_row);
+resampFac=1/tryinc;
 best_movie=[nan(1,mi_col) resample(backup_movie_LED,tryscales(mi_row)*(1/tryinc),(1/tryinc))];
+shouldBeLength=length(best_movie);
 best_arduino=[backup_arduino_LED nan(1,length(best_movie)-length(backup_arduino_LED))];
+movieToLength=length(best_arduino);
 if length(best_arduino)>length(best_movie)
     best_movie=[best_movie nan(1,length(best_arduino)-length(best_movie))];
 end
@@ -80,7 +83,7 @@ plot(best_movie,'Color','b');
 hold on;
 plot(best_arduino,'Color','r');
 
-% Then re-align sub-sections of movie to arduino code??
+% Then re-align sub-sections of movie to arduino code
 alignSegments=750; % in number of indices
 mov_distractor=[];
 arduino_distractor=[];
@@ -90,14 +93,20 @@ segmentInds=firstInd:alignSegments:lastBoth;
 mov_distractor=[mov_distractor nan(1,firstInd-1)];
 arduino_distractor=[arduino_distractor nan(1,firstInd-1)];
 segmentDelays=nan(1,length(segmentInds));
+addZeros_movie=nan(1,length(segmentInds));
+addZeros_arduino=nan(1,length(segmentInds));
 for i=1:floor(lastBoth/alignSegments)
     currInd=segmentInds(i);
     [temp1,temp2,D]=alignsignals(best_movie(currInd:currInd+alignSegments-1),best_arduino(currInd:currInd+alignSegments-1));
     segmentDelays(i)=D;
     if length(temp1)>length(temp2)
         temp2=[temp2 zeros(1,length(temp1)-length(temp2))];
+        addZeros_arduino(i)=length(temp1)-length(temp2);
+        addZeros_movie(i)=0;
     elseif length(temp2)>length(temp1)
         temp1=[temp1 zeros(1,length(temp2)-length(temp1))];
+        addZeros_movie(i)=length(temp2)-length(temp1);
+        addZeros_arduino(i)=0;
     end
     mov_distractor=[mov_distractor temp1];
     arduino_distractor=[arduino_distractor temp2];
@@ -113,5 +122,53 @@ plot(arduino_distractor,'Color','r');
 disp('hi');
 end
 
-function alignLikeDistractor(decind,
-    
+function outsignal=alignLikeDistractor(signal,scaleThisSignal,decind,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros)
+
+% If like movie, scaleThisSignal=1
+% else scaleThisSignal=0
+
+signal=decimate(signal,decind);
+if scaleThisSignal==1
+    % Like movie
+    signal=[nan(1,frontShift) resample(signal,scaleBy*resampFac,resampFac)];
+    if movieToLength>length(signal)
+        signal=[signal nan(1,movieToLength-length(signal))];
+    end
+else
+    % Like arduino
+    signal=[signal nan(1,shouldBeLength-length(signal))];
+end
+
+% [Xa,Ya] = alignsignals(X,Y)
+% X is movie, Y is arduino
+% If Y is delayed with respect to X, then D is positive and X is delayed by D samples.
+% If Y is advanced with respect to X, then D is negative and Y is delayed by –D samples.
+
+outsignal=[];
+firstInd=segmentInds(1);
+outsignal=[outsignal nan(1,firstInd-1)];
+for i=1:length(segmentInds)
+    currInd=segmentInds(i);
+    currChunk=signal(currInd:currInd+alignSegments-1);
+    if scaleThisSignal==1
+        % Like movie
+        if segmentDelays(i)>0
+            % Delay is positive, so movie was shifted
+            currChunk=[zeros(1,segmentDelays(i)) currChunk];
+        else
+            % Delay is negative, so arduino was shifted
+        end
+    else
+        % Like arduino
+        if segmentDelays(i)>0
+            % Delay is positive, so movie was shifted
+        else
+            % Delay is negative, so arduino was shifted
+            currChunk=[zeros(1,-segmentDelays(i)) currChunk];
+        end
+    end
+    currChunk=[currChunk addZeros(i)];
+    outsignal=[outsignal currChunk];
+end
+
+end
