@@ -118,7 +118,6 @@ for i=1:length(segmentInds)-1
     end
     mov_distractor=[mov_distractor temp1];
     arduino_distractor=[arduino_distractor temp2];
-    disp(length(arduino_distractor));
 end
 figure();
 plot(mov_distractor,'Color','b');
@@ -272,7 +271,6 @@ for i=1:length(segmentInds)-1
     end
     currChunk=[currChunk nan(1,addZeros(i))];
     outsignal=[outsignal currChunk];
-    disp(length(outsignal));
 end
 
 end

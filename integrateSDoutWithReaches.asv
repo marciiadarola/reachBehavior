@@ -1,4 +1,4 @@
-function alignment=integrateSDoutWithReaches(reaches,out,moviefps,alignment,savedir)
+function integrateSDoutWithReaches(reaches,out,moviefps,alignment,savedir)
 
 % Will need to fix some file alignments by lining up cue onsets and offsets
 if isempty(alignment)
@@ -16,21 +16,13 @@ alignment.reachEnds=restructureEvent(reaches.pelletTime, movframes);
 alignment.success_reachStarts=restructureEvent(reaches.reachStarts(reaches.atePellet==1), movframes);
 % Drop (paw touches pellet, but mouse drops pellet before eating it) --
 % initiation of reach
-alignment.drop_reachStarts=restructureEvent(reaches.reachStarts(reaches.pelletTouched==1 & reaches.atePellet==0), movframes);
+alignment.drop_reachStarts=restructureEvent(reaches.reachStarts(reaches.pelletTouched==1 && reaches.atePellet==0), movframes);
 % Miss (paw never touches pellet) -- initiation of reach
 alignment.miss_reachStarts=restructureEvent(reaches.reachStarts(reaches.pelletTouched==0), movframes);
 % Eat time
 alignment.eating=restructureEvent(reaches.eatTime, movframes);
 % Reach ongoing
-alignment.reach_ongoing=zeros(1,length(movframes));
-reachIsStarting=find(alignment.reachStarts>0.5);
-reachIsEnding=find(alignment.reachEnds>0.5);
-for i=1:length(reachIsStarting)
-   alignment.reach_ongoing(reachIsStarting(i):reachIsEnding(i))=1;
-end
-
-% Save data
-save([savedir '\final_aligned_data.mat'],'alignment');
+alignment.reach_ong
 
 end
 
