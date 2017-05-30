@@ -140,6 +140,7 @@ startIndsIntoEventLog=find(eventLog==beginTrialWrite);
 all_distractorEvents=find(eventLog==distractorWriteCode);
 all_cueEvents=find(eventLog==cueWriteCode);
 timeSoFar=0;
+trialStartTimes=[];
 for i=1:length(ITIs)
     currITI=ITIs(i);
     allTrialTimes(i,timesPerTrial<=currITI)=timesPerTrial(timesPerTrial<=currITI);
@@ -156,6 +157,7 @@ for i=1:length(ITIs)
     end
     % Change times to wrt start of this trial
     relevantEventLogTimes=relevantEventLogTimes-eventLogTimes(startIndsIntoEventLog(i));
+    trialStartTimes=[trialStartTimes 
     timeSoFar=timeSoFar+currITI;
     % Find time when pellet loaded
     curr=relevantEventLogTimes(relevantEventLog==loaderWriteCode);
@@ -184,9 +186,6 @@ for i=1:length(ITIs)
     indsIntoLedStarts=find(ismember(all_distractorEvents,curr_distractorEvents));
     curr=relevantEventLogTimes(relevantEventLog==distractorWriteCode);
     startsOn=1;
-    if i==7
-        disp('stop');
-    end
     for j=1:length(curr) % iterate through changes in distractor state
         stateChange=distractorStart(indsIntoLedStarts(j));
         if stateChange==1 % distractor is turning on
@@ -206,7 +205,7 @@ for i=1:length(ITIs)
     end
     % Find time of cue on
     curr_cueEvents=find(isCurrentTrial==1 & eventLog==cueWriteCode);
-    indsIntoLedStarts=find(ismember(all_cueEvents,curr_cueEvents,));
+    indsIntoLedStarts=find(ismember(all_cueEvents,curr_cueEvents));
     curr=relevantEventLogTimes(relevantEventLog==cueWriteCode);
     startsOn=1;
     for j=1:length(curr) % iterate through changes in distractor state
@@ -268,7 +267,7 @@ if showExampleTrial==1
     subplot(4,1,3);
     plot(timesPerTrial,nanmean(cueOn,1));
     subplot(4,1,4);
-    plot(timesPerTrial,distractorOn(6,:));
+    plot(timesPerTrial,distractorOn(9,:));
 end
 
 fclose(fid);

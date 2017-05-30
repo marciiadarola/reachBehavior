@@ -140,6 +140,7 @@ startIndsIntoEventLog=find(eventLog==beginTrialWrite);
 all_distractorEvents=find(eventLog==distractorWriteCode);
 all_cueEvents=find(eventLog==cueWriteCode);
 timeSoFar=0;
+trialStartTimes=[];
 for i=1:length(ITIs)
     currITI=ITIs(i);
     allTrialTimes(i,timesPerTrial<=currITI)=timesPerTrial(timesPerTrial<=currITI);
@@ -156,6 +157,7 @@ for i=1:length(ITIs)
     end
     % Change times to wrt start of this trial
     relevantEventLogTimes=relevantEventLogTimes-eventLogTimes(startIndsIntoEventLog(i));
+    trialStartTimes=[trialStartTimes eventLogTimes(startIndsIntoEventLog(i))];
     timeSoFar=timeSoFar+currITI;
     % Find time when pellet loaded
     curr=relevantEventLogTimes(relevantEventLog==loaderWriteCode);
@@ -255,6 +257,7 @@ out.distractorOn=distractorOn;
 out.nDropsPerTrial=nDropsPerTrial;
 out.nMissesPerTrial=nMissesPerTrial;
 out.allTrialTimes=allTrialTimes;
+out.trialStartTimes=trialStartTimes;
 
 if showExampleTrial==1
     figure();
