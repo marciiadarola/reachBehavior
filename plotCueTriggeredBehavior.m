@@ -65,6 +65,19 @@ end
 % eating_tbt=eating_tbt(:,1:smallestTrial);
 % times_tbt=times_tbt(:,1:smallestTrial);
 
+% Zero out
+cue_tbt(isnan(cue_tbt))=0;
+distractor_tbt(isnan(distractor_tbt))=0;
+pelletLoaded_tbt(isnan(pelletLoaded_tbt))=0;
+pelletPresented_tbt(isnan(pelletPresented_tbt))=0;
+reachStarts_tbt(isnan(reachStarts_tbt))=0;
+reach_ongoing_tbt(isnan(reach_ongoing_tbt))=0;
+success_tbt(isnan(success_tbt))=0;
+drop_tbt(isnan(drop_tbt))=0;
+miss_tbt(isnan(miss_tbt))=0;
+eating_tbt(isnan(eating_tbt))=0;
+times_tbt(isnan(times_tbt))=0;
+
 tbt.cue_tbt=cue_tbt;
 tbt.distractor_tbt=distractor_tbt;
 tbt.pelletLoaded_tbt=pelletLoaded_tbt;
@@ -83,7 +96,7 @@ timespertrial=1:length(timespertrial);
 
 % Plot
 figure();
-ha=tight_subplot(10,1,[0.06 0.03],[0.05 0.05],[0.1 0.01]);
+ha=tight_subplot(10,1,[0.06 0.03],[0.05 0.05],[0.1 0.03]);
 currha=ha(1);
 axes(currha);
 plot(timespertrial,nanmean(cue_tbt,1));
