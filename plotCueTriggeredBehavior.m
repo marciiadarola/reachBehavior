@@ -5,7 +5,9 @@ function tbt=plotCueTriggeredBehavior(data,nameOfCue)
 
 cue=data.(nameOfCue); 
 
-cueInds=find(cue>0.5);
+[pks,locs]=findpeaks(cue);
+% cueInds=find(cue>0.5);
+cueInds=locs(pks>0.5);
 cueIndITIs=diff(cueInds);
 smallestTrial=min(cueIndITIs(cueIndITIs>10));
 
@@ -20,6 +22,7 @@ drop=data.drop_reachStarts;
 miss=data.miss_reachStarts;
 eating=data.eating;
 timesFromArduino=data.timesfromarduino;
+movieframeinds=data.movieframeinds;
 
 % Trial-by-trial, tbt
 cue_tbt=nan(length(cueInds),max(cueIndITIs));
@@ -33,6 +36,7 @@ drop_tbt=nan(length(cueInds),max(cueIndITIs));
 miss_tbt=nan(length(cueInds),max(cueIndITIs));
 eating_tbt=nan(length(cueInds),max(cueIndITIs));
 times_tbt=nan(length(cueInds),max(cueIndITIs));
+movieframeinds_tbt=nan(length(cueInds),max(cueIndITIs));
 
 for i=1:length(cueInds)
     if i==length(cueInds)
@@ -51,6 +55,7 @@ for i=1:length(cueInds)
     miss_tbt(i,1:length(theseInds))=miss(theseInds);
     eating_tbt(i,1:length(theseInds))=eating(theseInds); 
     times_tbt(i,1:length(theseInds))=timesFromArduino(theseInds); 
+    movieframeinds_tbt(i,1:length(theseInds))=movieframeinds(theseInds); 
 end
 
 % cue_tbt=cue_tbt(:,1:smallestTrial);
@@ -64,6 +69,7 @@ end
 % miss_tbt=miss_tbt(:,1:smallestTrial);
 % eating_tbt=eating_tbt(:,1:smallestTrial);
 % times_tbt=times_tbt(:,1:smallestTrial);
+% movieframeinds_tbt=movieframeinds_tbt(:,1:smallestTrial);
 
 % Zero out
 cue_tbt(isnan(cue_tbt))=0;
@@ -78,6 +84,21 @@ miss_tbt(isnan(miss_tbt))=0;
 eating_tbt(isnan(eating_tbt))=0;
 times_tbt(isnan(times_tbt))=0;
 
+% Take only trials where movie video also available
+% isemptytrials=isnan(nanmean(movieframeinds_tbt,2));
+% cue_tbt=cue_tbt(~isemptytrials,:);
+% distractor_tbt=distractor_tbt(~isemptytrials,:);
+% pelletLoaded_tbt=pelletLoaded_tbt(~isemptytrials,:);
+% pelletPresented_tbt=pelletPresented_tbt(~isemptytrials,:);
+% reachStarts_tbt=reachStarts_tbt(~isemptytrials,:);
+% reach_ongoing_tbt=reach_ongoing_tbt(~isemptytrials,:);
+% success_tbt=success_tbt(~isemptytrials,:);
+% drop_tbt=drop_tbt(~isemptytrials,:);
+% miss_tbt=miss_tbt(~isemptytrials,:);
+% eating_tbt=eating_tbt(~isemptytrials,:);
+% times_tbt=times_tbt(~isemptytrials,:);
+% movieframeinds_tbt=movieframeinds_tbt(~isemptytrials,:);
+
 tbt.cue_tbt=cue_tbt;
 tbt.distractor_tbt=distractor_tbt;
 tbt.pelletLoaded_tbt=pelletLoaded_tbt;
@@ -89,6 +110,7 @@ tbt.drop_tbt=drop_tbt;
 tbt.miss_tbt=miss_tbt;
 tbt.eating_tbt=eating_tbt;
 tbt.times_tbt=times_tbt;
+tbt.movieframeinds_tbt=movieframeinds_tbt;
 
 times_tbt=times_tbt-repmat(nanmin(times_tbt,[],2),1,size(times_tbt,2));
 timespertrial=nanmean(times_tbt,1);
