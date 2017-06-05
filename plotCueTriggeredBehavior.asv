@@ -5,7 +5,9 @@ function tbt=plotCueTriggeredBehavior(data,nameOfCue)
 
 cue=data.(nameOfCue); 
 
-cueInds=find(cue>0.5);
+[pks,locs]=findpeaks(cue);
+% cueInds=find(cue>0.5);
+cueInds=locs(pks>0.5);
 cueIndITIs=diff(cueInds);
 smallestTrial=min(cueIndITIs(cueIndITIs>10));
 
@@ -83,12 +85,19 @@ eating_tbt(isnan(eating_tbt))=0;
 times_tbt(isnan(times_tbt))=0;
 
 % Take only trials where movie video also available
-isemptytrials=isnan(nanmean(movieframeinds_tbt,2));
-cue_tbt=cue_tbt(~isemptytrials,:);
-cue_tbt=cue_tbt(~isemptytrials,:);
-cue_tbt=cue_tbt(~isemptytrials,:);
-cue_tbt=cue_tbt(~isemptytrials,:);
-cue_tbt=cue_tbt(~isemptytrials,:);
+% isemptytrials=isnan(nanmean(movieframeinds_tbt,2));
+% cue_tbt=cue_tbt(~isemptytrials,:);
+% distractor_tbt=distractor_tbt(~isemptytrials,:);
+% pelletLoaded_tbt=pelletLoaded_tbt(~isemptytrials,:);
+% pelletPresented_tbt=pelletPresented_tbt(~isemptytrials,:);
+% reachStarts_tbt=reachStarts_tbt(~isemptytrials,:);
+% reach_ongoing_tbt=reach_ongoing_tbt(~isemptytrials,:);
+% success_tbt=success_tbt(~isemptytrials,:);
+% drop_tbt=drop_tbt(~isemptytrials,:);
+% miss_tbt=miss_tbt(~isemptytrials,:);
+% eating_tbt=eating_tbt(~isemptytrials,:);
+% times_tbt=times_tbt(~isemptytrials,:);
+% movieframeinds_tbt=movieframeinds_tbt(~isemptytrials,:);
 
 tbt.cue_tbt=cue_tbt;
 tbt.distractor_tbt=distractor_tbt;
@@ -160,5 +169,47 @@ axes(currha);
 plot(timespertrial,nanmean(pelletLoaded_tbt,1));
 title('pelletLoaded');
 
+
+% Also plot experiment as events in a scatter plot
+cue_color='b';
+reach_color='k';
+success_color='g';
+drop_color='r';
+drop_outline='k';
+miss_color='r';
+miss_outline='c';
+
+event_thresh=0.5;
+
+figure();
+for i=1:size(cue_tbt,1)
+    % Plot cue events
+    event_ind=find(cue_tbt(i,:)>event_thresh,1,'first');
+    scatter([timespertrial(event_ind) timespertrial(event_ind)],[i i],[],cue_color,'filled');
+    hold on;
+    % Plot reach start events
+    event_ind=find(reachStarts_tbt(i,:)>event_thresh);
+    for j=1:length(event_ind)
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],reach_color,'filled');
+    end
+    % Plot reach start events
+    event_ind=find(reachStarts_tbt(i,:)>event_thresh);
+    for j=1:length(event_ind)
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],reach_color,'filled');
+    end
+    % Plot drop events
+    event_ind=find(drop_tbt(i,:)>event_thresh);
+    for j=1:length(event_ind)
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],'MarkerEdgeColor',drop_outline,...
+              'MarkerFaceColor',drop_color,...
+              'LineWidth',1.5);
+    end
+    % Plot miss events
+    event_ind=find(miss_tbt(i,:)>event_thresh);
+    for j=1:length(event_ind)
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],'MarkerEdgeColor',miss_outline,...
+              'MarkerFaceColor',miss_color,...
+              'LineWidth',1.5);
+    end
 
 end

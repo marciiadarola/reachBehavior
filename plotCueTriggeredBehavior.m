@@ -21,7 +21,8 @@ success=data.success_reachStarts;
 drop=data.drop_reachStarts;
 miss=data.miss_reachStarts;
 eating=data.eating;
-timesFromArduino=data.timesfromarduino;
+timesFromArduino=data.timesfromarduino; % in ms
+timesFromArduino=timesFromArduino./1000; % in seconds
 movieframeinds=data.movieframeinds;
 
 % Trial-by-trial, tbt
@@ -82,7 +83,6 @@ success_tbt(isnan(success_tbt))=0;
 drop_tbt(isnan(drop_tbt))=0;
 miss_tbt(isnan(miss_tbt))=0;
 eating_tbt(isnan(eating_tbt))=0;
-times_tbt(isnan(times_tbt))=0;
 
 % Take only trials where movie video also available
 % isemptytrials=isnan(nanmean(movieframeinds_tbt,2));
@@ -114,7 +114,7 @@ tbt.movieframeinds_tbt=movieframeinds_tbt;
 
 times_tbt=times_tbt-repmat(nanmin(times_tbt,[],2),1,size(times_tbt,2));
 timespertrial=nanmean(times_tbt,1);
-timespertrial=1:length(timespertrial);
+% timespertrial=1:length(timespertrial);
 
 % Plot
 figure();
@@ -170,4 +170,45 @@ plot(timespertrial,nanmean(pelletLoaded_tbt,1));
 title('pelletLoaded');
 
 
+% Also plot experiment as events in a scatter plot
+cue_color='b';
+reach_color='k';
+success_color='g';
+drop_color='r';
+drop_outline='k';
+miss_color='r';
+miss_outline='c';
+
+event_thresh=0.5;
+
+figure();
+for i=1:size(cue_tbt,1)
+    % Plot cue events
+    event_ind=find(cue_tbt(i,:)>event_thresh,1,'first');
+    scatter([timespertrial(event_ind) timespertrial(event_ind)],[i i],[],cue_color,'filled');
+    hold on;
+    % Plot reach start events
+    event_ind=find(reachStarts_tbt(i,:)>event_thresh);
+    for j=1:length(event_ind)
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],reach_color,'filled');
+    end
+    % Plot success events
+    event_ind=find(success_tbt(i,:)>event_thresh);
+    for j=1:length(event_ind)
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],success_color,'filled');
+    end
+    % Plot drop events
+    event_ind=find(drop_tbt(i,:)>event_thresh);
+    for j=1:length(event_ind)
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],'MarkerEdgeColor',drop_outline,...
+              'MarkerFaceColor',drop_color,...
+              'LineWidth',1.5);
+    end
+    % Plot miss events
+    event_ind=find(miss_tbt(i,:)>event_thresh);
+    for j=1:length(event_ind)
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],'MarkerEdgeColor',miss_outline,...
+              'MarkerFaceColor',miss_color,...
+              'LineWidth',1.5);
+    end
 end

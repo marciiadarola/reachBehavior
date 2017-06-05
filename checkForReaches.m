@@ -53,6 +53,7 @@ function checkForReaches_OpeningFcn(hObject, eventdata, handles, varargin)
 % varargin   command line arguments to checkForReaches (see VARARGIN)
 
 % Settings
+timeToCheckAfterReach=5; % in seconds -- time after cue to check for reach, per cue
 framesPerChunk=500;
 frames_before_firstReachFrame=2;
 frames_after_firstReachFrame=50;
