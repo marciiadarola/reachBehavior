@@ -166,7 +166,7 @@ if discardFirstNFrames>0
     startsAtFrame=[startsAtFrame n+1];
     movieChunk=[movieChunk 1];
 %     save([outdir 'movie_' filename(parsedFilenameStart(end)+1:parsedFilenameEnd(1)) '_frame' num2str(startsAtFrame(end-1)) '.mat'],'allframes');
-%     handles.oneback=allframes(:,:,end-sizeoneback+1:end);
+%     handles.oneback=allframes(:,:,end-sizeoneback:end);
 end
 
 n=framesPerChunk; % How many frames to read initially
@@ -185,7 +185,7 @@ end
 startsAtFrame=[startsAtFrame n+1];
 movieChunk=[movieChunk movieChunk(end)+1];
 % save([outdir 'movie_' filename(parsedFilenameStart(end)+1:parsedFilenameEnd(1)) '_frame' num2str(startsAtFrame(end-1)) '.mat'],'allframes');
-handles.oneback=allframes(:,:,end-sizeoneback+1:end);
+handles.oneback=allframes(:,:,end-sizeoneback:end);
 
 handles.LEDvals=[];
 if isempty(perchdata)
@@ -287,7 +287,7 @@ if isempty(perchdata)
                 startsAtFrame=[startsAtFrame startsAtFrame(end)+n];
                 movieChunk=[movieChunk movieChunk(end)+1];
 %                 save([handles.filename_foroutput num2str(startsAtFrame(end-1)) '.mat'],'allframes');
-                handles.oneback=allframes(:,:,end-sizeoneback+1:end);
+                handles.oneback=allframes(:,:,end-sizeoneback:end);
                 
                 % Get LED zone intensity over all frames
                 temp=reshape(allframes,size(allframes,1)*size(allframes,2),size(allframes,3));
@@ -525,7 +525,7 @@ end
 if EOF==true
     finishFunction(handles);
 end
-handles.oneback=allframes(:,:,end-sizeoneback+1:end);
+handles.oneback=allframes(:,:,end-sizeoneback:end);
 % Get LED zone intensity over all frames
 temp=reshape(allframes,size(allframes,1)*size(allframes,2),size(allframes,3));
 summedIntensityLED=sum(temp(isin2,:),1);
@@ -545,7 +545,7 @@ else
     movieChunk=[movieChunk movieChunk(end)+1]; 
 end
 % save([handles.filename_foroutput num2str(startsAtFrame(end-1)) '.mat'],'allframes');
-handles.oneback=allframes(:,:,end-sizeoneback+1:end);
+handles.oneback=allframes(:,:,end-sizeoneback:end);
 
 % Update handles
 handles.videoFReader=videoFReader;
