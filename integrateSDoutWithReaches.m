@@ -6,6 +6,14 @@ if isempty(alignment)
     save([savedir '\alignment.mat'], 'alignment');
 end
 
+% Fix lengths
+minlength=min([length(reaches.reachStarts) length(reaches.pelletTouched) length(reaches.pelletTime) length(reaches.atePellet) length(reaches.eatTime)]);
+reaches.reachStarts=reaches.reachStarts(1:minlength);
+reaches.pelletTouched=reaches.pelletTouched(1:minlength);
+reaches.pelletTime=reaches.pelletTime(1:minlength);
+reaches.atePellet=reaches.atePellet(1:minlength);
+reaches.eatTime=reaches.eatTime(1:minlength);
+
 % Add other events 
 movframes=alignment.movieframeinds;
 % Initiation of reach

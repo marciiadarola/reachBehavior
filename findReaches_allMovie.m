@@ -1,35 +1,35 @@
-function varargout = findReaches(varargin)
-% FINDREACHES MATLAB code for findReaches.fig
-%      FINDREACHES, by itself, creates a new FINDREACHES or raises the existing
+function varargout = findReaches_allMovie(varargin)
+% FINDREACHES_ALLMOVIE MATLAB code for findReaches_allMovie.fig
+%      FINDREACHES_ALLMOVIE, by itself, creates a new FINDREACHES_ALLMOVIE or raises the existing
 %      singleton*.
 %
-%      H = FINDREACHES returns the handle to a new FINDREACHES or the handle to
+%      H = FINDREACHES_ALLMOVIE returns the handle to a new FINDREACHES_ALLMOVIE or the handle to
 %      the existing singleton*.
 %
-%      FINDREACHES('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in FINDREACHES.M with the given input arguments.
+%      FINDREACHES_ALLMOVIE('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in FINDREACHES_ALLMOVIE.M with the given input arguments.
 %
-%      FINDREACHES('Property','Value',...) creates a new FINDREACHES or raises the
+%      FINDREACHES_ALLMOVIE('Property','Value',...) creates a new FINDREACHES_ALLMOVIE or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before findReaches_OpeningFcn gets called.  An
+%      applied to the GUI before findReaches_allMovie_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to findReaches_OpeningFcn via varargin.
+%      stop.  All inputs are passed to findReaches_allMovie_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help findReaches
+% Edit the above text to modify the response to help findReaches_allMovie
 
-% Last Modified by GUIDE v2.5 22-May-2017 18:05:16
+% Last Modified by GUIDE v2.5 13-Jun-2017 16:04:03
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @findReaches_OpeningFcn, ...
-                   'gui_OutputFcn',  @findReaches_OutputFcn, ...
+                   'gui_OpeningFcn', @findReaches_allMovie_OpeningFcn, ...
+                   'gui_OutputFcn',  @findReaches_allMovie_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -44,13 +44,13 @@ end
 % End initialization code - DO NOT EDIT
 
 
-% --- Executes just before findReaches is made visible.
-function findReaches_OpeningFcn(hObject, eventdata, handles, varargin)
+% --- Executes just before findReaches_allMovie is made visible.
+function findReaches_allMovie_OpeningFcn(hObject, eventdata, handles, varargin)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to findReaches (see VARARGIN)
+% varargin   command line arguments to findReaches_allMovie (see VARARGIN)
 
 % Define some global variables for communication with perchZoneGUI
 global zoneVertices
@@ -68,8 +68,10 @@ nFramesBetweenReaches=10;
 % sizeoneback=100;
 sizeoneback=300;
 discardFirstNFrames=554;
+fps_noreach=60;
+fps_reach=30;
 
-% Choose default command line output for findReaches
+% Choose default command line output for findReaches_allMovie
 handles.output = hObject;
 
 % Set up handles
@@ -108,8 +110,10 @@ handles.eatTime_belongToReach=[];
 handles.showedMoreVideo=0;
 handles.pelletIsMissing=0;
 handles.pelletPresent=[];
+handles.fps_reach=fps_reach;
+handles.fps_noreach=fps_noreach;
 
-% Close all open figures except findReaches GUI
+% Close all open figures except findReaches_allMovie GUI
 set(hObject, 'HandleVisibility', 'off');
 close all;
 set(hObject, 'HandleVisibility', 'on');
@@ -117,6 +121,10 @@ set(hObject, 'HandleVisibility', 'on');
 % Get file name of video with reaches
 filename=varargin{1};
 perchdata=varargin{2}; % filename of .mat file containing information about perch zone and reach threshold
+discardFirstNFrames=varargin{3};
+if isempty(discardFirstNFrames)
+    discardFirstNFrames=0;
+end
 
 % Check whether user has already defined perch zone for this movie
 if ~isempty(perchdata)
@@ -190,7 +198,7 @@ handles.oneback=allframes(:,:,end-sizeoneback+1:end);
 handles.LEDvals=[];
 if isempty(perchdata)
     % Play movie until both hands are on perch
-    fig=implay(allframes);
+    fig=implay(allframes,30);
     fig.Parent.Position=[100 100 800 800];
     pause;
     currentFrameNumber=fig.data.Controls.CurrentFrame;
@@ -252,7 +260,7 @@ if isempty(perchdata)
     currentSegment=[1 size(allframes,3)];
     gotReach=0;
     for i=1:6
-        fig=implay(allframes(:,:,currentSegment(1):currentSegment(2)));
+        fig=implay(allframes(:,:,currentSegment(1):currentSegment(2)),50);
         fig.Parent.Position=[100 100 800 800];
         fig.Parent.Name='Check whether video segment contains a reach.';
         disp('Check whether video segment contains a reach.');
@@ -385,32 +393,41 @@ handles.isin2=isin2;
 % Find reaches in current movie chunk, then move to next movie chunk, etc.
 disp('Find the frame associated with each of the following events for this reach and press matching button while movie is stopped at that frame.'); 
 reachingStretch=findCurrentReaches(n,allframes,useAsThresh,n_consec,isin);
-if isempty(reachingStretch)
-    % No reaches found for this movie chunk, get next movie chunk
-    containsReach=0;
-    while containsReach==0
-        [handles,containsReach]=findMovieChunkWithReach(handles);
-    end
-    allframes=handles.allframes;
-    reachingStretch=handles.reachingStretch;
-end
+% if isempty(reachingStretch)
+%     % No reaches found for this movie chunk, get next movie chunk
+%     containsReach=0;
+%     while containsReach==0
+%         [handles,containsReach]=findMovieChunkWithReach(handles);
+%     end
+%     allframes=handles.allframes;
+%     reachingStretch=handles.reachingStretch;
+% end
 
 % Display current reach
-reachN=1;
-if reachingStretch(reachN)-frames_before_firstReachFrame<1
+if isempty(reachingStretch)
     startInd=1;
-else
-    startInd=reachingStretch(reachN)-frames_before_firstReachFrame;
-end
-if reachingStretch(reachN)+frames_after_firstReachFrame>size(allframes,3)
     endInd=size(allframes,3);
+    fig=implay(allframes(:,:,startInd:endInd),fps_noreach); % Play movie more quickly if reach is probably not present
+    fig.Parent.Position=[100 100 800 800];
+    lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
+    firstFrameDisplayed=startsAtFrame(end-1)+startInd-1;
 else
-    endInd=reachingStretch(reachN)+frames_after_firstReachFrame;
+    reachN=1;
+    if reachingStretch(reachN)-frames_before_firstReachFrame<1
+        startInd=1;
+    else
+        startInd=reachingStretch(reachN)-frames_before_firstReachFrame;
+    end
+    if reachingStretch(reachN)+frames_after_firstReachFrame>size(allframes,3)
+        endInd=size(allframes,3);
+    else
+        endInd=reachingStretch(reachN)+frames_after_firstReachFrame;
+    end
+    fig=implay(allframes(:,:,startInd:endInd),fps_reach); % Play movie slowly if reach may be present
+    fig.Parent.Position=[100 100 800 800];
+    lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
+    firstFrameDisplayed=startsAtFrame(end-1)+startInd-1;
 end
-fig=implay(allframes(:,:,startInd:endInd));
-fig.Parent.Position=[100 100 800 800];
-lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
-firstFrameDisplayed=startsAtFrame(end-1)+startInd-1;
 
 handles.fig=fig;
 handles.reachingStretch=reachingStretch;
@@ -420,7 +437,7 @@ handles.firstFrameDisplayed=firstFrameDisplayed;
 % Update handles structure
 guidata(hObject, handles);
 
-% UIWAIT makes findReaches wait for user response (see UIRESUME)
+% UIWAIT makes findReaches_allMovie wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
 function finishFunction(handles)
@@ -481,7 +498,7 @@ isin2=handles.isin2;
 LEDvals=handles.LEDvals;
 
 % If reached end of file, check whether have gotten reaches in all movie
-% chunks, if so, end, otherwise, start over
+% chunks, if so, end
 if ~isempty(EOF)
     if EOF==true
 %         finishFunction(handles);
@@ -581,7 +598,7 @@ reachN=1;
 % Check if there is any candidate reach in this movie chunk
 if isempty(reachingStretch)
     containsReach=false;
-    disp('Movie chunk lacked reach');
+    disp('Movie chunk may lack reach');
 else
     containsReach=true;
 end
@@ -627,8 +644,8 @@ firstFrameDisplayed=handles.firstFrameDisplayed;
 nFramesBetweenReaches=handles.nFramesBetweenReaches;
 timeOfLastEat=handles.eatTime(end);
 timeOfLastPellet=handles.pelletTime(end);
-if isempty(reachingStretch)
-elseif handles.addIn==0
+% if isempty(reachingStretch)
+if handles.addIn==0
     % Note that reachingStretch is an index into allframes
     % first index of allframes is startsAtFrame(end-1) wrt whole movie
     % and firstFrameDisplayed=startsAtFrame(end-1)+startInd-1
@@ -646,14 +663,18 @@ elseif handles.addIn==0
     handles.reachN=reachN;
 end
 
-% If reachingStretch is now empty, read next movie segment
-if isempty(reachingStretch) || handles.addIn==1
+% If have reached end of this movie chunk, read next movie segment
+if loseAllReachesBefore>size(allframes,3)-5 || handles.addIn==1
     containsReach=0;
-    while containsReach==0
+%     while containsReach==0
         [handles,containsReach]=findMovieChunkWithReach(handles);
         if handles.addIn==1
             containsReach=1; % this chunk contains end of reach from previous movie chunk
         end
+%     end
+    loseAllReachesBefore=0;
+    if containsReach==0
+        reachingStretch=[];
     end
 end
 
@@ -666,24 +687,33 @@ close(handles.fig);
 
 % Update implay
 if handles.addIn==0
-    if reachingStretch(reachN)-frames_before_firstReachFrame<1
+    if isempty(reachingStretch)
+        startInd=loseAllReachesBefore+1;
+    elseif reachingStretch(reachN)-frames_before_firstReachFrame<1
         startInd=1;
     else
         startInd=reachingStretch(reachN)-frames_before_firstReachFrame;
     end
-    if reachingStretch(reachN)+frames_after_firstReachFrame>size(allframes,3)
+    if isempty(reachingStretch)
+        endInd=size(allframes,3);
+    elseif reachingStretch(reachN)+frames_after_firstReachFrame>size(allframes,3)
         endInd=size(allframes,3);
     else
         endInd=reachingStretch(reachN)+frames_after_firstReachFrame;
     end
-    disp(reachingStretch(reachN));
-    fig=implay(allframes(:,:,startInd:endInd));
+    if isempty(reachingStretch)
+        disp('Computer sees no reach');
+        fig=implay(allframes(:,:,startInd:endInd),handles.fps_noreach);
+    else
+        disp(reachingStretch(reachN));
+        fig=implay(allframes(:,:,startInd:endInd),handles.fps_reach);
+    end
     lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
     firstFrameDisplayed=startsAtFrame(end-1)+startInd-1;
 else
     % add in reach from former movie chunk
     more_framesAfterReach=100;
-    fig=implay(cat(3,handles.whatToAddIn,allframes(:,:,1:more_framesAfterReach)));
+    fig=implay(cat(3,handles.whatToAddIn,allframes(:,:,1:more_framesAfterReach)),50);
     firstFrameDisplayed=(startsAtFrame(end-1)+1-1)-size(handles.whatToAddIn,3)+1;
     lastFrameDisplayed=(startsAtFrame(end-1)+more_framesAfterReach-1)+1+more_framesAfterReach-1;
     handles.addIn=0;
@@ -809,7 +839,7 @@ function intensity=intensityFromRGB(frame)
 intensity=0.299*frame(:,:,1)+0.587*frame(:,:,2)+0.114*frame(:,:,3);
 
 % --- Outputs from this function are returned to the command line.
-function varargout = findReaches_OutputFcn(hObject, eventdata, handles) 
+function varargout = findReaches_allMovie_OutputFcn(hObject, eventdata, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -1096,7 +1126,7 @@ if handles.addIn==0
     close(handles.fig);
     
     disp(reachingStretch(reachN));
-    fig=implay(allframes(:,:,startInd:endInd));
+    fig=implay(allframes(:,:,startInd:endInd),50);
     fig.Parent.Position=[100 100 800 800];
     handles.fig=fig;
     lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
