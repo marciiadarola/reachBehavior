@@ -1245,6 +1245,9 @@ if startInd-more_framesBeforeReach<1
             end
         end
     end
+else
+    startInd_forMovie=startInd_forMovie-more_framesBeforeReach;
+    startInd=startInd-more_framesBeforeReach;
 end
 % startInd=reachingStretch(reachN)-more_framesBeforeReach;
 
