@@ -70,7 +70,7 @@ nFramesBetweenReaches=10;
 sizeoneback=300;
 discardFirstNFrames=554;
 fps_noreach=60;
-fps_reach=10;
+fps_reach=17;
 perch_pellet_delay=0.133; % in seconds
 perch_pellet_delay_ind=floor(perch_pellet_delay/(1/movie_fps)); % in indices wrt fps
 perch_pellet_delay_ind=[perch_pellet_delay_ind-3 perch_pellet_delay_ind-2 perch_pellet_delay_ind-1 perch_pellet_delay_ind perch_pellet_delay_ind+1 perch_pellet_delay_ind+2 perch_pellet_delay_ind+3];
@@ -199,12 +199,13 @@ end
 startsAtFrame=[startsAtFrame n+1];
 movieChunk=[movieChunk movieChunk(end)+1];
 % save([outdir 'movie_' filename(parsedFilenameStart(end)+1:parsedFilenameEnd(1)) '_frame' num2str(startsAtFrame(end-1)) '.mat'],'allframes');
-handles.oneback=allframes(:,:,end-sizeoneback+1:end);
+% handles.oneback=allframes(:,:,end-sizeoneback+1:end);
 
 handles.LEDvals=[];
 if isempty(perchdata)
     % Play movie until both hands are on perch
     fig=implay(allframes,30);
+    handles.addIn=0;
     fig.Parent.Position=[100 100 800 800];
     pause;
     currentFrameNumber=fig.data.Controls.CurrentFrame;
@@ -281,6 +282,7 @@ if isempty(perchdata)
     gotReach=0;
     for i=1:6
         fig=implay(allframes(:,:,currentSegment(1):currentSegment(2)),50);
+        handles.addIn=0;
         fig.Parent.Position=[100 100 800 800];
         fig.Parent.Name='Check whether video segment contains a reach.';
         disp('Check whether video segment contains a reach.');
@@ -315,7 +317,7 @@ if isempty(perchdata)
                 startsAtFrame=[startsAtFrame startsAtFrame(end)+n];
                 movieChunk=[movieChunk movieChunk(end)+1];
 %                 save([handles.filename_foroutput num2str(startsAtFrame(end-1)) '.mat'],'allframes');
-                handles.oneback=allframes(:,:,end-sizeoneback+1:end);
+%                 handles.oneback=allframes(:,:,end-sizeoneback+1:end);
                 
                 % Get LED zone intensity over all frames
                 temp=reshape(allframes,size(allframes,1)*size(allframes,2),size(allframes,3));
@@ -460,6 +462,7 @@ if isempty(reachingStretch)
     startInd=1;
     endInd=size(allframes,3);
     fig=implay(allframes(:,:,startInd:endInd),fps_noreach); % Play movie more quickly if reach is probably not present
+    handles.addIn=0;
     handles.computerThinksNoReach=1;
     fig.Parent.Position=[100 100 800 800];
     lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
@@ -480,6 +483,7 @@ else
     % Play from beginning so user sees all frames
     startInd=1;
     fig=implay(allframes(:,:,startInd:endInd),fps_reach); % Play movie slowly if reach may be present
+    handles.addIn=0;
     handles.computerThinksNoReach=0;
     fig.Parent.Position=[100 100 800 800];
     lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
@@ -806,6 +810,7 @@ if handles.addIn==0
     if isempty(reachingStretch)
         disp('Computer sees no reach');
         fig=implay(allframes(:,:,startInd:endInd),handles.fps_noreach);
+        handles.addIn=0;
     else
         disp('reachingStretch');
         disp(reachingStretch);
@@ -814,8 +819,10 @@ if handles.addIn==0
         disp(endInd);
         if playAtFastSpeed==1
             fig=implay(allframes(:,:,startInd:endInd),handles.fps_noreach);
+            handles.addIn=0;
         else
             fig=implay(allframes(:,:,startInd:endInd),handles.fps_reach);
+            handles.addIn=0;
         end
     end
     lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
@@ -823,15 +830,18 @@ if handles.addIn==0
 else
     % add in reach from former movie chunk
     more_framesAfterReach=100;
-    fig=implay(cat(3,handles.whatToAddIn,allframes(:,:,1:more_framesAfterReach)),50);
+    fig=implay(cat(3,handles.whatToAddIn,allframes(:,:,1:more_framesAfterReach)),handles.fps_reach);
     firstFrameDisplayed=(startsAtFrame(end-1)+1-1)-size(handles.whatToAddIn,3)+1;
-    lastFrameDisplayed=(startsAtFrame(end-1)+more_framesAfterReach-1)+1+more_framesAfterReach-1;
+    lastFrameDisplayed=startsAtFrame(end-1)+more_framesAfterReach;
     handles.addIn=0;
 end
 fig.Parent.Position=[100 100 800 800];
 handles.fig=fig;
 handles.lastFrameDisplayed=lastFrameDisplayed;
 handles.firstFrameDisplayed=firstFrameDisplayed;
+if firstFrameDisplayed<1
+    firstFrameDisplayed=1;
+end
 handles.lookedAtFrame(firstFrameDisplayed:lastFrameDisplayed)=1;
     
 % Reset GUI for next reach
@@ -1204,6 +1214,8 @@ sizeoneback=handles.sizeoneback;
 oneback=handles.oneback;
 startsAtFrame=handles.startsAtFrame;
 
+handles.addIn=0;
+
 % Update implay
 startInd=handles.firstFrameDisplayed+1-startsAtFrame(end-1);
 endInd=handles.lastFrameDisplayed+1-startsAtFrame(end-1);
@@ -1221,9 +1233,9 @@ if startInd-more_framesBeforeReach<1
             temp(:,:,end-size(allframes,3)+1:end)=allframes;
             temp(:,:,1:end-size(allframes,3))=oneback(:,:,end-sizeoneback+1:end);
             allframes=temp;
+            startInd=startInd-sizeoneback;
             startInd_forMovie=startInd+sizeoneback;
             endInd_forMovie=endInd+sizeoneback;
-            startInd=startInd-sizeoneback;
             if ~isempty(reachingStretch)
                 reachingStretch=reachingStretch+sizeoneback;
             end
@@ -1264,6 +1276,7 @@ if handles.addIn==0
         disp(reachingStretch(reachN));
     end
     fig=implay(allframes(:,:,startInd_forMovie:endInd_forMovie),50);
+    handles.addIn=0;
     fig.Parent.Position=[100 100 800 800];
     handles.fig=fig;
     firstFrameDisplayed=startsAtFrame(end-1)+startInd-1;
