@@ -60,16 +60,19 @@ continueAnalysis=0;
 
 % Settings
 framesPerChunk=500;
-n_consec=3;
+n_consec=1;
 % frames_before_firstReachFrame=2;
-frames_before_firstReachFrame=10;
+frames_before_firstReachFrame=15;
 frames_after_firstReachFrame=50;
+movie_fps=30;
 nFramesBetweenReaches=10;
 % sizeoneback=100;
 sizeoneback=300;
 discardFirstNFrames=554;
 fps_noreach=60;
 fps_reach=30;
+perch_pellet_delay=0.133; % in seconds
+perch_pellet_delay_ind=floor(perch_pellet_delay/(1/movie_fps)); % in indices wrt fps
 
 % Choose default command line output for findReaches_allMovie
 handles.output = hObject;
@@ -133,6 +136,8 @@ if ~isempty(perchdata)
     useAsThresh=perch.useAsThresh;
     n_consec=perch.n_consec;
     isin=perch.isin;
+    stepByAmount=perch.stepByAmount;
+    isin3=perch.pelletIsIn;
 end
 
 if isempty(perchdata)
@@ -236,6 +241,20 @@ if isempty(perchdata)
     
     close(LEDFig);
     
+    % Get pellet zone
+    pelletFig=perchZoneGUI(allframes(:,:,currentFrameNumber));
+    disp('Press "enter" once have defined pellet zone.');
+    pause;
+    pelletVertices=zoneVertices;
+    
+    if continueAnalysis==1
+        disp('Pellet zone succesfully defined.');
+    else
+        disp('Failed to define pellet zone.');
+    end
+    
+    close(pelletFig);
+    
     % Clean up global variables
     clear continueAnalysis
     clear zoneVertices
@@ -308,11 +327,19 @@ if isempty(perchdata)
     end
     
     % Get distribution of intensity in perch zone over beginning of movie
+    [k,v]=convhull(pelletVertices(:,1),pelletVertices(:,2));
+    [cols,rows]=find(ones(size(allframes,1),size(allframes,2))>0);
+    isin3=inpolygon(rows,cols,pelletVertices(:,1),pelletVertices(:,2));
+    temp=reshape(allframes,size(allframes,1)*size(allframes,2),size(allframes,3));
+    pelletIntensity=sum(temp(isin3,:),1);
+    
     [k,v]=convhull(perchVertices(:,1),perchVertices(:,2));
     [cols,rows]=find(ones(size(allframes,1),size(allframes,2))>0);
     isin=inpolygon(rows,cols,perchVertices(:,1),perchVertices(:,2));
-    temp=reshape(allframes,size(allframes,1)*size(allframes,2),size(allframes,3));
-    summedIntensity=sum(temp(isin,:),1);
+    summedIntensity_perch=sum(temp(isin,:),1);
+    tempie=[nanmean(summedIntensity_perch)*ones(1,perch_pellet_delay_ind) summedIntensity_perch(1:end-perch_pellet_delay_ind)];
+    summedIntensity=pelletIntensity./tempie;
+    summedIntensity=-summedIntensity;
     % Calibrate reach detection
     % Start by using threshold 1 standard deviation below the mean
     % If frame defined as containing paws on perch is within 1 std of the mean
@@ -329,7 +356,7 @@ if isempty(perchdata)
         if counter>10
             break
         end
-        [useAsThresh,works,isUserApprovedReach]=calibrateReachDetection(summedIntensity,allframes,useAsThresh,counter);
+        [useAsThresh,works,isUserApprovedReach,stepByAmount]=calibrateReachDetection(summedIntensity,allframes,useAsThresh,counter);
         counter=counter+1;
     end
     
@@ -338,6 +365,12 @@ if isempty(perchdata)
     elseif works==1
         % Continue
     end
+    
+    % Display results of threshold setting
+    figure();
+    plot(-summedIntensity);
+    hold on;
+    line([1 length(summedIntensity)],[-useAsThresh -useAsThresh],'Color','r');
 else
     isin2=perch.LEDisin;
     handles.LEDvals=perch.LEDvals;
@@ -346,13 +379,17 @@ end
 % Save perch data
 if isempty(perchdata)
     perch.useAsThresh=useAsThresh;
+    perch.stepByAmount=stepByAmount;
     perch.n_consec=n_consec;
     perch.isin=isin;
     perch.LEDisin=isin2;
     perch.LEDvals=handles.LEDvals;
+    perch.pelletIsIn=isin3;
     endoffname=regexp(filename,'\.');
     save([filename(1:endoffname(end)-1) '_perch.mat'],'perch');
 end
+
+
 
 % Then look for changes in paw zone to identify potential reach
 % Have user indicate start of reach, time when paw contacts pellet, and
@@ -360,9 +397,12 @@ end
 
 % Set up handles
 handles.useAsThresh=useAsThresh;
+handles.stepByAmount=stepByAmount;
 handles.filename=filename;
 handles.n_consec=n_consec;
 handles.isin=isin;
+handles.isin3=isin3;
+handles.perch_pellet_delay_ind=perch_pellet_delay_ind;
 handles.reachStarts=[];
 handles.pelletTouched=[];
 handles.pelletTime=[];
@@ -389,10 +429,11 @@ handles.sizeOfLastChunk=[];
 handles.endoffname=regexp(filename,'\.');
 handles.sizeoneback=sizeoneback;
 handles.isin2=isin2;
+handles.lookedAtFrame=[];
 
 % Find reaches in current movie chunk, then move to next movie chunk, etc.
 disp('Find the frame associated with each of the following events for this reach and press matching button while movie is stopped at that frame.'); 
-reachingStretch=findCurrentReaches(n,allframes,useAsThresh,n_consec,isin);
+reachingStretch=findCurrentReaches(allframes,useAsThresh,n_consec,isin,isin3,perch_pellet_delay_ind);
 % if isempty(reachingStretch)
 %     % No reaches found for this movie chunk, get next movie chunk
 %     containsReach=0;
@@ -423,11 +464,16 @@ else
     else
         endInd=reachingStretch(reachN)+frames_after_firstReachFrame;
     end
+%     fig=implay(allframes(:,:,startInd:endInd),fps_reach); % Play movie slowly if reach may be present
+    % Play from beginning so user sees all frames
+    startInd=1;
     fig=implay(allframes(:,:,startInd:endInd),fps_reach); % Play movie slowly if reach may be present
     fig.Parent.Position=[100 100 800 800];
     lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
     firstFrameDisplayed=startsAtFrame(end-1)+startInd-1;
 end
+handles.lookedAtFrame=[handles.lookedAtFrame zeros(1,size(allframes,3))];
+handles.lookedAtFrame(firstFrameDisplayed:lastFrameDisplayed)=1;
 
 handles.fig=fig;
 handles.reachingStretch=reachingStretch;
@@ -442,13 +488,16 @@ guidata(hObject, handles);
 
 function finishFunction(handles)
 
-if ~isfield(handles,'useAsThresh')
+if exist('hObject','var')==0
+    return
+elseif ~isfield(handles,'useAsThresh')
     delete(hObject);
     return
 end
-    
+ 
 % Choose what to save 
 savehandles.useAsThresh=handles.useAsThresh;
+savehandles.stepByAmount=handles.stepByAmount;
 savehandles.filename=handles.filename;
 savehandles.n_consec=handles.n_consec;
 savehandles.isin=handles.isin;
@@ -475,6 +524,7 @@ savehandles.sizeoneback=handles.sizeoneback;
 savehandles.isin2=handles.isin2;
 savehandles.LEDvals=handles.LEDvals;
 savehandles.pelletPresent=handles.pelletPresent;
+savehandles.lookedAtFrame=handles.lookedAtFrame;
 
 endoffname=handles.endoffname;
 filename=handles.filename;
@@ -592,7 +642,7 @@ startsAtFrame=handles.startsAtFrame;
 movieChunk=handles.movieChunk;
 
 % Find new candidate reach frames
-reachingStretch=findCurrentReaches(handles.framesPerChunk,allframes,handles.useAsThresh,handles.n_consec,handles.isin);
+reachingStretch=findCurrentReaches(allframes,handles.useAsThresh,handles.n_consec,handles.isin,handles.isin3,handles.perch_pellet_delay_ind);
 reachN=1;
 
 % Check if there is any candidate reach in this movie chunk
@@ -639,13 +689,22 @@ startsAtFrame=handles.startsAtFrame;
 lastFrameDisplayed=handles.lastFrameDisplayed;
 firstFrameDisplayed=handles.firstFrameDisplayed;
 
+if ~isnan(handles.atePellet(end)) & isempty(reachingStretch)
+    % Last movie frame contained a reach, according to user
+    % and computer failed to detect this reach
+    handles.useAsThresh=handles.useAsThresh+handles.stepByAmount;
+    disp('Increasing reach detection threshold');
+end
+
 % Check whether next detected reach frames are within nFramesBetweenReaches
 % of current reach frame or within scope of just detected reach
 nFramesBetweenReaches=handles.nFramesBetweenReaches;
 timeOfLastEat=handles.eatTime(end);
 timeOfLastPellet=handles.pelletTime(end);
-% if isempty(reachingStretch)
-if handles.addIn==0
+loseAllReachesBefore=max([timeOfLastEat-startsAtFrame(end-1)+1 timeOfLastPellet-startsAtFrame(end-1)+1]);
+if isempty(reachingStretch)
+    loseAllReachesBefore=max([timeOfLastEat-startsAtFrame(end-1)+1 timeOfLastPellet-startsAtFrame(end-1)+1]);
+elseif handles.addIn==0
     % Note that reachingStretch is an index into allframes
     % first index of allframes is startsAtFrame(end-1) wrt whole movie
     % and firstFrameDisplayed=startsAtFrame(end-1)+startInd-1
@@ -662,9 +721,18 @@ if handles.addIn==0
     reachN=1;
     handles.reachN=reachN;
 end
+if isnan(handles.atePellet(end)) % Last movie frame was a "no reach"
+    loseAllReachesBefore=lastFrameDisplayed-startsAtFrame(end-1)+2;
+end
 
 % If have reached end of this movie chunk, read next movie segment
-if loseAllReachesBefore>size(allframes,3)-5 || handles.addIn==1
+getMoreMovie=0;
+if handles.addIn==1
+    getMoreMovie=1;
+elseif loseAllReachesBefore>size(allframes,3)-5 
+    getMoreMovie=1;
+end
+if getMoreMovie==1
     containsReach=0;
 %     while containsReach==0
         [handles,containsReach]=findMovieChunkWithReach(handles);
@@ -687,6 +755,7 @@ close(handles.fig);
 
 % Update implay
 if handles.addIn==0
+    startInd=loseAllReachesBefore+1;
     if isempty(reachingStretch)
         startInd=loseAllReachesBefore+1;
     elseif reachingStretch(reachN)-frames_before_firstReachFrame<1
@@ -694,6 +763,8 @@ if handles.addIn==0
     else
         startInd=reachingStretch(reachN)-frames_before_firstReachFrame;
     end
+    
+    endInd=size(allframes,3);
     if isempty(reachingStretch)
         endInd=size(allframes,3);
     elseif reachingStretch(reachN)+frames_after_firstReachFrame>size(allframes,3)
@@ -701,6 +772,7 @@ if handles.addIn==0
     else
         endInd=reachingStretch(reachN)+frames_after_firstReachFrame;
     end
+    
     if isempty(reachingStretch)
         disp('Computer sees no reach');
         fig=implay(allframes(:,:,startInd:endInd),handles.fps_noreach);
@@ -749,11 +821,15 @@ handles.curr_start_done=false;
 handles.curr_pellet_done=false;
 handles.curr_eat_done=false;
 
-function reachingStretch=findCurrentReaches(n,allframes,useAsThresh,n_consec,isin)
+function reachingStretch=findCurrentReaches(allframes,useAsThresh,n_consec,isin,isin3,perch_pellet_delay_ind)
 
 % summedIntensity=nan(1,n);
 temp=reshape(allframes,size(allframes,1)*size(allframes,2),size(allframes,3));
-summedIntensity=sum(temp(isin,:),1);
+pelletIntensity=sum(temp(isin3,:),1);
+summedIntensity_perch=sum(temp(isin,:),1);
+tempie=[nanmean(summedIntensity_perch)*ones(1,perch_pellet_delay_ind) summedIntensity_perch(1:end-perch_pellet_delay_ind)];
+summedIntensity=pelletIntensity./tempie;
+summedIntensity=-summedIntensity;
 % for i=1:n
 %     temp=intensityFromRGB(allframes(:,:,i));
 %     summedIntensity(i)=sum(temp(isin));
@@ -767,7 +843,9 @@ for i=1:n_consec
 end
 reachingStretch=find(runningSum>=n_consec);
 
-function [useAsThresh,works,isUserApprovedReach]=calibrateReachDetection(summedIntensity,allframes,useAsThresh,counter)
+function [useAsThresh,works,isUserApprovedReach,stepByAmount]=calibrateReachDetection(summedIntensity,allframes,useAsThresh,counter)
+
+stepByAmount=0.25*std(summedIntensity);
 
 % Show user candidate reach frames -- iterate threshold
 candidateFrames=find(summedIntensity<useAsThresh);
