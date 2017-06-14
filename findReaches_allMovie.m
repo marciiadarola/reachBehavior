@@ -707,7 +707,7 @@ startsAtFrame=handles.startsAtFrame;
 lastFrameDisplayed=handles.lastFrameDisplayed;
 firstFrameDisplayed=handles.firstFrameDisplayed;
 
-if (~isnan(handles.atePellet(end)) && isempty(reachingStretch)) || (handles.computerThinksNoReach==1 && ~isnan(handles.atePellet(end)))
+if ((~isnan(handles.atePellet(end)) && isempty(reachingStretch)) || (handles.computerThinksNoReach==1 && ~isnan(handles.atePellet(end)))) && (handles.addIn==0)
     % Last movie frame contained a reach, according to user
     % and computer failed to detect this reach
     handles.useAsThresh=handles.useAsThresh+handles.stepByAmount;
