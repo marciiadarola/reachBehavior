@@ -62,7 +62,7 @@ continueAnalysis=0;
 framesPerChunk=500;
 n_consec=1;
 % frames_before_firstReachFrame=2;
-frames_before_firstReachFrame=15;
+frames_before_firstReachFrame=30;
 frames_after_firstReachFrame=50;
 movie_fps=30;
 nFramesBetweenReaches=10;
@@ -70,9 +70,10 @@ nFramesBetweenReaches=10;
 sizeoneback=300;
 discardFirstNFrames=554;
 fps_noreach=60;
-fps_reach=30;
+fps_reach=10;
 perch_pellet_delay=0.133; % in seconds
 perch_pellet_delay_ind=floor(perch_pellet_delay/(1/movie_fps)); % in indices wrt fps
+perch_pellet_delay_ind=[perch_pellet_delay_ind-3 perch_pellet_delay_ind-2 perch_pellet_delay_ind-1 perch_pellet_delay_ind perch_pellet_delay_ind+1 perch_pellet_delay_ind+2 perch_pellet_delay_ind+3];
 
 % Choose default command line output for findReaches_allMovie
 handles.output = hObject;
@@ -337,9 +338,14 @@ if isempty(perchdata)
     [cols,rows]=find(ones(size(allframes,1),size(allframes,2))>0);
     isin=inpolygon(rows,cols,perchVertices(:,1),perchVertices(:,2));
     summedIntensity_perch=sum(temp(isin,:),1);
-    tempie=[nanmean(summedIntensity_perch)*ones(1,perch_pellet_delay_ind) summedIntensity_perch(1:end-perch_pellet_delay_ind)];
-    summedIntensity=pelletIntensity./tempie;
-    summedIntensity=-summedIntensity;
+    all_summedIntensity=zeros(length(perch_pellet_delay_ind),length(pelletIntensity));
+    for j=1:length(perch_pellet_delay_ind)
+        tempie=[nanmean(summedIntensity_perch)*ones(1,perch_pellet_delay_ind(j)) summedIntensity_perch(1:end-perch_pellet_delay_ind(j))];
+        summedIntensity=pelletIntensity./tempie;
+        summedIntensity=-summedIntensity;
+        all_summedIntensity(j,:)=summedIntensity;
+    end
+    summedIntensity=nanmean(all_summedIntensity,1);
     % Calibrate reach detection
     % Start by using threshold 1 standard deviation below the mean
     % If frame defined as containing paws on perch is within 1 std of the mean
@@ -348,7 +354,7 @@ if isempty(perchdata)
     else
         useAsMean=summedIntensity(currentFrameNumber);
     end
-    useAsThresh=useAsMean-1*std(summedIntensity);
+    useAsThresh=useAsMean-1.5*std(summedIntensity);
     rng shuffle;
     works=0;
     counter=1;
@@ -361,7 +367,11 @@ if isempty(perchdata)
     end
     
     if works==0
-        error('Check reach detection');
+        if sum(isUserApprovedReach)>(2/3)*length(isUserApprovedReach)
+            % Continue
+        else
+            error('Check reach detection');
+        end
     elseif works==1
         % Continue
     end
@@ -430,6 +440,7 @@ handles.endoffname=regexp(filename,'\.');
 handles.sizeoneback=sizeoneback;
 handles.isin2=isin2;
 handles.lookedAtFrame=[];
+handles.computerThinksNoReach=0;
 
 % Find reaches in current movie chunk, then move to next movie chunk, etc.
 disp('Find the frame associated with each of the following events for this reach and press matching button while movie is stopped at that frame.'); 
@@ -449,6 +460,7 @@ if isempty(reachingStretch)
     startInd=1;
     endInd=size(allframes,3);
     fig=implay(allframes(:,:,startInd:endInd),fps_noreach); % Play movie more quickly if reach is probably not present
+    handles.computerThinksNoReach=1;
     fig.Parent.Position=[100 100 800 800];
     lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
     firstFrameDisplayed=startsAtFrame(end-1)+startInd-1;
@@ -465,12 +477,16 @@ else
         endInd=reachingStretch(reachN)+frames_after_firstReachFrame;
     end
 %     fig=implay(allframes(:,:,startInd:endInd),fps_reach); % Play movie slowly if reach may be present
-s
+    % Play from beginning so user sees all frames
+    startInd=1;
     fig=implay(allframes(:,:,startInd:endInd),fps_reach); % Play movie slowly if reach may be present
+    handles.computerThinksNoReach=0;
     fig.Parent.Position=[100 100 800 800];
     lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
     firstFrameDisplayed=startsAtFrame(end-1)+startInd-1;
 end
+handles.lookedAtFrame=[handles.lookedAtFrame zeros(1,size(allframes,3))];
+handles.lookedAtFrame(firstFrameDisplayed:lastFrameDisplayed)=1;
 
 handles.fig=fig;
 handles.reachingStretch=reachingStretch;
@@ -487,16 +503,11 @@ function finishFunction(handles)
 
 if exist('hObject','var')==0
     return
-else
+elseif ~isfield(handles,'useAsThresh')
     delete(hObject);
     return
 end
-
-if ~isfield(handles,'useAsThresh')
-    delete(hObject);
-    return
-end
-    
+ 
 % Choose what to save 
 savehandles.useAsThresh=handles.useAsThresh;
 savehandles.stepByAmount=handles.stepByAmount;
@@ -526,6 +537,7 @@ savehandles.sizeoneback=handles.sizeoneback;
 savehandles.isin2=handles.isin2;
 savehandles.LEDvals=handles.LEDvals;
 savehandles.pelletPresent=handles.pelletPresent;
+savehandles.lookedAtFrame=handles.lookedAtFrame;
 
 endoffname=handles.endoffname;
 filename=handles.filename;
@@ -665,7 +677,7 @@ handles.reachN=reachN;
 function handles=updateReach(handles)
 
 if handles.addIn==0
-    disp('Reach detected');
+%     disp('Done');
 
     % Increment total reaches
     handles.allReachesTally=handles.allReachesTally+1;
@@ -690,7 +702,7 @@ startsAtFrame=handles.startsAtFrame;
 lastFrameDisplayed=handles.lastFrameDisplayed;
 firstFrameDisplayed=handles.firstFrameDisplayed;
 
-if ~isnan(handles.atePellet(end)) & isempty(reachingStretch)
+if (~isnan(handles.atePellet(end)) && isempty(reachingStretch)) || (handles.computerThinksNoReach==1 && ~isnan(handles.atePellet(end)))
     % Last movie frame contained a reach, according to user
     % and computer failed to detect this reach
     handles.useAsThresh=handles.useAsThresh+handles.stepByAmount;
@@ -755,14 +767,18 @@ startsAtFrame=handles.startsAtFrame;
 close(handles.fig);
 
 % Update implay
+playAtFastSpeed=0;
 if handles.addIn==0
     startInd=loseAllReachesBefore+1;
     if isempty(reachingStretch)
         startInd=loseAllReachesBefore+1;
+        handles.computerThinksNoReach=1;
     elseif reachingStretch(reachN)-frames_before_firstReachFrame<1
         startInd=1;
+        handles.computerThinksNoReach=0;
     else
         startInd=reachingStretch(reachN)-frames_before_firstReachFrame;
+        handles.computerThinksNoReach=0;
     end
     
     endInd=size(allframes,3);
@@ -774,12 +790,33 @@ if handles.addIn==0
         endInd=reachingStretch(reachN)+frames_after_firstReachFrame;
     end
     
+    % Be sure that user sees all frames
+    if ~isempty(reachingStretch)
+        if startInd-loseAllReachesBefore>40
+            % First play a "no reach" movie for time until this first reach
+            handles.computerThinksNoReach=1;
+            endInd=startInd;
+            startInd=loseAllReachesBefore+1;
+            playAtFastSpeed=1;
+        else
+            startInd=loseAllReachesBefore+1;
+        end
+    end
+    
     if isempty(reachingStretch)
         disp('Computer sees no reach');
         fig=implay(allframes(:,:,startInd:endInd),handles.fps_noreach);
     else
-        disp(reachingStretch(reachN));
-        fig=implay(allframes(:,:,startInd:endInd),handles.fps_reach);
+        disp('reachingStretch');
+        disp(reachingStretch);
+        disp('showing');
+        disp(startInd);
+        disp(endInd);
+        if playAtFastSpeed==1
+            fig=implay(allframes(:,:,startInd:endInd),handles.fps_noreach);
+        else
+            fig=implay(allframes(:,:,startInd:endInd),handles.fps_reach);
+        end
     end
     lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
     firstFrameDisplayed=startsAtFrame(end-1)+startInd-1;
@@ -795,6 +832,7 @@ fig.Parent.Position=[100 100 800 800];
 handles.fig=fig;
 handles.lastFrameDisplayed=lastFrameDisplayed;
 handles.firstFrameDisplayed=firstFrameDisplayed;
+handles.lookedAtFrame(firstFrameDisplayed:lastFrameDisplayed)=1;
     
 % Reset GUI for next reach
 handles=resetGUI(handles);
@@ -828,9 +866,16 @@ function reachingStretch=findCurrentReaches(allframes,useAsThresh,n_consec,isin,
 temp=reshape(allframes,size(allframes,1)*size(allframes,2),size(allframes,3));
 pelletIntensity=sum(temp(isin3,:),1);
 summedIntensity_perch=sum(temp(isin,:),1);
-tempie=[nanmean(summedIntensity_perch)*ones(1,perch_pellet_delay_ind) summedIntensity_perch(1:end-perch_pellet_delay_ind)];
-summedIntensity=pelletIntensity./tempie;
-summedIntensity=-summedIntensity;
+
+all_summedIntensity=zeros(length(perch_pellet_delay_ind),length(pelletIntensity));
+for j=1:length(perch_pellet_delay_ind)
+    tempie=[nanmean(summedIntensity_perch)*ones(1,perch_pellet_delay_ind(j)) summedIntensity_perch(1:end-perch_pellet_delay_ind(j))];
+    summedIntensity=pelletIntensity./tempie;
+    summedIntensity=-summedIntensity;
+    all_summedIntensity(j,:)=summedIntensity;
+end
+summedIntensity=nanmean(all_summedIntensity,1);
+
 % for i=1:n
 %     temp=intensityFromRGB(allframes(:,:,i));
 %     summedIntensity(i)=sum(temp(isin));
@@ -1160,7 +1205,11 @@ oneback=handles.oneback;
 startsAtFrame=handles.startsAtFrame;
 
 % Update implay
-if reachingStretch(reachN)-more_framesBeforeReach<1
+startInd=handles.firstFrameDisplayed+1-startsAtFrame(end-1);
+endInd=handles.lastFrameDisplayed+1-startsAtFrame(end-1);
+startInd_forMovie=startInd;
+endInd_forMovie=endInd;
+if startInd-more_framesBeforeReach<1
     if isempty(oneback)
     else
         if length(size(oneback))<3
@@ -1172,15 +1221,21 @@ if reachingStretch(reachN)-more_framesBeforeReach<1
             temp(:,:,end-size(allframes,3)+1:end)=allframes;
             temp(:,:,1:end-size(allframes,3))=oneback(:,:,end-sizeoneback+1:end);
             allframes=temp;
-            reachingStretch=reachingStretch+sizeoneback;
+            startInd_forMovie=startInd+sizeoneback;
+            endInd_forMovie=endInd+sizeoneback;
+            startInd=startInd-sizeoneback;
+            if ~isempty(reachingStretch)
+                reachingStretch=reachingStretch+sizeoneback;
+            end
             if more_framesBeforeReach>sizeoneback
                 error('more_framesBeforeReach should be less than sizeoneback');
             end
         end
     end
 end
-startInd=reachingStretch(reachN)-more_framesBeforeReach;
-if reachingStretch(reachN)+more_framesAfterReach>size(allframes,3)
+% startInd=reachingStretch(reachN)-more_framesBeforeReach;
+
+if endInd_forMovie+more_framesAfterReach>size(allframes,3)
     didEndInd=0;
     % Reach extends beyond end of movie chunk 
     % Move on to next movie chunk, keeping track of fact that need to add
@@ -1195,27 +1250,34 @@ if reachingStretch(reachN)+more_framesAfterReach>size(allframes,3)
     end
     if didEndInd==0 
         handles.addIn=1;
-        handles.whatToAddIn=allframes(:,:,startInd:end);
+        handles.whatToAddIn=allframes(:,:,startInd_forMovie:endInd_forMovie);
     end
 else
-    endInd=reachingStretch(reachN)+more_framesAfterReach;
+%     endInd=reachingStretch(reachN)+more_framesAfterReach;
+    endInd_forMovie=endInd_forMovie+more_framesAfterReach;
+    endInd=endInd+more_framesAfterReach;
 end
 
 if handles.addIn==0
     close(handles.fig);
-    
-    disp(reachingStretch(reachN));
-    fig=implay(allframes(:,:,startInd:endInd),50);
+    if ~isempty(reachingStretch)
+        disp(reachingStretch(reachN));
+    end
+    fig=implay(allframes(:,:,startInd_forMovie:endInd_forMovie),50);
     fig.Parent.Position=[100 100 800 800];
     handles.fig=fig;
-    lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
     firstFrameDisplayed=startsAtFrame(end-1)+startInd-1;
+    lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
     handles.lastFrameDisplayed=lastFrameDisplayed;
     handles.firstFrameDisplayed=firstFrameDisplayed;
     
     % Reset GUI
     handles=resetGUI(handles);
 else
+    firstFrameDisplayed=startsAtFrame(end-1)+startInd-1;
+    lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
+    handles.lastFrameDisplayed=lastFrameDisplayed;
+    handles.firstFrameDisplayed=firstFrameDisplayed;
     handles=updateReach(handles);
 end
 
