@@ -121,6 +121,7 @@ handles.pelletPresent=[];
 handles.fps_reach=fps_reach;
 handles.fps_noreach=fps_noreach;
 handles.changeBetweenFrames=[];
+handles.perc10_change=[];
 
 % Close all open figures except findReaches_allMovie GUI
 set(hObject, 'HandleVisibility', 'off');
@@ -321,19 +322,19 @@ if isempty(perchdata)
     [cols,rows]=find(ones(size(allframes,1),size(allframes,2))>0);
     isin3=inpolygon(rows,cols,pelletVertices(:,1),pelletVertices(:,2));
     pelletIntensity=sum(temp(isin3,:),1);
-    handles.pelletRegimeVals=[handles.pelletRegimeVals tempie];
+    handles.pelletRegimeVals=[handles.pelletRegimeVals pelletIntensity];
     
 %     [k,v]=convhull(eatVertices(:,1),eatVertices(:,2));
     [cols,rows]=find(ones(size(allframes,1),size(allframes,2))>0);
     isin4=inpolygon(rows,cols,eatVertices(:,1),eatVertices(:,2));
     eatIntensity=sum(temp(isin4,:),1);
-    handles.eatRegimeVals=[handles.eatRegimeVals tempie];
+    handles.eatRegimeVals=[handles.eatRegimeVals eatIntensity];
     
 %     [k,v]=convhull(perchVertices(:,1),perchVertices(:,2));
     [cols,rows]=find(ones(size(allframes,1),size(allframes,2))>0);
     isin=inpolygon(rows,cols,perchVertices(:,1),perchVertices(:,2));
     summedIntensity_perch=sum(temp(isin,:),1);
-    handles.perchRegimeVals=[handles.perchRegimeVals tempie];  
+    handles.perchRegimeVals=[handles.perchRegimeVals summedIntensity_perch];  
     
     % Get change between frames
     changeBetweenFrames=nanmean(nanmean(diff(allframes,1,3),1),2);
@@ -433,6 +434,7 @@ if isempty(perchdata)
     
     % Get change between frames
     changeBetweenFrames=nanmean(nanmean(diff(allframes,1,3),1),2);
+    changeBetweenFrames=[reshape(changeBetweenFrames,1,size(changeBetweenFrames,3)) 0];
     
     all_summedIntensity=zeros(length(perch_pellet_delay_ind),length(pelletIntensity));
     for j=1:length(perch_pellet_delay_ind)
@@ -442,7 +444,10 @@ if isempty(perchdata)
         summedIntensity=-summedIntensity;
         all_summedIntensity(j,:)=summedIntensity;
     end
-    summedIntensity=nanmean(all_summedIntensity,1);
+    perc10_change=-0.9*nanstd(changeBetweenFrames);
+    handles.perc10_change=perc10_change;
+    summedIntensity=(nanmean(all_summedIntensity,1)-nanmean(nanmean(all_summedIntensity,1),2))+(100000*changeBetweenFrames);
+%     summedIntensity=nanmean(all_summedIntensity,1);
     % Calibrate reach detection
     % Start by using threshold 1 standard deviation below the mean
     % If frame defined as containing paws on perch is within 1 std of the mean
@@ -452,15 +457,17 @@ if isempty(perchdata)
         useAsMean=summedIntensity(currentFrameNumber);
     end
 %     useAsThresh=useAsMean-1.5*std(summedIntensity);
-    useAsThresh=useAsMean-3*std(summedIntensity);
+    useAsThresh=useAsMean-2*std(summedIntensity);
     rng shuffle;
     works=0;
     counter=1;
+    stepByAmount=0.25*std(summedIntensity);
     while works==0
         if counter>10
             break
         end
-        [useAsThresh,works,isUserApprovedReach,stepByAmount]=calibrateReachDetection(summedIntensity,allframes,useAsThresh,counter);
+        
+        [useAsThresh,works,isUserApprovedReach,stepByAmount]=calibrateReachDetection(summedIntensity,allframes,useAsThresh,counter,stepByAmount);
         counter=counter+1;
     end
     
@@ -475,6 +482,7 @@ if isempty(perchdata)
     end
     
     % Display results of threshold setting
+    handles.summedIntensity=summedIntensity;
     figure();
     plot(-summedIntensity);
     hold on;
@@ -487,6 +495,7 @@ else
     handles.pelletRegimeVals=perch.pelletRegimeVals; 
     handles.pelletStopVals=perch.pelletStopVals;
     handles.changeBetweenFrames=perch.changeBetweenFrames;
+    handles.perc10_change=perch.perc10_change;
 end
 
 % Save perch data
@@ -497,7 +506,7 @@ if isempty(perchdata)
     perch.isin=isin;
     perch.LEDisin=isin2;
     perch.LEDvals=handles.LEDvals;
-    perch.eatRegimeVals=handles.eatRegimeVal;
+    perch.eatRegimeVals=handles.eatRegimeVals;
     perch.perchRegimeVals=handles.perchRegimeVals;
     perch.pelletRegimeVals=handles.pelletRegimeVals; 
     perch.pelletStopVals=handles.pelletStopVals;
@@ -505,6 +514,7 @@ if isempty(perchdata)
     perch.pelletIsIn=isin3;
     perch.isin5=isin5;
     perch.isin4=isin4;
+    perch.perc10_change=handles.perc10_change;
     endoffname=regexp(filename,'\.');
     save([filename(1:endoffname(end)-1) '_perch.mat'],'perch');
 end
@@ -553,10 +563,11 @@ handles.sizeoneback=sizeoneback;
 handles.isin2=isin2;
 handles.lookedAtFrame=[];
 handles.computerThinksNoReach=0;
+handles.summedIntensity=[];
 
 % Find reaches in current movie chunk, then move to next movie chunk, etc.
 disp('Find the frame associated with each of the following events for this reach and press matching button while movie is stopped at that frame.'); 
-reachingStretch=findCurrentReaches(allframes,useAsThresh,n_consec,isin,isin3,isin4,perch_pellet_delay_ind);
+[reachingStretch,handles.summedIntensity]=findCurrentReaches(allframes,useAsThresh,n_consec,isin,isin3,isin4,perch_pellet_delay_ind,handles.perc10_change);
 % if isempty(reachingStretch)
 %     % No reaches found for this movie chunk, get next movie chunk
 %     containsReach=0;
@@ -615,9 +626,7 @@ guidata(hObject, handles);
 
 function finishFunction(handles)
 
-if ~exist('hObject','var')
-    return
-elseif ~isfield(handles,'useAsThresh')
+if ~isfield(handles,'useAsThresh')
     delete(hObject);
     return
 end
@@ -660,6 +669,7 @@ savehandles.pelletRegimeVals=handles.pelletRegimeVals;
 savehandles.pelletStopVals=handles.pelletStopVals;
 savehandles.pelletPresent=handles.pelletPresent;
 savehandles.lookedAtFrame=handles.lookedAtFrame;
+savehandles.perc10_change=handles.perc10_change;
 
 endoffname=handles.endoffname;
 filename=handles.filename;
@@ -735,17 +745,20 @@ temp=reshape(allframes,size(allframes,1)*size(allframes,2),size(allframes,3));
 summedIntensityLED=sum(temp(isin2,:),1);
 handles.LEDvals=[handles.LEDvals summedIntensityLED];
 
-tempie=sum(temp(isin4,:),1);
+tempie=sum(temp(handles.isin4,:),1);
 handles.eatRegimeVals=[handles.eatRegimeVals tempie];
-tempie=sum(temp(isin,:),1);
+tempie=sum(temp(handles.isin,:),1);
 handles.perchRegimeVals=[handles.perchRegimeVals tempie];
-tempie=sum(temp(isin3,:),1);
+tempie=sum(temp(handles.isin3,:),1);
 handles.pelletRegimeVals=[handles.pelletRegimeVals tempie];
-tempie=sum(temp(isin5,:),1);
+tempie=sum(temp(handles.isin5,:),1);
 handles.pelletStopVals=[handles.pelletStopVals tempie];
 
 % Get change between frames
 changeBetweenFrames=nanmean(nanmean(diff(allframes,1,3),1),2);
+if isempty(changeBetweenFrames)
+    finishFunction(handles);
+end
 handles.changeBetweenFrames=[handles.changeBetweenFrames changeBetweenFrames];
 
 if ~isempty(startedOver)
@@ -773,7 +786,7 @@ handles.EOF=EOF;
 handles.startedOver=startedOver;
 handles.sizeOfLastChunk=sizeOfLastChunk;
 
-function [handles,containsReach]=findMovieChunkWithReach(handles)
+function [handles,containsReach,summedIntensity]=findMovieChunkWithReach(handles)
 
 didReachForThisChunk=handles.didReachForThisChunk;
 movieChunk=handles.movieChunk;
@@ -791,7 +804,7 @@ startsAtFrame=handles.startsAtFrame;
 movieChunk=handles.movieChunk;
 
 % Find new candidate reach frames
-reachingStretch=findCurrentReaches(allframes,handles.useAsThresh,handles.n_consec,handles.isin,handles.isin3,handles.isin4,handles.perch_pellet_delay_ind);
+[reachingStretch,summedIntensity]=findCurrentReaches(allframes,handles.useAsThresh,handles.n_consec,handles.isin,handles.isin3,handles.isin4,handles.perch_pellet_delay_ind,handles.perc10_change);
 reachN=1;
 
 % Check if there is any candidate reach in this movie chunk
@@ -843,6 +856,25 @@ if ((~isnan(handles.atePellet(end)) && isempty(reachingStretch)) || (handles.com
     % and computer failed to detect this reach
     handles.useAsThresh=handles.useAsThresh+handles.stepByAmount;
     disp('Increasing reach detection threshold');
+    
+    if ~isempty(handles.summedIntensity)
+        figure();
+        plot(handles.summedIntensity);
+        hold on;
+        line([1 length(handles.summedIntensity)],[handles.useAsThresh handles.useAsThresh],'Color','r');
+    end
+elseif (isnan(handles.atePellet(end)) && handles.computerThinksNoReach==0) && (handles.addIn==0)
+    % Last movie did not contain a reach, but 
+    % computer thought this was a reach
+    handles.useAsThresh=handles.useAsThresh-handles.stepByAmount;
+    disp('Decreasing reach detection threshold');
+    
+    if ~isempty(handles.summedIntensity)
+        figure();
+        plot(handles.summedIntensity);
+        hold on;
+        line([1 length(handles.summedIntensity)],[handles.useAsThresh handles.useAsThresh],'Color','r');
+    end
 end
 
 % Check whether next detected reach frames are within nFramesBetweenReaches
@@ -884,7 +916,7 @@ end
 if getMoreMovie==1
     containsReach=0;
 %     while containsReach==0
-        [handles,containsReach]=findMovieChunkWithReach(handles);
+        [handles,containsReach,handles.summedIntensity]=findMovieChunkWithReach(handles);
         if handles.addIn==1
             containsReach=1; % this chunk contains end of reach from previous movie chunk
         end
@@ -1002,7 +1034,7 @@ handles.curr_start_done=false;
 handles.curr_pellet_done=false;
 handles.curr_eat_done=false;
 
-function reachingStretch=findCurrentReaches(allframes,useAsThresh,n_consec,isin,isin3,isin4,perch_pellet_delay_ind)
+function [reachingStretch,summedIntensity]=findCurrentReaches(allframes,useAsThresh,n_consec,isin,isin3,isin4,perch_pellet_delay_ind,perc10_change)
 
 % summedIntensity=nan(1,n);
 temp=reshape(allframes,size(allframes,1)*size(allframes,2),size(allframes,3));
@@ -1010,6 +1042,9 @@ pelletIntensity=sum(temp(isin3,:),1);
 summedIntensity_perch=sum(temp(isin,:),1);
 eatIntensity=sum(temp(isin4,:),1);
 
+changeBetweenFrames=nanmean(nanmean(diff(allframes,1,3),1),2);
+changeBetweenFrames=[reshape(changeBetweenFrames,1,size(changeBetweenFrames,3)) 0];
+    
 all_summedIntensity=zeros(length(perch_pellet_delay_ind),length(pelletIntensity));
 for j=1:length(perch_pellet_delay_ind)
     tempie2=[nanmean(eatIntensity)*ones(1,perch_pellet_delay_ind(j)+4) eatIntensity(1:end-(perch_pellet_delay_ind(j)+4))];
@@ -1019,13 +1054,23 @@ for j=1:length(perch_pellet_delay_ind)
     summedIntensity=-summedIntensity;
     all_summedIntensity(j,:)=summedIntensity;
 end
-summedIntensity=nanmean(all_summedIntensity,1);
+% summedIntensity=nanmean(all_summedIntensity,1);
+summedIntensity=(nanmean(all_summedIntensity,1)-nanmean(nanmean(all_summedIntensity,1),2))+(100000*changeBetweenFrames);
 
 % for i=1:n
 %     temp=intensityFromRGB(allframes(:,:,i));
 %     summedIntensity(i)=sum(temp(isin));
 % end
-reachFrames=summedIntensity<useAsThresh;
+
+
+% reachFrames=summedIntensity<useAsThresh;
+
+% Get peaks only
+[~,locs]=findpeaks(-summedIntensity);
+locs=locs(summedIntensity(locs)<useAsThresh);
+isReaching=zeros(size(summedIntensity));
+isReaching(locs)=1;
+reachFrames=isReaching;
 
 % Real reach should be at least n_consec consecutive reach frames
 runningSum=zeros(size(reachFrames));
@@ -1034,9 +1079,11 @@ for i=1:n_consec
 end
 reachingStretch=find(runningSum>=n_consec);
 
-function [useAsThresh,works,isUserApprovedReach,stepByAmount]=calibrateReachDetection(summedIntensity,allframes,useAsThresh,counter)
+function [useAsThresh,works,isUserApprovedReach,stepByAmount]=calibrateReachDetection(summedIntensity,allframes,useAsThresh,counter,stepByAmount)
 
-stepByAmount=0.25*std(summedIntensity);
+if isempty(stepByAmount)
+    stepByAmount=0.25*std(summedIntensity);
+end
 
 % Show user candidate reach frames -- iterate threshold
 candidateFrames=find(summedIntensity<useAsThresh);
