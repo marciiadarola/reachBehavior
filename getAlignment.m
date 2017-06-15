@@ -1,4 +1,4 @@
-function aligned=getAlignment(filename,out,startedVideoAfterArduino,distractorWriteCode,moviefps,totalFramesInExpt,handles)
+function aligned=getAlignment(out,moviefps,handles)
 
 % Note that microSD (Arduino) output is timed in ms
 % Whereas video is timed in frames per sec
