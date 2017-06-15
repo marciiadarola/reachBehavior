@@ -338,6 +338,7 @@ if isempty(perchdata)
     
     % Get change between frames
     changeBetweenFrames=nanmean(nanmean(diff(allframes,1,3),1),2);
+    changeBetweenFrames=[reshape(changeBetweenFrames,1,size(changeBetweenFrames,3)) 0];
     handles.changeBetweenFrames=[handles.changeBetweenFrames changeBetweenFrames];
     
     % Check that current movie segment includes a reach
@@ -406,6 +407,7 @@ if isempty(perchdata)
                 
                 % Get change between frames
                 changeBetweenFrames=nanmean(nanmean(diff(allframes,1,3),1),2);
+                changeBetweenFrames=[reshape(changeBetweenFrames,1,size(changeBetweenFrames,3)) 0];
                 handles.changeBetweenFrames=[handles.changeBetweenFrames changeBetweenFrames];
 
         end
@@ -670,6 +672,11 @@ savehandles.pelletStopVals=handles.pelletStopVals;
 savehandles.pelletPresent=handles.pelletPresent;
 savehandles.lookedAtFrame=handles.lookedAtFrame;
 savehandles.perc10_change=handles.perc10_change;
+savehandles.reachStarts_belongToReach=handles.reachStarts_belongToReach;
+savehandles.pelletTouched_belongToReach=handles.pelletTouched_belongToReach;
+savehandles.pelletTime_belongToReach=handles.pelletTime_belongToReach;
+savehandles.atePellet_belongToReach=handles.atePellet_belongToReach;
+savehandles.eatTime_belongToReach=handles.eatTime_belongToReach;
 
 endoffname=handles.endoffname;
 filename=handles.filename;
@@ -756,6 +763,7 @@ handles.pelletStopVals=[handles.pelletStopVals tempie];
 
 % Get change between frames
 changeBetweenFrames=nanmean(nanmean(diff(allframes,1,3),1),2);
+changeBetweenFrames=[reshape(changeBetweenFrames,1,size(changeBetweenFrames,3)) 0];
 if isempty(changeBetweenFrames)
     finishFunction(handles);
 end
@@ -835,7 +843,11 @@ if handles.addIn==0
     handles.pelletPresent=[handles.pelletPresent handles.pelletIsMissing];
     % Reset pellet present to default
     handles.pelletIsMissing=0;
+    
 end
+handles.curr_eat_done=false;
+handles.curr_pellet_done=false;
+handles.curr_start_done=false;
 
 % Display next reach movie
 
@@ -1345,6 +1357,10 @@ if currFrame==(handles.lastFrameDisplayed-handles.firstFrameDisplayed+1)
     handles.pelletTouched=[handles.pelletTouched nan];
     handles.pelletTime=[handles.pelletTime nan];
     handles.reachStarts=[handles.reachStarts nan];
+    
+    handles.curr_eat_done=false;
+    handles.curr_pellet_done=false;
+    handles.curr_start_done=false;
     
     handles=updateReach(handles);
     
