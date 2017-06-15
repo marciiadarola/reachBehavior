@@ -117,56 +117,57 @@ timespertrial=nanmean(times_tbt,1);
 % timespertrial=1:length(timespertrial);
 
 % Plot
+plot_cues=1:30;
 figure();
 ha=tight_subplot(10,1,[0.06 0.03],[0.05 0.05],[0.1 0.03]);
 currha=ha(1);
 axes(currha);
-plot(timespertrial,nanmean(cue_tbt,1));
+plot(timespertrial,nanmean(cue_tbt(plot_cues,:),1));
 title('cue');
 
 currha=ha(2);
 axes(currha);
-plot(timespertrial,nanmean(reachStarts_tbt,1));
+plot(timespertrial,nanmean(reachStarts_tbt(plot_cues,:),1));
 title('reachStarts');
 
 currha=ha(3);
 axes(currha);
-plot(timespertrial,nanmean(distractor_tbt,1));
+plot(timespertrial,nanmean(distractor_tbt(plot_cues,:),1));
 title('distractor');
 
 currha=ha(4);
 axes(currha);
-plot(timespertrial,nanmean(reach_ongoing_tbt,1));
+plot(timespertrial,nanmean(reach_ongoing_tbt(plot_cues,:),1));
 title('reach ongoing');
 
 currha=ha(5);
 axes(currha);
-plot(timespertrial,nanmean(success_tbt,1));
+plot(timespertrial,nanmean(success_tbt(plot_cues,:),1));
 title('success');
 
 currha=ha(6);
 axes(currha);
-plot(timespertrial,nanmean(pelletPresented_tbt,1));
+plot(timespertrial,nanmean(pelletPresented_tbt(plot_cues,:),1));
 title('pelletPresented');
 
 currha=ha(7);
 axes(currha);
-plot(timespertrial,nanmean(drop_tbt,1));
+plot(timespertrial,nanmean(drop_tbt(plot_cues,:),1));
 title('drop');
 
 currha=ha(8);
 axes(currha);
-plot(timespertrial,nanmean(miss_tbt,1));
+plot(timespertrial,nanmean(miss_tbt(plot_cues,:),1));
 title('miss');
 
 currha=ha(9);
 axes(currha);
-plot(timespertrial,nanmean(eating_tbt,1));
+plot(timespertrial,nanmean(eating_tbt(plot_cues,:),1));
 title('eating');
 
 currha=ha(10);
 axes(currha);
-plot(timespertrial,nanmean(pelletLoaded_tbt,1));
+plot(timespertrial,nanmean(pelletLoaded_tbt(plot_cues,:),1));
 title('pelletLoaded');
 
 
@@ -182,7 +183,8 @@ miss_outline='c';
 event_thresh=0.5;
 
 figure();
-for i=1:size(cue_tbt,1)
+% for i=1:size(cue_tbt,1)
+for i=plot_cues
     % Plot cue events
     event_ind=find(cue_tbt(i,:)>event_thresh,1,'first');
     scatter([timespertrial(event_ind) timespertrial(event_ind)],[i i],[],cue_color,'filled');
