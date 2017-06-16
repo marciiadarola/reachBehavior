@@ -7,7 +7,7 @@ if isempty(alignment)
 end
 
 % Remove incomplete reach detections
-isnotnaninds=~isnan(mean([reaches.reachStarts' reaches.pelletTime' reaches.eatTime' reaches.pelletPresent'],2)) & (reaches.pelletTime'-reaches.reachStarts'>=0);
+isnotnaninds=~isnan(mean([reaches.reachStarts' reaches.pelletTime' reaches.eatTime' reaches.pelletPresent'],2));
 reaches.reachStarts=reaches.reachStarts(isnotnaninds);
 reaches.pelletTouched=reaches.pelletTouched(isnotnaninds);
 reaches.pelletTime=reaches.pelletTime(isnotnaninds);
@@ -71,10 +71,7 @@ function eventVector=restructureEvent(eventFrames, movieFrames)
 eventFrames=eventFrames(~isnan(eventFrames));
 eventVector=zeros(1,length(movieFrames));
 for i=1:length(eventFrames)
-%    [~,mi]=min(abs(movieFrames-eventFrames(i)));
-   temp=movieFrames-eventFrames(i);
-   temp(temp<0)=max(temp)+10000;
-   [~,mi]=min(temp);
+   [~,mi]=min(abs(movieFrames-eventFrames(i)));
    eventVector(mi)=1;    
 end
 

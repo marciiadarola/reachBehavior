@@ -117,7 +117,7 @@ timespertrial=nanmean(times_tbt,1);
 % timespertrial=1:length(timespertrial);
 
 % Plot
-plot_cues=1:30;
+plot_cues=1:size(cue_tbt,1);
 figure();
 ha=tight_subplot(10,1,[0.06 0.03],[0.05 0.05],[0.1 0.03]);
 currha=ha(1);
