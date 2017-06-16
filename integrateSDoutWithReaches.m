@@ -57,7 +57,7 @@ alignment.miss_reachStarts=restructureEvent(reaches.reachStarts(reaches.pelletTo
 % Reach despite no pellet -- initiation of reach
 alignment.pelletmissingreach_reachStarts=restructureEvent(reaches.reachStarts(reaches.pelletPresent==0), movframes);
 % Eat time
-alignment.eating=restructureEvent(reaches.eatTime, movframes);
+alignment.eating=restructureEvent(reaches.eatTime(reaches.atePellet==1), movframes);
 % Reach ongoing
 alignment.reach_ongoing=zeros(1,length(movframes));
 reachIsStarting=find(alignment.reachStarts>0.5);
