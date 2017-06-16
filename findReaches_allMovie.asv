@@ -1229,19 +1229,22 @@ function pelletbutton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % If already hit this button, ignore second press
-if handles.reach.curr_pellet_done==true
+if handles.curr_pellet_done==true
     return
 end
 
 % Get current frame number in movie player
 firstFrameDisplayed=handles.firstFrameDisplayed;
 currFrame=handles.fig.data.Controls.CurrentFrame;
-handles.reach=putFrameNumber(handles.reach,firstFrameDisplayed+currFrame-1,hObject.Tag);
+handles.pelletTouched=[handles.pelletTouched 1];
+handles.pelletTime=[handles.pelletTime firstFrameDisplayed+currFrame-1];
+handles.pelletTouched_belongToReach=[handles.pelletTouched_belongToReach handles.allReachesTally];
+handles.pelletTime_belongToReach=[handles.pelletTime_belongToReach handles.allReachesTally];
 
 % Set pellet button to done
 set(handles.text4,'String','Done');
 set(handles.text4,'ForegroundColor','g');
-handles.reach=updateReachProgress(handles.reach,hObject.Tag);
+handles.curr_pellet_done=true;
 
 % Check whether this reach is done
 if reachIsDone(handles)==true
@@ -1249,7 +1252,6 @@ if reachIsDone(handles)==true
 end
 
 guidata(hObject, handles);
-
 
 % --- Executes on button press in missbutton.
 function missbutton_Callback(hObject, eventdata, handles)
@@ -1258,19 +1260,19 @@ function missbutton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % If already hit this button, ignore second press
-if handles.reach.curr_pellet_done==true
+if handles.curr_pellet_done==true
     return
 end
 
 % Get current frame number in movie player
 firstFrameDisplayed=handles.firstFrameDisplayed;
 currFrame=handles.fig.data.Controls.CurrentFrame;
-handles.reach=putFrameNumber(handles.reach,firstFrameDisplayed+currFrame-1,hObject.Tag);
+handles.reach=putFrameNumber(handles.reach,firstFrameDisplayed+currFrame-1,'missbutton');
 
 % Set pellet button to done
 set(handles.text4,'String','Done');
 set(handles.text4,'ForegroundColor','g');
-handles.reach=updateReachProgress(handles.reach,hObject.Tag);
+handles.reach.curr_pellet_done=true;
 
 % Check whether this reach is done
 if reachIsDone(handles)==true
@@ -1279,7 +1281,6 @@ end
 
 guidata(hObject, handles);
 
-
 % --- Executes on button press in eatbutton.
 function eatbutton_Callback(hObject, eventdata, handles)
 % hObject    handle to eatbutton (see GCBO)
@@ -1287,19 +1288,19 @@ function eatbutton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % If already hit this button, ignore second press
-if handles.reach.curr_eat_done==true
+if handles.curr_eat_done==true
     return
 end
 
 % Get current frame number in movie player
 firstFrameDisplayed=handles.firstFrameDisplayed;
 currFrame=handles.fig.data.Controls.CurrentFrame;
-handles.reach=putFrameNumber(handles.reach,firstFrameDisplayed+currFrame-1,hObject.Tag);
+handles.reach=putFrameNumber(handles.reach,firstFrameDisplayed+currFrame-1,'eatbutton');
 
 % Set eat button to done
 set(handles.text5,'String','Done');
 set(handles.text5,'ForegroundColor','g');
-handles.reach=updateReachProgress(handles.reach,hObject.Tag);
+handles.curr_eat_done=true;
 
 % Check whether this reach is done
 if reachIsDone(handles)==true
@@ -1315,19 +1316,19 @@ function dropbutton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % If already hit this button, ignore second press
-if handles.reach.curr_eat_done==true
+if handles.curr_eat_done==true
     return
 end
 
 % Get current frame number in movie player
 firstFrameDisplayed=handles.firstFrameDisplayed;
 currFrame=handles.fig.data.Controls.CurrentFrame;
-handles.reach=putFrameNumber(handles.reach,firstFrameDisplayed+currFrame-1,hObject.Tag);
+handles.reach=putFrameNumber(handles.reach,firstFrameDisplayed+currFrame-1,'dropbutton');
 
 % Set eat button to done
 set(handles.text5,'String','Done');
 set(handles.text5,'ForegroundColor','g');
-handles.reach=updateReachProgress(handles.reach,hObject.Tag);
+handles.curr_eat_done=true;
 
 % Check whether this reach is done
 if reachIsDone(handles)==true
@@ -1362,25 +1363,6 @@ function reach=resetReachProgress(reach)
 reach.curr_eat_done=false;
 reach.curr_pellet_done=false;
 reach.curr_start_done=false;
-
-
-function reach=updateReachProgress(reach,tag)
-
-switch tag
-    case 'startbutton' % reach is starting
-        reach.curr_start_done=true;
-    case 'pelletbutton' % mouse touches pellet
-        reach.curr_pellet_done=true;
-    case 'missbutton' % reach does not touch pellet
-        reach.curr_pellet_done=true;
-    case 'eatbutton' % mouse eats pellet
-        reach.curr_eat_done=true;
-    case 'dropbutton' % mouse drops pellet
-        reach.curr_eat_done=true;
-    otherwise
-        error('Do not recognize tag passed to updateReachProgress');
-end 
-
 
 
 function reach=putFrameNumber(reach,frameN,tag)
