@@ -529,6 +529,7 @@ end
 
 % Set up handles
 handles.useAsThresh=useAsThresh;
+handles.discardFirstNFrames=discardFirstNFrames;
 handles.stepByAmount=stepByAmount;
 handles.filename=filename;
 handles.n_consec=n_consec;
@@ -634,6 +635,7 @@ if ~isfield(handles,'useAsThresh')
 end
  
 % Choose what to save 
+savehandles.discardFirstNFrames=handles.discardFirstNFrames;
 savehandles.useAsThresh=handles.useAsThresh;
 savehandles.stepByAmount=handles.stepByAmount;
 savehandles.filename=handles.filename;

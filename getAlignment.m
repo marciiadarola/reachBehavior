@@ -170,9 +170,83 @@ aligned.misses=misses;
 timesfromarduino=alignLikeDistractor(double(arduino_times),0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac); 
 aligned.timesfromarduino=timesfromarduino;
 % From movie
-movieframeinds=double(1:length(handles.LEDvals));
-movieframeinds=alignLikeDistractor(movieframeinds,1,movie_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_movie,scaleBy,resampFac);
-aligned.movieframeinds=movieframeinds;
+temp=1:length(handles.LEDvals);
+movieframeinds_raw=double(handles.discardFirstNFrames+temp);
+movieframeinds=alignLikeDistractor(movieframeinds_raw,1,movie_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_movie,scaleBy,resampFac);
+
+% Re-align movie frame inds based on alignment to non-interped LED vals
+maxNFramesForLEDtoChange=2;
+deriv_LEDvals=[diff(naninterp(handles.LEDvals)) 0];
+deriv_thresh=(nanmean(handles.LEDvals))/(maxNFramesForLEDtoChange+1);
+[pks,locs]=findpeaks(deriv_LEDvals);
+peakLocs=locs(pks>deriv_thresh);
+tooclose=diff(peakLocs);
+peakLocs=peakLocs(tooclose>=3*maxNFramesForLEDtoChange);
+[pks,locs]=findpeaks(-deriv_LEDvals);
+troughLocs=locs(pks>deriv_thresh);
+tooclose=diff(troughLocs);
+troughLocs=troughLocs(tooclose>=3*maxNFramesForLEDtoChange);
+rawmovieinds_onto_rescaled=nan(size(movieframeinds));
+if movieframeinds_raw(peakLocs(1))<movieframeinds_raw(troughLocs(1))
+    % LED first increases
+else
+    % LED first decreases
+    % Throw out first decrease
+    troughLocs=troughLocs(2:end);
+end
+if length(peakLocs)>length(troughLocs)
+    peakLocs=peakLocs(1:length(troughLocs));
+end
+if movieframeinds_raw(peakLocs(1))>=movieframeinds_raw(troughLocs(1))
+    error('Problem in raw LED values -- should always turn on, then off');
+end
+rescaled_thresh=0.5;
+movieframeinds=naninterp(movieframeinds);
+deriv_LEDvals_rescaled=[diff(naninterp(aligned.movie_distractor)) 0];
+[pks,locs]=findpeaks(deriv_LEDvals_rescaled);
+peakLocs_rescaled=locs(pks>rescaled_thresh);
+tooclose=diff(peakLocs_rescaled);
+peakLocs_rescaled=peakLocs_rescaled(tooclose>=3*maxNFramesForLEDtoChange);
+peakTimes_rescaled=movieframeinds(peakLocs_rescaled);
+[pks,locs]=findpeaks(-deriv_LEDvals_rescaled);
+troughLocs_rescaled=locs(pks>rescaled_thresh);
+tooclose=diff(troughLocs_rescaled);
+troughLocs_rescaled=troughLocs_rescaled(tooclose>=3*maxNFramesForLEDtoChange);
+troughTimes_rescaled=movieframeinds(troughLocs_rescaled);
+for i=1:length(peakLocs)
+    up=movieframeinds_raw(peakLocs(i));
+    down=movieframeinds_raw(troughLocs(i));
+    [~,mi_up]=min(abs(peakTimes_rescaled-up));
+    [~,mi_down]=min(abs(troughTimes_rescaled-down));
+    rawmovieinds_onto_rescaled(peakLocs_rescaled(mi_up):troughLocs_rescaled(mi_down))=linspace(up,down,troughLocs_rescaled(mi_down)-peakLocs_rescaled(mi_up)+1);
+end
+% Fill in nans accordingly
+firstnan=find(isnan(rawmovieinds_onto_rescaled),1,'first');
+temp=rawmovieinds_onto_rescaled;
+temp(1:firstnan)=nan;
+firstnotnan=find(~isnan(temp),1,'first');
+safety_counter=1;
+rawframestart=movieframeinds_raw(1);
+while ~isempty(firstnan)
+    if safety_counter>20*10^4
+        break
+    end
+    if isempty(rawmovieinds_onto_rescaled(firstnotnan))
+        temp=linspace(rawframestart,movieframeinds_raw(end),length(rawmovieinds_onto_rescaled)-firstnan+2);
+        rawmovieinds_onto_rescaled(firstnan:length(rawmovieinds_onto_rescaled))=temp(2:end);
+        break
+    end
+    temp=linspace(rawframestart,rawmovieinds_onto_rescaled(firstnotnan),firstnotnan-firstnan+2);
+    rawmovieinds_onto_rescaled(firstnan:firstnotnan-1)=temp(2:end-1);
+    % Increment
+    firstnan=find(isnan(rawmovieinds_onto_rescaled),1,'first');
+    rawframestart=rawmovieinds_onto_rescaled(firstnan-1);
+    temp=rawmovieinds_onto_rescaled;
+    temp(1:firstnan)=nan;
+    firstnotnan=find(~isnan(temp),1,'first');
+    safety_counter=safety_counter+1;
+end
+aligned.movieframeinds=rawmovieinds_onto_rescaled;
 
 % Plot results
 figure();
@@ -228,6 +302,14 @@ plot(aligned.movieframeinds.*(1/moviefps),'Color','b');
 xlabel('Times from movie');
 set(currha,'XTickLabel','');
 % set(currha,'YTickLabel','');
+end
+
+function X = naninterp(X) 
+
+% Interpolate over NaNs 
+X(isnan(X)) = interp1(find(~isnan(X)), X(~isnan(X)), find(isnan(X)), 'cubic'); 
+return 
+
 end
 
 function outsignal=alignLikeDistractor(signal,scaleThisSignal,decind,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros,scaleBy,resampFac)

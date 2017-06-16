@@ -7,7 +7,7 @@ cue=data.(nameOfCue);
 
 [pks,locs]=findpeaks(cue);
 % cueInds=find(cue>0.5);
-cueInds=locs(pks>0.2);
+cueInds=locs(pks>0.5);
 cueIndITIs=diff(cueInds);
 smallestTrial=min(cueIndITIs(cueIndITIs>10));
 
@@ -25,13 +25,6 @@ reach_wout_pellet=data.pelletmissingreach_reachStarts;
 timesFromArduino=data.timesfromarduino; % in ms
 timesFromArduino=timesFromArduino./1000; % in seconds
 movieframeinds=data.movieframeinds;
-
-% Turn pellet presented into events
-sigmax=max(max(pelletPresented));
-sigthresh=sigmax/2;
-temp=zeros(size(pelletPresented));
-temp(pelletPresented>=sigthresh)=1;
-pelletPresented=temp;
 
 % Trial-by-trial, tbt
 cue_tbt=nan(length(cueInds),max(cueIndITIs));
@@ -199,6 +192,7 @@ miss_outline='c';
 nopellet_outline=[0.8 0.8 0.8];
 nopellet_color=[0.8 0.8 0.8];
 wheel_turns_color='k';
+wheel_turns_outline=[1 1 1];
 
 event_thresh=0.5;
 
@@ -221,10 +215,10 @@ for i=plot_cues
 %     for j=1:length(event_ind)
 %         scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],reach_color,'filled');
 %     end
-    % Plot wheel begins to turn events
-    event_ind=find(pelletPresented_tbt(i,:)>event_thresh);
+% Plot success events
+    event_ind=find(success_tbt(i,:)>event_thresh);
     for j=1:length(event_ind)
-        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],wheel_turns_color,'filled');
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],success_color,'filled');
     end
     % Plot success events
     event_ind=find(success_tbt(i,:)>event_thresh);
