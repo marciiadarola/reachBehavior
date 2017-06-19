@@ -22,7 +22,7 @@ function varargout = findReaches_allMovie(varargin)
 
 % Edit the above text to modify the response to help findReaches_allMovie
 
-% Last Modified by GUIDE v2.5 13-Jun-2017 16:04:03
+% Last Modified by GUIDE v2.5 19-Jun-2017 16:44:33
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -65,7 +65,7 @@ n_consec=1;
 frames_before_firstReachFrame=30;
 frames_after_firstReachFrame=50;
 movie_fps=30;
-nFramesBetweenReaches=10;
+nFramesBetweenReaches=5;
 % sizeoneback=100;
 sizeoneback=300;
 discardFirstNFrames=554;
@@ -89,6 +89,7 @@ handles.pelletTime=[];
 handles.atePellet=[];
 handles.eatTime=[];
 handles.reachIsDone=[];
+handles.logReachN=[];
 handles.curr_start_done=[];
 handles.curr_pellet_done=[];
 handles.curr_eat_done=[]; 
@@ -110,14 +111,9 @@ handles.perchRegimeVals=[];
 handles.pelletRegimeVals=[];
 handles.pelletStopVals=[];
 handles.addIn=0;
-handles.reachStarts_belongToReach=[];
-handles.pelletTouched_belongToReach=[];
-handles.pelletTime_belongToReach=[];
-handles.atePellet_belongToReach=[];
-handles.eatTime_belongToReach=[];
 handles.showedMoreVideo=0;
-handles.pelletIsMissing=0;
-handles.pelletPresent=[];
+handles.pelletMissing=[];
+handles.pawStartsOnWheel=[];
 handles.fps_reach=fps_reach;
 handles.fps_noreach=fps_noreach;
 handles.changeBetweenFrames=[];
@@ -496,7 +492,11 @@ else
     handles.perchRegimeVals=perch.perchRegimeVals;
     handles.pelletRegimeVals=perch.pelletRegimeVals; 
     handles.pelletStopVals=perch.pelletStopVals;
-    handles.changeBetweenFrames=perch.changeBetweenFrames;
+    if length(size(perch.changeBetweenFrames))==3
+        handles.changeBetweenFrames=[reshape(perch.changeBetweenFrames,1,size(perch.changeBetweenFrames,3)) 0];
+    else
+        handles.changeBetweenFrames=perch.changeBetweenFrames;
+    end    
     handles.perc10_change=perch.perc10_change;
 end
 
@@ -543,11 +543,11 @@ handles.pelletTouched=[];
 handles.pelletTime=[];
 handles.atePellet=[];
 handles.eatTime=[];
+handles.logReachN=[];
 handles.reachIsDone=false;
 handles.curr_start_done=false;
 handles.curr_pellet_done=false;
 handles.curr_eat_done=false; 
-handles.reachN=1;
 handles.allframes=allframes;
 handles.frames_before_firstReachFrame=frames_before_firstReachFrame;
 handles.frames_after_firstReachFrame=frames_after_firstReachFrame;
@@ -557,7 +557,7 @@ handles.didReachForThisChunk=didReachForThisChunk;
 handles.movieChunk=movieChunk;
 handles.startsAtFrame=startsAtFrame;
 handles.framesPerChunk=framesPerChunk;
-handles.allReachesTally=0;
+handles.allReachesTally=1;
 handles.EOF=EOF;
 handles.startedOver=[];
 handles.sizeOfLastChunk=[];
@@ -567,10 +567,6 @@ handles.isin2=isin2;
 handles.lookedAtFrame=[];
 handles.computerThinksNoReach=0;
 handles.summedIntensity=[];
-handles.curr_atePellet=nan;
-handles.curr_eatTime=nan;
-handles.curr_atePellet_belongToReach=nan;
-handles.curr_eatTime_belongToReach=nan;
 
 % Find reaches in current movie chunk, then move to next movie chunk, etc.
 disp('Find the frame associated with each of the following events for this reach and press matching button while movie is stopped at that frame.'); 
@@ -596,16 +592,15 @@ if isempty(reachingStretch)
     lastFrameDisplayed=startsAtFrame(end-1)+endInd-1;
     firstFrameDisplayed=startsAtFrame(end-1)+startInd-1;
 else
-    reachN=1;
-    if reachingStretch(reachN)-frames_before_firstReachFrame<1
+    if reachingStretch(1)-frames_before_firstReachFrame<1
         startInd=1;
     else
-        startInd=reachingStretch(reachN)-frames_before_firstReachFrame;
+        startInd=reachingStretch(1)-frames_before_firstReachFrame;
     end
-    if reachingStretch(reachN)+frames_after_firstReachFrame>size(allframes,3)
+    if reachingStretch(1)+frames_after_firstReachFrame>size(allframes,3)
         endInd=size(allframes,3);
     else
-        endInd=reachingStretch(reachN)+frames_after_firstReachFrame;
+        endInd=reachingStretch(1)+frames_after_firstReachFrame;
     end
 %     fig=implay(allframes(:,:,startInd:endInd),fps_reach); % Play movie slowly if reach may be present
     % Play from beginning so user sees all frames
@@ -624,6 +619,7 @@ handles.fig=fig;
 handles.reachingStretch=reachingStretch;
 handles.lastFrameDisplayed=lastFrameDisplayed;
 handles.firstFrameDisplayed=firstFrameDisplayed;
+handles.reach=createReach(handles.allReachesTally);
 
 % Update handles structure
 guidata(hObject, handles);
@@ -675,14 +671,11 @@ savehandles.eatRegimeVals=handles.eatRegimeVals;
 savehandles.perchRegimeVals=handles.perchRegimeVals;
 savehandles.pelletRegimeVals=handles.pelletRegimeVals;
 savehandles.pelletStopVals=handles.pelletStopVals;
-savehandles.pelletPresent=handles.pelletPresent;
+savehandles.pelletMissing=handles.pelletMissing;
+savehandles.pawStartsOnWheel=handles.pawStartsOnWheel;
 savehandles.lookedAtFrame=handles.lookedAtFrame;
 savehandles.perc10_change=handles.perc10_change;
-savehandles.reachStarts_belongToReach=handles.reachStarts_belongToReach;
-savehandles.pelletTouched_belongToReach=handles.pelletTouched_belongToReach;
-savehandles.pelletTime_belongToReach=handles.pelletTime_belongToReach;
-savehandles.atePellet_belongToReach=handles.atePellet_belongToReach;
-savehandles.eatTime_belongToReach=handles.eatTime_belongToReach;
+savehandles.logReachN=handles.logReachN;
 
 endoffname=handles.endoffname;
 filename=handles.filename;
@@ -819,7 +812,6 @@ movieChunk=handles.movieChunk;
 
 % Find new candidate reach frames
 [reachingStretch,summedIntensity]=findCurrentReaches(allframes,handles.useAsThresh,handles.n_consec,handles.isin,handles.isin3,handles.isin4,handles.perch_pellet_delay_ind,handles.perc10_change);
-reachN=1;
 
 % Check if there is any candidate reach in this movie chunk
 if isempty(reachingStretch)
@@ -835,7 +827,19 @@ handles.videoFReader=videoFReader;
 handles.startsAtFrame=startsAtFrame;
 handles.movieChunk=movieChunk;
 handles.reachingStretch=reachingStretch;
-handles.reachN=reachN;
+
+function handles=logReach(handles)
+
+reach=handles.reach;
+handles.atePellet=[handles.atePellet reach.atePellet];
+handles.eatTime=[handles.eatTime reach.eatTime];
+handles.pelletTouched=[handles.pelletTouched reach.pelletTouched];
+handles.pelletTime=[handles.pelletTime reach.pelletTime];
+handles.reachStarts=[handles.reachStarts reach.reachStarts];
+handles.pawStartsOnWheel=[handles.pawStartsOnWheel reach.pawStartsOnWheel];
+handles.logReachN=[handles.logReachN reach.reachN];
+handles.pelletMissing=[handles.pelletMissing reach.pelletIsMissing];
+
 
 function handles=updateReach(handles)
 
@@ -844,22 +848,20 @@ if handles.addIn==0
 
     % Increment total reaches
     handles.allReachesTally=handles.allReachesTally+1;
+    % Increment reach detected count
+    set(handles.reachTallyBox,'String',['Reach ' num2str(handles.allReachesTally)]);
     
-    % Log whether pellet was present
-    handles.pelletPresent=[handles.pelletPresent handles.pelletIsMissing];
-    % Reset pellet present to default
-    handles.pelletIsMissing=0;
+    % Log reach
+    handles=logReach(handles);
     
+    % Reset reach
+    handles.reach=createReach(handles.allReachesTally);
 end
-handles.curr_eat_done=false;
-handles.curr_pellet_done=false;
-handles.curr_start_done=false;
 
 % Display next reach movie
 
 % Get variables
 reachingStretch=handles.reachingStretch;
-reachN=handles.reachN;
 allframes=handles.allframes;
 frames_before_firstReachFrame=handles.frames_before_firstReachFrame;
 frames_after_firstReachFrame=handles.frames_after_firstReachFrame;
@@ -900,9 +902,11 @@ end
 nFramesBetweenReaches=handles.nFramesBetweenReaches;
 timeOfLastEat=handles.eatTime(end);
 timeOfLastPellet=handles.pelletTime(end);
-loseAllReachesBefore=max([timeOfLastEat-startsAtFrame(end-1)+1 timeOfLastPellet-startsAtFrame(end-1)+1]);
+% loseAllReachesBefore=max([timeOfLastEat-startsAtFrame(end-1)+1 timeOfLastPellet-startsAtFrame(end-1)+1]);
+loseAllReachesBefore=lastFrameDisplayed-startsAtFrame(end-1)+2;
 if isempty(reachingStretch)
-    loseAllReachesBefore=max([timeOfLastEat-startsAtFrame(end-1)+1 timeOfLastPellet-startsAtFrame(end-1)+1]);
+    loseAllReachesBefore=lastFrameDisplayed-startsAtFrame(end-1)+2;
+%     loseAllReachesBefore=max([timeOfLastEat-startsAtFrame(end-1)+1 timeOfLastPellet-startsAtFrame(end-1)+1]);
 elseif handles.addIn==0
     % Note that reachingStretch is an index into allframes
     % first index of allframes is startsAtFrame(end-1) wrt whole movie
@@ -911,18 +915,16 @@ elseif handles.addIn==0
         % so skip all the way to end of this movie frame
         loseAllReachesBefore=lastFrameDisplayed-startsAtFrame(end-1)+2;
     elseif ~isnan(timeOfLastEat) || ~isnan(timeOfLastPellet)
-        loseAllReachesBefore=max([timeOfLastEat-startsAtFrame(end-1)+1 timeOfLastPellet-startsAtFrame(end-1)+1 reachingStretch(reachN)+nFramesBetweenReaches]);
+        loseAllReachesBefore=max([timeOfLastEat-startsAtFrame(end-1)+1 timeOfLastPellet-startsAtFrame(end-1)+1 reachingStretch(1)+nFramesBetweenReaches]);
     else
-        loseAllReachesBefore=reachingStretch(reachN)+nFramesBetweenReaches;
+        loseAllReachesBefore=reachingStretch(1)+nFramesBetweenReaches;
     end
-    reachingStretch=reachingStretch(reachingStretch>loseAllReachesBefore);
-    handles.reachingStretch=reachingStretch;
-    reachN=1;
-    handles.reachN=reachN;
 end
 if isnan(handles.atePellet(end)) % Last movie frame was a "no reach"
     loseAllReachesBefore=lastFrameDisplayed-startsAtFrame(end-1)+2;
 end
+reachingStretch=reachingStretch(reachingStretch>loseAllReachesBefore);
+handles.reachingStretch=reachingStretch;
 
 % If have reached end of this movie chunk, read next movie segment
 getMoreMovie=0;
@@ -947,7 +949,6 @@ end
 
 allframes=handles.allframes;
 reachingStretch=handles.reachingStretch;
-reachN=handles.reachN;
 startsAtFrame=handles.startsAtFrame;
 
 close(handles.fig);
@@ -959,21 +960,21 @@ if handles.addIn==0
     if isempty(reachingStretch)
         startInd=loseAllReachesBefore+1;
         handles.computerThinksNoReach=1;
-    elseif reachingStretch(reachN)-frames_before_firstReachFrame<1
+    elseif reachingStretch(1)-frames_before_firstReachFrame<1
         startInd=1;
         handles.computerThinksNoReach=0;
     else
-        startInd=reachingStretch(reachN)-frames_before_firstReachFrame;
+        startInd=reachingStretch(1)-frames_before_firstReachFrame;
         handles.computerThinksNoReach=0;
     end
     
     endInd=size(allframes,3);
     if isempty(reachingStretch)
         endInd=size(allframes,3);
-    elseif reachingStretch(reachN)+frames_after_firstReachFrame>size(allframes,3)
+    elseif reachingStretch(1)+frames_after_firstReachFrame>size(allframes,3)
         endInd=size(allframes,3);
     else
-        endInd=reachingStretch(reachN)+frames_after_firstReachFrame;
+        endInd=reachingStretch(1)+frames_after_firstReachFrame;
     end
     
     % Be sure that user sees all frames
@@ -1043,14 +1044,10 @@ set(handles.text4,'ForegroundColor','r');
 set(handles.text5,'String','Waiting');
 set(handles.text5,'ForegroundColor','r');
 
-% Increment reach detected count
-set(handles.reachTallyBox,'String',['Reach ' num2str(handles.allReachesTally+1)]);
-
 % Reset reach progress variables
-handles.reachIsDone=false;
-handles.curr_start_done=false;
-handles.curr_pellet_done=false;
-handles.curr_eat_done=false;
+% reset to beginning of coding this reach
+handles.reach=resetReachState(handles.reach);
+handles.reach=resetReachProgress(handles.reach);
 
 function [reachingStretch,summedIntensity]=findCurrentReaches(allframes,useAsThresh,n_consec,isin,isin3,isin4,perch_pellet_delay_ind,perc10_change)
 
@@ -1190,20 +1187,19 @@ function startbutton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % If already hit this button, ignore second press
-if handles.curr_start_done==true
+if handles.reach.curr_start_done==true
     return
 end
 
 % Get current frame number in movie player
 firstFrameDisplayed=handles.firstFrameDisplayed;
 currFrame=handles.fig.data.Controls.CurrentFrame;
-handles.reachStarts=[handles.reachStarts firstFrameDisplayed+currFrame-1];
-handles.reachStarts_belongToReach=[handles.reachStarts_belongToReach handles.allReachesTally];
+handles.reach=putFrameNumber(handles.reach,firstFrameDisplayed+currFrame-1,hObject.Tag);
 
 % Set start button to done
 set(handles.text3,'String','Done');
 set(handles.text3,'ForegroundColor','g');
-handles.curr_start_done=true;
+handles.reach=updateReachProgress(handles.reach,hObject.Tag);
 
 % Check whether this reach is done
 if reachIsDone(handles)==true
@@ -1418,6 +1414,7 @@ reach.pelletTouched=nan;
 reach.pelletTime=nan;
 reach.reachStarts=nan;
 reach.pelletIsMissing=0;
+reach.pawStartsOnWheel=0;
 
 
 function reach=createReach(reachN)
@@ -1430,6 +1427,10 @@ reach.pelletTime=nan;
 reach.reachStarts=nan;
 reach.pelletIsMissing=0;
 reach.reachN=reachN;
+reach.pawStartsOnWheel=0;
+reach.curr_eat_done=false;
+reach.curr_pellet_done=false;
+reach.curr_start_done=false;
 
 
 % --- Executes on button press in morevideobutton.
@@ -1455,7 +1456,6 @@ more_framesAfterReach=100;
 
 allframes=handles.allframes;
 reachingStretch=handles.reachingStretch;
-reachN=handles.reachN;
 sizeoneback=handles.sizeoneback;
 oneback=handles.oneback;
 startsAtFrame=handles.startsAtFrame;
@@ -1520,7 +1520,7 @@ end
 if handles.addIn==0
     close(handles.fig);
     if ~isempty(reachingStretch)
-        disp(reachingStretch(reachN));
+        disp(reachingStretch(1));
     end
     fig=implay(allframes(:,:,startInd_forMovie:endInd_forMovie),50);
     handles.addIn=0;
@@ -1582,5 +1582,16 @@ function pelletmissingbutton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 handles.reach=updateReachState(handles.reach,'pelletIsMissing',1);
+
+guidata(hObject, handles);
+
+
+% --- Executes on button press in pawonwheel.
+function pawonwheel_Callback(hObject, eventdata, handles)
+% hObject    handle to pawonwheel (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+handles.reach=updateReachState(handles.reach,'pawStartsOnWheel',1);
 
 guidata(hObject, handles);
