@@ -206,6 +206,8 @@ else
     startsAtFrame=[startsAtFrame n+1];
 end
 movieChunk=[movieChunk movieChunk(end)+1];
+figure();
+implay(allframes,30);
 % save([outdir 'movie_' filename(parsedFilenameStart(end)+1:parsedFilenameEnd(1)) '_frame' num2str(startsAtFrame(end-1)) '.mat'],'allframes');
 % handles.oneback=allframes(:,:,end-sizeoneback+1:end);
 
@@ -389,6 +391,8 @@ if isempty(perchdata)
                 end
                 startsAtFrame=[startsAtFrame startsAtFrame(end)+n];
                 movieChunk=[movieChunk movieChunk(end)+1];
+                figure();
+                implay(allframes,30);
 %                 save([handles.filename_foroutput num2str(startsAtFrame(end-1)) '.mat'],'allframes');
 %                 handles.oneback=allframes(:,:,end-sizeoneback+1:end);
                 
@@ -749,6 +753,8 @@ end
 if EOF==true
     finishFunction(handles);
 end
+figure();
+implay(allframes,30);
 
 % handles.oneback=allframes(:,:,end-sizeoneback+1:end);
 % Get LED zone intensity over all frames
@@ -1017,7 +1023,7 @@ if handles.addIn==0
     firstFrameDisplayed=startsAtFrame(end-1)+startInd-1;
 else
     % add in reach from former movie chunk
-    more_framesAfterReach=50;
+    more_framesAfterReach=100;
     fig=implay(cat(3,handles.whatToAddIn,allframes(:,:,1:more_framesAfterReach)),handles.fps_reach);
     firstFrameDisplayed=(startsAtFrame(end-1)+1-1)-size(handles.whatToAddIn,3)+1;
     lastFrameDisplayed=startsAtFrame(end-1)+more_framesAfterReach;
@@ -1456,8 +1462,8 @@ end
 handles.reach=resetReachState(handles.reach);
 handles.reach=resetReachProgress(handles.reach);
 
-more_framesBeforeReach=50;
-more_framesAfterReach=50;
+more_framesBeforeReach=100;
+more_framesAfterReach=100;
 
 allframes=handles.allframes;
 reachingStretch=handles.reachingStretch;
