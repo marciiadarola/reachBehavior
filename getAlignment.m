@@ -137,15 +137,15 @@ for i=1:length(segmentInds)-1
     elseif i==length(segmentInds)-1
         % alignment easily messed up at end -- just use delay from previous
         % segment
-        startAt=floor(0.25*length(temp1));
-        endAt=length(temp1);
-        temp1=temp1(startAt:endAt);
-        temp2=temp2(startAt:endAt);
         if segmentDelays(i-1)>0
             temp1=[zeros(1,segmentDelays(i-1)) temp1];
         else
             temp2=[zeros(1,-segmentDelays(i-1)) temp2];
         end
+        startAt=floor(0.25*length(temp1));
+        endAt=length(temp1);
+        temp1=temp1(startAt:endAt);
+        temp2=temp2(startAt:endAt);
         segmentDelays(i)=segmentDelays(i-1);
     else
         startAt=floor(0.25*length(temp1));

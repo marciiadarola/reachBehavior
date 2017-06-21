@@ -48,8 +48,9 @@ movie_times=decimate(movie_times,movie_dec);
 maxDelay=length(arduino_LED)-length(movie_LED);
 minscale=1; % scale movie wrt arduino time
 maxscale=2.5;
-tryinc=0.05;
-% tryinc=0.025;
+% tryinc=0.05;
+tryinc=0.02;
+% tryinc=0.01;
 tryscales=minscale:tryinc:maxscale;
 sumdiffs=nan(length(tryscales),maxDelay);
 backup_movie_LED=movie_LED;
@@ -100,88 +101,67 @@ plot(best_arduino,'Color','r');
 
 % Then re-align sub-sections of movie to arduino code
 alignSegments=750; % in number of indices
-[mov_distractor,arduino_distractor]=findGoodAlignment(alignSegments,best_movie,best_arduino,0);
+% alignSegments=1000; % in number of indices
+mov_distractor=[];
+arduino_distractor=[];
+firstInd=find(~isnan(best_movie) & ~isnan(best_arduino),1,'first');
+lastBoth=min([find(~isnan(best_movie),1,'last') find(~isnan(best_arduino),1,'last')]);
+segmentInds=firstInd:floor(alignSegments/2):lastBoth;
+mov_distractor=[mov_distractor nan(1,firstInd-1)];
+arduino_distractor=[arduino_distractor nan(1,firstInd-1)];
+segmentDelays=nan(1,length(segmentInds));
+addZeros_movie=nan(1,length(segmentInds));
+addZeros_arduino=nan(1,length(segmentInds));
+moveChunks=nan(length(segmentInds),2);
+for i=1:length(segmentInds)-1
+    currInd=segmentInds(i);
+    [temp1,temp2,D]=alignsignals(best_movie(currInd:currInd+alignSegments-1),best_arduino(currInd:currInd+alignSegments-1));
+    segmentDelays(i)=D;
+    if length(temp1)>length(temp2)
+        addZeros_arduino(i)=length(temp1)-length(temp2);
+        temp2=[temp2 zeros(1,length(temp1)-length(temp2))];
+        addZeros_movie(i)=0;
+    elseif length(temp2)>length(temp1)
+        addZeros_movie(i)=length(temp2)-length(temp1);
+        temp1=[temp1 zeros(1,length(temp2)-length(temp1))];
+        addZeros_arduino(i)=0;
+    else
+        addZeros_movie(i)=0;
+        addZeros_arduino(i)=0;
+    end
+    if i==1
+        startAt=1;
+        endAt=floor(0.75*length(temp1));
+        temp1=temp1(1:endAt);
+        temp2=temp2(1:endAt);
+    elseif i==length(segmentInds)-1
+        % alignment easily messed up at end -- just use delay from previous
+        % segment
+        if segmentDelays(i-1)>0
+            temp1=[zeros(1,segmentDelays(i-1)) temp1];
+        else
+            temp2=[zeros(1,-segmentDelays(i-1)) temp2];
+        end
+        startAt=floor(0.25*length(temp1));
+        endAt=length(temp1);
+        temp1=temp1(startAt:endAt);
+        temp2=temp2(startAt:endAt);
+        segmentDelays(i)=segmentDelays(i-1);
+    else
+        startAt=floor(0.25*length(temp1));
+        endAt=floor(0.75*length(temp1));
+        temp1=temp1(startAt:endAt);
+        temp2=temp2(startAt:endAt);
+    end
+    moveChunks(i,1)=startAt;
+    moveChunks(i,2)=endAt;
+    mov_distractor=[mov_distractor temp1];
+    arduino_distractor=[arduino_distractor temp2];
+end
 figure();
 plot(mov_distractor,'Color','b');
 hold on;
 plot(arduino_distractor,'Color','r');
-
-
-% alignSegments=1250; % in number of indices
-% alignSegments=2000; % in number of indices
-% mov_distractor=[];
-% arduino_distractor=[];
-% firstInd=find(~isnan(best_movie) & ~isnan(best_arduino),1,'first');
-% lastBoth=min([find(~isnan(best_movie),1,'last') find(~isnan(best_arduino),1,'last')]);
-% segmentInds=firstInd:alignSegments:lastBoth;
-% mov_distractor=[mov_distractor nan(1,firstInd-1)];
-% arduino_distractor=[arduino_distractor nan(1,firstInd-1)];
-% segmentDelays=nan(1,length(segmentInds));
-% addZeros_movie=nan(1,length(segmentInds));
-% addZeros_arduino=nan(1,length(segmentInds));
-% for i=1:length(segmentInds)-1
-%     currInd=segmentInds(i);
-%     [temp1,temp2,D]=alignsignals(best_movie(currInd:currInd+alignSegments-1),best_arduino(currInd:currInd+alignSegments-1));
-%     segmentDelays(i)=D;
-%     if length(temp1)>length(temp2)
-%         addZeros_arduino(i)=length(temp1)-length(temp2);
-%         temp2=[temp2 zeros(1,length(temp1)-length(temp2))];
-%         addZeros_movie(i)=0;
-%     elseif length(temp2)>length(temp1)
-%         addZeros_movie(i)=length(temp2)-length(temp1);
-%         temp1=[temp1 zeros(1,length(temp2)-length(temp1))];
-%         addZeros_arduino(i)=0;
-%     else
-%         addZeros_movie(i)=0;
-%         addZeros_arduino(i)=0;
-%     end
-%     mov_distractor=[mov_distractor temp1];
-%     arduino_distractor=[arduino_distractor temp2];
-% end
-% figure();
-% plot(mov_distractor,'Color','b');
-% hold on;
-% plot(arduino_distractor,'Color','r');
-% aligned.movie_distractor=mov_distractor;
-% aligned.arduino_distractor=arduino_distractor;
-
-% % Then re-align sub-sections of movie to arduino code
-% alignSegments=750; % in number of indices
-% % alignSegments=1250; % in number of indices
-% % alignSegments=2000; % in number of indices
-% mov_distractor=[];
-% arduino_distractor=[];
-% firstInd=find(~isnan(best_movie) & ~isnan(best_arduino),1,'first');
-% lastBoth=min([find(~isnan(best_movie),1,'last') find(~isnan(best_arduino),1,'last')]);
-% segmentInds=firstInd+floor(alignSegments/2):alignSegments:lastBoth;
-% mov_distractor=[mov_distractor nan(1,firstInd-1)];
-% arduino_distractor=[arduino_distractor nan(1,firstInd-1)];
-% segmentDelays=nan(1,length(segmentInds));
-% addZeros_movie=nan(1,length(segmentInds));
-% addZeros_arduino=nan(1,length(segmentInds));
-% for i=1:length(segmentInds)-1
-%     currInd=segmentInds(i);
-%     [temp1,temp2,D]=alignsignals(best_movie(currInd:currInd+alignSegments-1),best_arduino(currInd:currInd+alignSegments-1));
-%     segmentDelays(i)=D;
-%     if length(temp1)>length(temp2)
-%         addZeros_arduino(i)=length(temp1)-length(temp2);
-%         temp2=[temp2 zeros(1,length(temp1)-length(temp2))];
-%         addZeros_movie(i)=0;
-%     elseif length(temp2)>length(temp1)
-%         addZeros_movie(i)=length(temp2)-length(temp1);
-%         temp1=[temp1 zeros(1,length(temp2)-length(temp1))];
-%         addZeros_arduino(i)=0;
-%     else
-%         addZeros_movie(i)=0;
-%         addZeros_arduino(i)=0;
-%     end
-%     mov_distractor=[mov_distractor temp1];
-%     arduino_distractor=[arduino_distractor temp2];
-% end
-% figure();
-% plot(mov_distractor,'Color','b');
-% hold on;
-% plot(arduino_distractor,'Color','r');
 aligned.movie_distractor=mov_distractor;
 aligned.arduino_distractor=arduino_distractor;
 
@@ -200,39 +180,39 @@ end
 temp=out.cueOn';
 temp=temp(1:end);
 cue=temp(~isnan(temptimes));
-cue=alignLikeDistractor(cue,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac); 
+cue=alignLikeDistractor(cue,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
 aligned.cue=cue;
 temp=out.pelletLoaded';
 temp=temp(1:end);
 pelletLoaded=temp(~isnan(temptimes));
-pelletLoaded=alignLikeDistractor(pelletLoaded,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac); 
+pelletLoaded=alignLikeDistractor(pelletLoaded,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
 aligned.pelletLoaded=pelletLoaded;
 temp=out.pelletPresented';
 temp=temp(1:end);
 pelletPresented=temp(~isnan(temptimes));
-pelletPresented=alignLikeDistractor(pelletPresented,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac); 
+pelletPresented=alignLikeDistractor(pelletPresented,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
 aligned.pelletPresented=pelletPresented;
 temp=out.encoderTrialVals';
 temp=temp(1:end);
 encoder=temp(~isnan(temptimes));
-encoder=alignLikeDistractor(encoder,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac); 
+encoder=alignLikeDistractor(encoder,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
 aligned.encoder=encoder;
 temp=out.nDropsPerTrial';
 temp=temp(1:end);
 drops=temp(~isnan(temptimes));
-drops=alignLikeDistractor(drops,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac); 
+drops=alignLikeDistractor(drops,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
 aligned.drops=drops;
 temp=out.nMissesPerTrial';
 temp=temp(1:end);
 misses=temp(~isnan(temptimes));
-misses=alignLikeDistractor(misses,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac); 
+misses=alignLikeDistractor(misses,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
 aligned.misses=misses;
-timesfromarduino=alignLikeDistractor(double(arduino_times),0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac); 
+timesfromarduino=alignLikeDistractor(double(arduino_times),0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
 aligned.timesfromarduino=timesfromarduino;
 % From movie
 temp=1:length(handles.LEDvals);
 movieframeinds_raw=double(handles.discardFirstNFrames+temp);
-movieframeinds=alignLikeDistractor(movieframeinds_raw,1,movie_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_movie,scaleBy,resampFac);
+movieframeinds=alignLikeDistractor(movieframeinds_raw,1,movie_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_movie,scaleBy,resampFac,moveChunks);
 
 % Re-align movie frame inds based on alignment to non-interped LED vals
 maxNFramesForLEDtoChange=2;
@@ -364,49 +344,6 @@ set(currha,'XTickLabel','');
 % set(currha,'YTickLabel','');
 end
 
-function [mov_distractor,arduino_distractor]=findGoodAlignment(alignSegments,best_movie,best_arduino)
-
-% Then re-align sub-sections of movie to arduino code
-% alignSegments in number of indices
-mov_distractor=[];
-arduino_distractor=[];
-firstInd=find(~isnan(best_movie) & ~isnan(best_arduino),1,'first');
-lastBoth=min([find(~isnan(best_movie),1,'last') find(~isnan(best_arduino),1,'last')]);
-segmentInds=firstInd:floor(alignSegments/2):lastBoth;
-mov_distractor=[mov_distractor nan(1,firstInd-1)];
-arduino_distractor=[arduino_distractor nan(1,firstInd-1)];
-segmentDelays=nan(1,length(segmentInds));
-addZeros_movie=nan(1,length(segmentInds));
-addZeros_arduino=nan(1,length(segmentInds));
-for i=1:length(segmentInds)-1
-    currInd=segmentInds(i);
-    [temp1,temp2,D]=alignsignals(best_movie(currInd:currInd+alignSegments-1),best_arduino(currInd:currInd+alignSegments-1));
-    segmentDelays(i)=D;
-    if length(temp1)>length(temp2)
-        addZeros_arduino(i)=length(temp1)-length(temp2);
-        temp2=[temp2 zeros(1,length(temp1)-length(temp2))];
-        addZeros_movie(i)=0;
-    elseif length(temp2)>length(temp1)
-        addZeros_movie(i)=length(temp2)-length(temp1);
-        temp1=[temp1 zeros(1,length(temp2)-length(temp1))];
-        addZeros_arduino(i)=0;
-    else
-        addZeros_movie(i)=0;
-        addZeros_arduino(i)=0;
-    end
-    if i==1
-        endAt=floor(0.75*length(temp1));
-        temp1=temp1(1:endAt);
-        temp2=temp2(1:endAt);
-    else
-        startAt=floor(0.25*length(temp1));
-        endAt=floor(0.75*length(temp1));
-    mov_distractor=[mov_distractor temp1];
-    arduino_distractor=[arduino_distractor temp2];
-end
-
-end
-
 function X = naninterp(X) 
 
 % Interpolate over NaNs 
@@ -415,7 +352,7 @@ return
 
 end
 
-function outsignal=alignLikeDistractor(signal,scaleThisSignal,decind,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros,scaleBy,resampFac)
+function outsignal=alignLikeDistractor(signal,scaleThisSignal,decind,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros,scaleBy,resampFac,moveChunks)
 
 % If like movie, scaleThisSignal=1
 % else scaleThisSignal=0
@@ -464,6 +401,7 @@ for i=1:length(segmentInds)-1
         end
     end
     currChunk=[currChunk nan(1,addZeros(i))];
+    currChunk=currChunk(moveChunks(i,1):moveChunks(i,2));
     outsignal=[outsignal currChunk];
 end
 
