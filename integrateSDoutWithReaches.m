@@ -16,7 +16,8 @@ reaches.atePellet=reaches.atePellet(isnotnaninds);
 reaches.eatTime=reaches.eatTime(isnotnaninds);
 reaches.pelletMissing=reaches.pelletMissing(isnotnaninds);
 % Flip pellet present because actually saved 1 if pellet MISSING
-reaches.pelletMissing=reaches.pelletMissing==0;
+reaches.pelletPresent=reaches.pelletMissing==0;
+reaches.pawStartsOnWheel=reaches.pawStartsOnWheel(isnotnaninds);
 
 % % Make sure reach time, then pellet time, then eat time all line up
 % take_reachStarts=nan(size(reaches.reachStarts));
@@ -48,16 +49,29 @@ alignment.reachStarts=restructureEvent(reaches.reachStarts, movframes);
 % End of reach
 alignment.reachEnds=restructureEvent(reaches.pelletTime, movframes);
 % Successful reach (mouse eats pellet) -- initiation of successful reach
-alignment.success_reachStarts=restructureEvent(reaches.reachStarts(reaches.atePellet==1 & reaches.pelletMissing==1), movframes);
+alignment.success_reachStarts=restructureEvent(reaches.reachStarts(reaches.atePellet==1 & reaches.pelletPresent==1 & reaches.pawStartsOnWheel==0), movframes);
 % Drop (paw touches pellet, but mouse drops pellet before eating it) --
 % initiation of reach
-alignment.drop_reachStarts=restructureEvent(reaches.reachStarts(reaches.pelletTouched==1 & reaches.atePellet==0 & reaches.pelletMissing==1), movframes);
+alignment.drop_reachStarts=restructureEvent(reaches.reachStarts(reaches.pelletTouched==1 & reaches.atePellet==0 & reaches.pelletPresent==1 & reaches.pawStartsOnWheel==0), movframes);
 % Miss (paw never touches pellet) -- initiation of reach
-alignment.miss_reachStarts=restructureEvent(reaches.reachStarts(reaches.pelletTouched==0 & reaches.pelletMissing==1), movframes);
+alignment.miss_reachStarts=restructureEvent(reaches.reachStarts(reaches.pelletTouched==0 & reaches.pelletPresent==1 & reaches.pawStartsOnWheel==0), movframes);
 % Reach despite no pellet -- initiation of reach
-alignment.pelletmissingreach_reachStarts=restructureEvent(reaches.reachStarts(reaches.pelletMissing==0), movframes);
+alignment.pelletmissingreach_reachStarts=restructureEvent(reaches.reachStarts(reaches.pelletPresent==0 & reaches.pawStartsOnWheel==0), movframes);
 % Eat time
-alignment.eating=restructureEvent(reaches.eatTime(reaches.atePellet==1), movframes);
+alignment.eating=restructureEvent(reaches.eatTime(reaches.atePellet==1 & reaches.pawStartsOnWheel==0), movframes);
+% Paw starts on wheel
+alignment.pawOnWheel=restructureEvent(reaches.reachStarts(reaches.pawStartsOnWheel==1), movframes);
+
+% Successful reach (mouse eats pellet) -- initiation of successful reach --
+% paw starts on wheel
+alignment.success_reachStarts_pawOnWheel=restructureEvent(reaches.reachStarts(reaches.atePellet==1 & reaches.pelletPresent==1 & reaches.pawStartsOnWheel==1), movframes);
+% Drop (paw touches pellet, but mouse drops pellet before eating it) --
+% initiation of reach -- paw starts on wheel
+alignment.drop_reachStarts_pawOnWheel=restructureEvent(reaches.reachStarts(reaches.pelletTouched==1 & reaches.atePellet==0 & reaches.pelletPresent==1 & reaches.pawStartsOnWheel==1), movframes);
+% Miss (paw never touches pellet) -- initiation of reach -- paw starts on
+% wheel
+alignment.miss_reachStarts_pawOnWheel=restructureEvent(reaches.reachStarts(reaches.pelletTouched==0 & reaches.pelletPresent==1 & reaches.pawStartsOnWheel==1), movframes);
+
 % Reach ongoing
 alignment.reach_ongoing=zeros(1,length(movframes));
 reachIsStarting=find(alignment.reachStarts>0.5);

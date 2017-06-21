@@ -26,9 +26,9 @@ timesFromArduino=data.timesfromarduino; % in ms
 timesFromArduino=timesFromArduino./1000; % in seconds
 movieframeinds=data.movieframeinds;
 paw_from_wheel=data.pawOnWheel;
-success_pawOnWheel=data.success_reachStarts_pawOnWheel;
-drop_pawOnWheel=data.drop_reachStarts_pawOnWheel;
-miss_pawOnWheel=data.miss_reachStarts_pawOnWheel;
+success_pawOnWheel=data.success_pawOnWheel;
+drop_pawOnWheel=data.drop_pawOnWheel;
+miss_pawOnWheel=data.miss_pawOnWheel;
 
 % Turn pellet presented into events
 sigmax=max(max(pelletPresented));
