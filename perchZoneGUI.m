@@ -63,9 +63,10 @@ zoneVertices=[];
 handles.output = hObject;
 
 slice=varargin{1};
+guititle=varargin{2};
 h=imagesc(slice);
 colormap gray
-set(h.Parent.Parent,'Name','Draw a polygon enclosing the perch zone on the image. Press "Done" after have defined vertices.')
+set(h.Parent.Parent,'Name',guititle)
 handles.h=h;
 handles.slice=slice;
 

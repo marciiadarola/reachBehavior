@@ -4,13 +4,13 @@ function aligned=getAlignment(out,moviefps,handles)
 % Whereas video is timed in frames per sec
 
 % Remove incomplete reach detections
-isnotnaninds=~isnan(mean([handles.reachStarts' handles.pelletTime' handles.eatTime' handles.pelletPresent'],2));
+isnotnaninds=~isnan(mean([handles.reachStarts' handles.pelletTime' handles.eatTime' handles.pelletMissing'],2));
 handles.reachStarts=handles.reachStarts(isnotnaninds);
 handles.pelletTouched=handles.pelletTouched(isnotnaninds);
 handles.pelletTime=handles.pelletTime(isnotnaninds);
 handles.atePellet=handles.atePellet(isnotnaninds);
 handles.eatTime=handles.eatTime(isnotnaninds);
-handles.pelletPresent=handles.pelletPresent(isnotnaninds);
+handles.pelletMissing=handles.pelletMissing(isnotnaninds);
 
 % Try to align based on distractor LED from movie and Arduino output
 temp_LED=handles.LEDvals;
@@ -137,6 +137,15 @@ aligned.arduino_distractor=arduino_distractor;
 
 % Align other signals in same fashion as LED distractor
 % From Arduino
+
+% Make cue ONLY the *start* of cue
+for i=1:size(out.cueOn,1)
+    temp=zeros(size(out.cueOn(i,:)));
+    temp(isnan(out.cueOn(i,:)))=nan;
+    temp(find(out.cueOn(i,:)>0.5,1,'first'))=1;
+    out.cueOn(i,:)=temp;
+end
+
 temp=out.cueOn';
 temp=temp(1:end);
 cue=temp(~isnan(temptimes));

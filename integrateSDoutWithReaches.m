@@ -14,9 +14,9 @@ reaches.pelletTouched=reaches.pelletTouched(isnotnaninds);
 reaches.pelletTime=reaches.pelletTime(isnotnaninds);
 reaches.atePellet=reaches.atePellet(isnotnaninds);
 reaches.eatTime=reaches.eatTime(isnotnaninds);
-reaches.pelletPresent=reaches.pelletPresent(isnotnaninds);
+reaches.pelletMissing=reaches.pelletMissing(isnotnaninds);
 % Flip pellet present because actually saved 1 if pellet MISSING
-reaches.pelletPresent=reaches.pelletPresent==0;
+reaches.pelletMissing=reaches.pelletMissing==0;
 
 % % Make sure reach time, then pellet time, then eat time all line up
 % take_reachStarts=nan(size(reaches.reachStarts));
@@ -48,14 +48,14 @@ alignment.reachStarts=restructureEvent(reaches.reachStarts, movframes);
 % End of reach
 alignment.reachEnds=restructureEvent(reaches.pelletTime, movframes);
 % Successful reach (mouse eats pellet) -- initiation of successful reach
-alignment.success_reachStarts=restructureEvent(reaches.reachStarts(reaches.atePellet==1 & reaches.pelletPresent==1), movframes);
+alignment.success_reachStarts=restructureEvent(reaches.reachStarts(reaches.atePellet==1 & reaches.pelletMissing==1), movframes);
 % Drop (paw touches pellet, but mouse drops pellet before eating it) --
 % initiation of reach
-alignment.drop_reachStarts=restructureEvent(reaches.reachStarts(reaches.pelletTouched==1 & reaches.atePellet==0 & reaches.pelletPresent==1), movframes);
+alignment.drop_reachStarts=restructureEvent(reaches.reachStarts(reaches.pelletTouched==1 & reaches.atePellet==0 & reaches.pelletMissing==1), movframes);
 % Miss (paw never touches pellet) -- initiation of reach
-alignment.miss_reachStarts=restructureEvent(reaches.reachStarts(reaches.pelletTouched==0 & reaches.pelletPresent==1), movframes);
+alignment.miss_reachStarts=restructureEvent(reaches.reachStarts(reaches.pelletTouched==0 & reaches.pelletMissing==1), movframes);
 % Reach despite no pellet -- initiation of reach
-alignment.pelletmissingreach_reachStarts=restructureEvent(reaches.reachStarts(reaches.pelletPresent==0), movframes);
+alignment.pelletmissingreach_reachStarts=restructureEvent(reaches.reachStarts(reaches.pelletMissing==0), movframes);
 % Eat time
 alignment.eating=restructureEvent(reaches.eatTime(reaches.atePellet==1), movframes);
 % Reach ongoing

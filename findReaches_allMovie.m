@@ -229,7 +229,7 @@ if isempty(perchdata)
     disp('Stopped at frame number');
     disp(currentFrameNumber);
     close(fig);
-    perchFig=perchZoneGUI(allframes(:,:,currentFrameNumber));
+    perchFig=perchZoneGUI(allframes(:,:,currentFrameNumber),'Draw a polygon enclosing the perch zone on the image. Press "Done" after have defined vertices.');
     disp('Press "enter" once have defined perch zone.');
     pause;
     perchVertices=zoneVertices;
@@ -243,7 +243,7 @@ if isempty(perchdata)
     close(perchFig);
     
     % Get distractor LED zone
-    LEDFig=perchZoneGUI(allframes(:,:,currentFrameNumber));
+    LEDFig=perchZoneGUI(allframes(:,:,currentFrameNumber),'Draw a polygon enclosing the distractor LED zone on the image. Press "Done" after have defined vertices.');
     disp('Press "enter" once have defined LED zone.');
     pause;
     LEDVertices=zoneVertices;
@@ -257,7 +257,7 @@ if isempty(perchdata)
     close(LEDFig);
     
     % Get pellet zone
-    pelletFig=perchZoneGUI(allframes(:,:,currentFrameNumber));
+    pelletFig=perchZoneGUI(allframes(:,:,currentFrameNumber),'Draw a polygon enclosing the area surrounding but NOT including the pellet. Press "Done" after have defined vertices.');
     disp('Press "enter" once have defined pellet zone.');
     pause;
     pelletVertices=zoneVertices;
@@ -271,7 +271,7 @@ if isempty(perchdata)
     close(pelletFig);
     
     % Get eat zone
-    eatFig=perchZoneGUI(allframes(:,:,currentFrameNumber));
+    eatFig=perchZoneGUI(allframes(:,:,currentFrameNumber),'Draw a polygon enclosing the region where mouse paws go when mouse eats. Press "Done" after have defined vertices.');
     disp('Press "enter" once have defined eating zone.');
     pause;
     eatVertices=zoneVertices;
@@ -285,7 +285,7 @@ if isempty(perchdata)
     close(eatFig);
     
     % Get actual pellet spot, once pellet is stopped
-    pelletStopFig=perchZoneGUI(allframes(:,:,currentFrameNumber));
+    pelletStopFig=perchZoneGUI(allframes(:,:,currentFrameNumber),'Draw a polygon enclosing the stopped pellet. Press "Done" after have defined vertices.');
     disp('Press "enter" once have defined pellet stopped zone.');
     pause;
     pelletStopVertices=zoneVertices;
@@ -1066,38 +1066,43 @@ changeBetweenFrames=nanmean(nanmean(diff(allframes,1,3),1),2);
 changeBetweenFrames=[reshape(changeBetweenFrames,1,size(changeBetweenFrames,3)) 0];
     
 all_summedIntensity=zeros(length(perch_pellet_delay_ind),length(pelletIntensity));
-for j=1:length(perch_pellet_delay_ind)
-    tempie2=[nanmean(eatIntensity)*ones(1,perch_pellet_delay_ind(j)+4) eatIntensity(1:end-(perch_pellet_delay_ind(j)+4))];
-    tempie=[nanmean(summedIntensity_perch)*ones(1,perch_pellet_delay_ind(j)) summedIntensity_perch(1:end-perch_pellet_delay_ind(j))];
-%     summedIntensity=pelletIntensity./tempie;
-    summedIntensity=10*pelletIntensity-tempie+(0.3*tempie2);
-    summedIntensity=-summedIntensity;
-    all_summedIntensity(j,:)=summedIntensity;
+if size(allframes,3)<handles.framesPerChunk
+    disp('Looks like movie is done. Enter at command line, then close all figures to end.');
+    pause;
+else
+    for j=1:length(perch_pellet_delay_ind)
+        tempie2=[nanmean(eatIntensity)*ones(1,perch_pellet_delay_ind(j)+4) eatIntensity(1:end-(perch_pellet_delay_ind(j)+4))];
+        tempie=[nanmean(summedIntensity_perch)*ones(1,perch_pellet_delay_ind(j)) summedIntensity_perch(1:end-perch_pellet_delay_ind(j))];
+        %     summedIntensity=pelletIntensity./tempie;
+        summedIntensity=10*pelletIntensity-tempie+(0.3*tempie2);
+        summedIntensity=-summedIntensity;
+        all_summedIntensity(j,:)=summedIntensity;
+    end
+    % summedIntensity=nanmean(all_summedIntensity,1);
+    summedIntensity=(nanmean(all_summedIntensity,1)-nanmean(nanmean(all_summedIntensity,1),2))+(100000*changeBetweenFrames);
+    
+    % for i=1:n
+    %     temp=intensityFromRGB(allframes(:,:,i));
+    %     summedIntensity(i)=sum(temp(isin));
+    % end
+    
+    
+    % reachFrames=summedIntensity<useAsThresh;
+    
+    % Get peaks only
+    [~,locs]=findpeaks(-summedIntensity);
+    locs=locs(summedIntensity(locs)<useAsThresh);
+    isReaching=zeros(size(summedIntensity));
+    isReaching(locs)=1;
+    reachFrames=isReaching;
+    
+    % Real reach should be at least n_consec consecutive reach frames
+    runningSum=zeros(size(reachFrames));
+    for i=1:n_consec
+        runningSum(1:end-(i-1))=runningSum(1:end-(i-1))+reachFrames(i:end);
+    end
+    reachingStretch=find(runningSum>=n_consec);
 end
-% summedIntensity=nanmean(all_summedIntensity,1);
-summedIntensity=(nanmean(all_summedIntensity,1)-nanmean(nanmean(all_summedIntensity,1),2))+(100000*changeBetweenFrames);
-
-% for i=1:n
-%     temp=intensityFromRGB(allframes(:,:,i));
-%     summedIntensity(i)=sum(temp(isin));
-% end
-
-
-% reachFrames=summedIntensity<useAsThresh;
-
-% Get peaks only
-[~,locs]=findpeaks(-summedIntensity);
-locs=locs(summedIntensity(locs)<useAsThresh);
-isReaching=zeros(size(summedIntensity));
-isReaching(locs)=1;
-reachFrames=isReaching;
-
-% Real reach should be at least n_consec consecutive reach frames
-runningSum=zeros(size(reachFrames));
-for i=1:n_consec
-    runningSum(1:end-(i-1))=runningSum(1:end-(i-1))+reachFrames(i:end);
-end
-reachingStretch=find(runningSum>=n_consec);
 
 function [useAsThresh,works,isUserApprovedReach,stepByAmount]=calibrateReachDetection(summedIntensity,allframes,useAsThresh,counter,stepByAmount)
 
