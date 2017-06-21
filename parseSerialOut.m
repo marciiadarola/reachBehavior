@@ -190,10 +190,10 @@ for i=1:length(ITIs)
         stateChange=distractorStart(indsIntoLedStarts(j));
         if stateChange==1 % distractor is turning on
             startsOn=0;
-            [~,mi]=min(abs(timesPerTrial-curr(j))); % Find closest time
+            mi=findClosestTime(timesPerTrial,curr(j)); % Find closest time
             distractorOn(i,mi(1):end)=1;
         elseif stateChange==0 % distractor is turning off
-            [~,mi]=min(abs(timesPerTrial-curr(j))); % Find closest time
+            mi=findClosestTime(timesPerTrial,curr(j)); % Find closest time
             distractorOn(i,mi(1):end)=0;
             if startsOn==1
                 distractorOn(i,1:mi(1)-1)=1;
@@ -212,10 +212,10 @@ for i=1:length(ITIs)
         stateChange=cueStart(indsIntoLedStarts(j));
         if stateChange==1 % cue is turning on
             startsOn=0;
-            [~,mi]=min(abs(timesPerTrial-curr(j))); % Find closest time
+            mi=findClosestTime(timesPerTrial,curr(j)); % Find closest time
             cueOn(i,mi(1):end)=1;
         elseif stateChange==0 % cue is turning off
-            [~,mi]=min(abs(timesPerTrial-curr(j))); % Find closest time
+            mi=findClosestTime(timesPerTrial,curr(j)); % Find closest time
             cueOn(i,mi(1):end)=0;
             if startsOn==1
                 cueOn(i,1:mi(1)-1)=1;
@@ -276,6 +276,9 @@ fclose(fid);
 % Save data
 save(outfile,'out');
 
-    
-    
-    
+
+function mi=findClosestTime(times,currtime)
+
+temp=currtime-times;
+temp(temp<0)=max(temp)+10000;
+[~,mi]=min(temp);

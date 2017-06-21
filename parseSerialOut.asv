@@ -276,6 +276,20 @@ fclose(fid);
 % Save data
 save(outfile,'out');
 
-    
-    
+
+function findClosestTime(times,currtime)
+
+temp=times-currtime;
+temp(temp<0)=max(temp)+10000;
+
+
+temp=movieFrames-eventFrames(i);
+   temp(temp<0)=max(temp)+10000;
+   [~,mi]=min(temp); 
+   eventVector(mi)=1;    
+   
+   
+   startsOn=0;
+            [~,mi]=min(abs(timesPerTrial-curr(j))); % Find closest time
+            cueOn(i,mi(1):end)=1;
     
