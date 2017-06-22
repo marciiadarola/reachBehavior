@@ -301,8 +301,8 @@ while ~isempty(firstnan)
     firstnotnan=find(~isnan(temp),1,'first');
     safety_counter=safety_counter+1;
 end
-% aligned.movieframeinds=rawmovieinds_onto_rescaled;
-aligned.movieframeinds=movieframeinds_backup;
+aligned.movieframeinds=rawmovieinds_onto_rescaled;
+% aligned.movieframeinds=movieframeinds_backup;
 
 % Plot results
 figure();
