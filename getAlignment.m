@@ -47,6 +47,7 @@ arduino_times=temptimes(~isnan(temptimes));
 arduino_dec=100;
 arduino_LED=decimate(arduino_LED,arduino_dec);
 
+testRun_movieLED=double(movie_LED);
 movie_dec=3;
 movie_LED=decimate(double(movie_LED),movie_dec);
 movie_times=decimate(movie_times,movie_dec);
@@ -126,11 +127,11 @@ for i=1:length(segmentInds)-1
     segmentDelays(i)=D;
     if length(temp1)>length(temp2)
         addZeros_arduino(i)=length(temp1)-length(temp2);
-        temp2=[temp2 zeros(1,length(temp1)-length(temp2))];
+        temp2=[temp2 temp2(end)*ones(1,length(temp1)-length(temp2))];
         addZeros_movie(i)=0;
     elseif length(temp2)>length(temp1)
         addZeros_movie(i)=length(temp2)-length(temp1);
-        temp1=[temp1 zeros(1,length(temp2)-length(temp1))];
+        temp1=[temp1 temp1(end)*ones(1,length(temp2)-length(temp1))];
         addZeros_arduino(i)=0;
     else
         addZeros_movie(i)=0;
@@ -145,9 +146,9 @@ for i=1:length(segmentInds)-1
         % alignment easily messed up at end -- just use delay from previous
         % segment
         if segmentDelays(i-1)>0
-            temp1=[zeros(1,segmentDelays(i-1)) temp1];
+            temp1=[ones(1,segmentDelays(i-1))*temp1(1) temp1];
         else
-            temp2=[zeros(1,-segmentDelays(i-1)) temp2];
+            temp2=[ones(1,-segmentDelays(i-1))*temp2(1) temp2];
         end
         startAt=floor(0.25*length(temp1));
         endAt=length(temp1);
@@ -228,6 +229,9 @@ temp=1:length(handles.LEDvals);
 movieframeinds_raw=double(handles.discardFirstNFrames+temp);
 movieframeinds=alignLikeDistractor(movieframeinds_raw,1,movie_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_movie,scaleBy,resampFac,moveChunks);
 movieframeinds_backup=movieframeinds;
+
+testRunDistractor_movie=alignLikeDistractor(testRun_movieLED,1,movie_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_movie,scaleBy,resampFac,moveChunks);
+aligned.testRunDistractor_movie=testRunDistractor_movie;
 
 % Re-align movie frame inds based on alignment to non-interped LED vals
 maxNFramesForLEDtoChange=2;
@@ -379,13 +383,13 @@ if scaleThisSignal==1
     temp=resample(signal,scaleBy*resampFac,resampFac);
     % cut off ringing artifact
     temp(end-10+1:end)=nan;
-    signal=[zeros(1,frontShift) temp];
+    signal=[nan(1,frontShift) temp];
     if movieToLength>length(signal)
-        signal=[signal zeros(1,movieToLength-length(signal))];
+        signal=[signal nan(1,movieToLength-length(signal))];
     end
 else
     % Like arduino
-    signal=[signal zeros(1,shouldBeLength-length(signal))];
+    signal=[signal nan(1,shouldBeLength-length(signal))];
 end
 
 % [Xa,Ya] = alignsignals(X,Y)
@@ -406,7 +410,7 @@ for i=1:length(segmentInds)-1
         % Like movie
         if segmentDelays(i)>0
             % Delay is positive, so movie was shifted
-            currChunk=[zeros(1,segmentDelays(i)) currChunk];
+            currChunk=[ones(1,segmentDelays(i))*currChunk(1) currChunk];
         else
             % Delay is negative, so arduino was shifted
         end
@@ -416,10 +420,10 @@ for i=1:length(segmentInds)-1
             % Delay is positive, so movie was shifted
         else
             % Delay is negative, so arduino was shifted
-            currChunk=[zeros(1,-segmentDelays(i)) currChunk];
+            currChunk=[ones(1,-segmentDelays(i))*currChunk(1) currChunk];
         end
     end
-    currChunk=[currChunk zeros(1,addZeros(i))];
+    currChunk=[currChunk currChunk(end)*ones(1,addZeros(i))];
     currChunk=currChunk(moveChunks(i,1):moveChunks(i,2));
     outsignal=[outsignal currChunk];
 end
