@@ -378,14 +378,14 @@ if scaleThisSignal==1
     % Like movie
     temp=resample(signal,scaleBy*resampFac,resampFac);
     % cut off ringing artifact
-    temp=temp(1:end-10);
-    signal=[nan(1,frontShift) temp];
+    temp(end-10+1:end)=nan;
+    signal=[zeros(1,frontShift) temp];
     if movieToLength>length(signal)
-        signal=[signal nan(1,movieToLength-length(signal))];
+        signal=[signal zeros(1,movieToLength-length(signal))];
     end
 else
     % Like arduino
-    signal=[signal nan(1,shouldBeLength-length(signal))];
+    signal=[signal zeros(1,shouldBeLength-length(signal))];
 end
 
 % [Xa,Ya] = alignsignals(X,Y)
@@ -398,7 +398,7 @@ end
 
 outsignal=[];
 firstInd=segmentInds(1);
-outsignal=[outsignal nan(1,firstInd-1)];
+outsignal=[outsignal zeros(1,firstInd-1)];
 for i=1:length(segmentInds)-1
     currInd=segmentInds(i);
     currChunk=signal(currInd:currInd+alignSegments-1);
@@ -406,7 +406,7 @@ for i=1:length(segmentInds)-1
         % Like movie
         if segmentDelays(i)>0
             % Delay is positive, so movie was shifted
-            currChunk=[nan(1,segmentDelays(i)) currChunk];
+            currChunk=[zeros(1,segmentDelays(i)) currChunk];
         else
             % Delay is negative, so arduino was shifted
         end
@@ -416,10 +416,10 @@ for i=1:length(segmentInds)-1
             % Delay is positive, so movie was shifted
         else
             % Delay is negative, so arduino was shifted
-            currChunk=[nan(1,-segmentDelays(i)) currChunk];
+            currChunk=[zeros(1,-segmentDelays(i)) currChunk];
         end
     end
-    currChunk=[currChunk nan(1,addZeros(i))];
+    currChunk=[currChunk zeros(1,addZeros(i))];
     currChunk=currChunk(moveChunks(i,1):moveChunks(i,2));
     outsignal=[outsignal currChunk];
 end
