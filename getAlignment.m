@@ -28,9 +28,16 @@ movie_LED=temp_LED>threshForOnVsOff;
 % Find best alignment of distractor LED in movie and Arduino output -- note
 % different sampling rates
 temp=out.distractorOn';
+testRunLED=out.distractorOn;
 % arduino_timestep=out.allTrialTimes(1,2)-out.allTrialTimes(1,1); % in ms
-temptimes=(out.allTrialTimes+repmat(out.trialStartTimes',1,size(out.allTrialTimes,2)))';
-temptimes=temptimes(1:end);
+% temptimes=(out.allTrialTimes+repmat(out.trialStartTimes',1,size(out.allTrialTimes,2)))';
+
+temptimes=[];
+for i=1:size(out.allTrialTimes,1)
+    temptimes=[temptimes out.allTrialTimes(i,:)];
+end
+% temptimes=out.allTrialTimes;
+% temptimes=temptimes(1:end);
 temp=temp(1:end);
 arduino_LED=temp(~isnan(temptimes));
 arduino_times=temptimes(~isnan(temptimes));
@@ -182,6 +189,13 @@ temp=temp(1:end);
 cue=temp(~isnan(temptimes));
 cue=alignLikeDistractor(cue,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
 aligned.cue=cue;
+
+temp=testRunLED';
+temp=temp(1:end);
+testRunDistractor=temp(~isnan(temptimes));
+testRunDistractor=alignLikeDistractor(testRunDistractor,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
+aligned.testRunDistractor=testRunDistractor;
+
 temp=out.pelletLoaded';
 temp=temp(1:end);
 pelletLoaded=temp(~isnan(temptimes));
@@ -213,6 +227,7 @@ aligned.timesfromarduino=timesfromarduino;
 temp=1:length(handles.LEDvals);
 movieframeinds_raw=double(handles.discardFirstNFrames+temp);
 movieframeinds=alignLikeDistractor(movieframeinds_raw,1,movie_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_movie,scaleBy,resampFac,moveChunks);
+movieframeinds_backup=movieframeinds;
 
 % Re-align movie frame inds based on alignment to non-interped LED vals
 maxNFramesForLEDtoChange=2;
@@ -286,7 +301,8 @@ while ~isempty(firstnan)
     firstnotnan=find(~isnan(temp),1,'first');
     safety_counter=safety_counter+1;
 end
-aligned.movieframeinds=rawmovieinds_onto_rescaled;
+% aligned.movieframeinds=rawmovieinds_onto_rescaled;
+aligned.movieframeinds=movieframeinds_backup;
 
 % Plot results
 figure();
@@ -360,7 +376,10 @@ function outsignal=alignLikeDistractor(signal,scaleThisSignal,decind,frontShift,
 signal=decimate(signal,decind);
 if scaleThisSignal==1
     % Like movie
-    signal=[nan(1,frontShift) resample(signal,scaleBy*resampFac,resampFac)];
+    temp=resample(signal,scaleBy*resampFac,resampFac);
+    % cut off ringing artifact
+    temp=temp(1:end-10);
+    signal=[nan(1,frontShift) temp];
     if movieToLength>length(signal)
         signal=[signal nan(1,movieToLength-length(signal))];
     end

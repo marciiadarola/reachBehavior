@@ -31,8 +31,8 @@ ITIs=[];
 eventLog=[];
 eventLogTimes=[];
 encoderPosition=[];
-cueStart=[]; % 0 if cue is starting, 1 if cue is stopping
-distractorStart=[]; % 0 if distractor is starting, 1 if distractor is stopping
+cueStart=[]; % 1 if cue is starting, 0 if cue is stopping
+distractorStart=[]; % 1 if distractor is starting, 0 if distractor is stopping
 trialDropCount=[]; % counts up pellets dropped during trial
 trialMissCount=[]; % counts up pellets missed during trial
 
@@ -128,6 +128,7 @@ out.ITIs=ITIs;
 
 % Re-structure data as trial-by-trial
 timesPerTrial=0:1:maxITI; % in ms
+backup_timesPerTrial=timesPerTrial;
 pelletLoaded=zeros(length(ITIs),length(timesPerTrial));
 pelletPresented=zeros(length(ITIs),length(timesPerTrial));
 encoderTrialVals=nan(length(ITIs),length(timesPerTrial));
@@ -143,20 +144,24 @@ timeSoFar=0;
 trialStartTimes=[];
 for i=1:length(ITIs)
     currITI=ITIs(i);
-    allTrialTimes(i,timesPerTrial<=currITI)=timesPerTrial(timesPerTrial<=currITI);
+%     allTrialTimes(i,timesPerTrial<=currITI)=timesPerTrial(timesPerTrial<=currITI);
     if i==length(ITIs)
+        timesPerTrial=eventLogTimes(startIndsIntoEventLog(i)):eventLogTimes(end);
         relevantEventLog=eventLog(startIndsIntoEventLog(i):end);
         relevantEventLogTimes=eventLogTimes(startIndsIntoEventLog(i):end);
         isCurrentTrial=zeros(1,length(eventLog));
         isCurrentTrial(startIndsIntoEventLog(i):end)=1;
     else
+        timesPerTrial=eventLogTimes(startIndsIntoEventLog(i)):eventLogTimes(startIndsIntoEventLog(i+1))-1;
         relevantEventLog=eventLog(startIndsIntoEventLog(i):startIndsIntoEventLog(i+1)-1);
         relevantEventLogTimes=eventLogTimes(startIndsIntoEventLog(i):startIndsIntoEventLog(i+1)-1);
         isCurrentTrial=zeros(1,length(eventLog));
         isCurrentTrial(startIndsIntoEventLog(i):startIndsIntoEventLog(i+1)-1)=1;
     end
     % Change times to wrt start of this trial
-    relevantEventLogTimes=relevantEventLogTimes-eventLogTimes(startIndsIntoEventLog(i));
+%     relevantEventLogTimes=relevantEventLogTimes-eventLogTimes(startIndsIntoEventLog(i));
+%     timesPerTrial=eventLogTimes(startIndsIntoEventLog(i))+backup_timesPerTrial;
+    allTrialTimes(i,1:length(timesPerTrial))=timesPerTrial;
     trialStartTimes=[trialStartTimes eventLogTimes(startIndsIntoEventLog(i))];
     timeSoFar=timeSoFar+currITI;
     % Find time when pellet loaded
@@ -259,6 +264,7 @@ out.nMissesPerTrial=nMissesPerTrial;
 out.allTrialTimes=allTrialTimes;
 out.trialStartTimes=trialStartTimes;
 
+timesPerTrial=backup_timesPerTrial;
 if showExampleTrial==1
     figure();
     subplot(4,1,1);
@@ -282,3 +288,5 @@ function mi=findClosestTime(times,currtime)
 temp=currtime-times;
 temp(temp<0)=max(temp)+10000;
 [~,mi]=min(temp);
+
+[~,mi]=min(abs(times-currtime));

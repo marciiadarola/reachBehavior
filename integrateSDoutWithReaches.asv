@@ -77,11 +77,8 @@ alignment.reach_ongoing=zeros(1,length(movframes));
 reachIsStarting=find(alignment.reachStarts>0.5);
 reachIsEnding=find(alignment.reachEnds>0.5);
 for i=1:length(reachIsStarting)
-    currReachStarts=reachIsStarting(i);
-    temp=reachIsEnding-currReachStarts;
-    temp(temp<0)=max(temp)+10000;
-    [~,mi]=min(temp);
-    alignment.reach_ongoing(reachIsStarting(i):reachIsEnding(mi))=1;
+    currReachSt
+   alignment.reach_ongoing(reachIsStarting(i):reachIsEnding(i))=1;
 end
 
 % Save data
