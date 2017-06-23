@@ -121,6 +121,7 @@ segmentDelays=nan(1,length(segmentInds));
 addZeros_movie=nan(1,length(segmentInds));
 addZeros_arduino=nan(1,length(segmentInds));
 moveChunks=nan(length(segmentInds),2);
+tookTheseIndsOfTemp1=floor(0.25*alignSegments):floor(0.75*alignSegments);
 for i=1:length(segmentInds)-1
     currInd=segmentInds(i);
     [temp1,temp2,D]=alignsignals(best_movie(currInd:currInd+alignSegments-1),best_arduino(currInd:currInd+alignSegments-1));
@@ -139,9 +140,11 @@ for i=1:length(segmentInds)-1
     end
     if i==1
         startAt=1;
-        endAt=floor(0.75*length(temp1));
-        temp1=temp1(1:endAt);
-        temp2=temp2(1:endAt);
+        if D>0 % temp1 has been delayed by D samples
+            endAt=tookTheseIndsOfTemp1(end)+D;
+        else % temp2 has been delayed by D samples
+            endAt=tookTheseIndsOfTemp1(end);
+        end
     elseif i==length(segmentInds)-1
         % alignment easily messed up at end -- just use delay from previous
         % segment
@@ -150,17 +153,25 @@ for i=1:length(segmentInds)-1
         else
             temp2=[ones(1,-segmentDelays(i-1))*temp2(1) temp2];
         end
-        startAt=floor(0.25*length(temp1));
-        endAt=length(temp1);
-        temp1=temp1(startAt:endAt);
-        temp2=temp2(startAt:endAt);
         segmentDelays(i)=segmentDelays(i-1);
+        D=segmentDelays(i);
+        if D>0 % temp1 has been delayed by D samples
+            startAt=tookTheseIndsOfTemp1(1)+D;
+        else % temp2 has been delayed by D samples
+            startAt=tookTheseIndsOfTemp1(1);
+        end
+        endAt=length(temp1);        
     else
-        startAt=floor(0.25*length(temp1));
-        endAt=floor(0.75*length(temp1));
-        temp1=temp1(startAt:endAt);
-        temp2=temp2(startAt:endAt);
+        if D>0 % temp1 has been delayed by D samples
+            startAt=tookTheseIndsOfTemp1(1)+D; 
+            endAt=tookTheseIndsOfTemp1(end)+D;
+        else % temp2 has been delayed by D samples
+            startAt=tookTheseIndsOfTemp1(1); 
+            endAt=tookTheseIndsOfTemp1(end);
+        end
     end
+    temp1=temp1(startAt:endAt);
+    temp2=temp2(startAt:endAt);
     moveChunks(i,1)=startAt;
     moveChunks(i,2)=endAt;
     mov_distractor=[mov_distractor temp1];
@@ -235,7 +246,7 @@ aligned.testRunDistractor_movie=testRunDistractor_movie;
 
 % Re-align movie frame inds based on alignment to non-interped LED vals
 maxNFramesForLEDtoChange=2;
-deriv_LEDvals=[diff(naninterp(handles.LEDvals)) 0];
+deriv_LEDvals=[diff(handles.LEDvals) 0];
 deriv_thresh=(nanmean(handles.LEDvals))/(maxNFramesForLEDtoChange+1);
 [pks,locs]=findpeaks(deriv_LEDvals);
 peakLocs=locs(pks>deriv_thresh);
@@ -260,8 +271,7 @@ if movieframeinds_raw(peakLocs(1))>=movieframeinds_raw(troughLocs(1))
     error('Problem in raw LED values -- should always turn on, then off');
 end
 rescaled_thresh=0.5;
-movieframeinds=naninterp(movieframeinds);
-deriv_LEDvals_rescaled=[diff(naninterp(aligned.movie_distractor)) 0];
+deriv_LEDvals_rescaled=[diff(aligned.movie_distractor) 0];
 [pks,locs]=findpeaks(deriv_LEDvals_rescaled);
 peakLocs_rescaled=locs(pks>rescaled_thresh);
 tooclose=diff(peakLocs_rescaled);
@@ -272,12 +282,26 @@ troughLocs_rescaled=locs(pks>rescaled_thresh);
 tooclose=diff(troughLocs_rescaled);
 troughLocs_rescaled=troughLocs_rescaled(tooclose>=3*maxNFramesForLEDtoChange);
 troughTimes_rescaled=movieframeinds(troughLocs_rescaled);
+if peakTimes_rescaled(1)<troughTimes_rescaled(1)
+    % LED first increases
+else
+    % LED first decreases
+    % Throw out first decrease
+    troughLocs_rescaled=troughLocs_rescaled(2:end);
+    troughTimes_rescaled=troughTimes_rescaled(2:end);
+end
+if length(peakLocs_rescaled)>length(troughLocs_rescaled)
+    peakLocs_rescaled=peakLocs_rescaled(1:length(troughLocs_rescaled));
+    peakTimes_rescaled=peakTimes_rescaled(1:length(troughLocs_rescaled));
+end
+k=1;
 for i=1:length(peakLocs)
     up=movieframeinds_raw(peakLocs(i));
     down=movieframeinds_raw(troughLocs(i));
     [~,mi_up]=min(abs(peakTimes_rescaled-up));
     [~,mi_down]=min(abs(troughTimes_rescaled-down));
-    rawmovieinds_onto_rescaled(peakLocs_rescaled(mi_up):troughLocs_rescaled(mi_down))=linspace(up,down,troughLocs_rescaled(mi_down)-peakLocs_rescaled(mi_up)+1);
+    rawmovieinds_onto_rescaled(peakLocs_rescaled(k):troughLocs_rescaled(k))=linspace(up,down,troughLocs_rescaled(k)-peakLocs_rescaled(k)+1);
+    k=k+1;
 end
 % Fill in nans accordingly
 firstnan=find(isnan(rawmovieinds_onto_rescaled),1,'first');
