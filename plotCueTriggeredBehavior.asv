@@ -1,4 +1,4 @@
-function tbt=plotCueTriggeredBehavior(data,nameOfCue)
+function tbt=plotCueTriggeredBehavior(data,nameOfCue,excludePawOnWheelTrials)
 
 % nameOfCue should be 'cue' for real cue
 % 'arduino_distractor' for distractor
@@ -26,9 +26,9 @@ timesFromArduino=data.timesfromarduino; % in ms
 timesFromArduino=timesFromArduino./1000; % in seconds
 movieframeinds=data.movieframeinds;
 paw_from_wheel=data.pawOnWheel;
-success_pawOnWheel=data.success_pawOnWheel;
-drop_pawOnWheel=data.drop_pawOnWheel;
-miss_pawOnWheel=data.miss_pawOnWheel;
+success_pawOnWheel=data.success_reachStarts_pawOnWheel;
+drop_pawOnWheel=data.drop_reachStarts_pawOnWheel;
+miss_pawOnWheel=data.miss_reachStarts_pawOnWheel;
 
 % Turn pellet presented into events
 sigmax=max(max(pelletPresented));
@@ -151,8 +151,19 @@ times_tbt=times_tbt-repmat(nanmin(times_tbt,[],2),1,size(times_tbt,2));
 timespertrial=nanmean(times_tbt,1);
 % timespertrial=1:length(timespertrial);
 
+% Exclude trials where paw was on wheel while wheel turning
+if excludePawOnWheelTrials==1
+    % Find trials where paw was on wheel while wheel turning
+    for i=1:size(cue_tbt,1)
+        presentInd=find(pelletPresented_tbt(i,:)>0.5,1,'first');
+        cueInd=find(cue_tbt(i,:)>0.5,1,'first');
+        pawWasOnWheel=0;
+        if any(paw_from_wheel_tbt(i,presentInd:cueInd)
+else
+    plot_cues=1:size(cue_tbt,1);
+end
+
 % Plot
-plot_cues=1:size(cue_tbt,1);
 figure();
 ha=tight_subplot(11,1,[0.06 0.03],[0.05 0.05],[0.1 0.03]);
 currha=ha(1);

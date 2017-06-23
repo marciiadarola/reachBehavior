@@ -1,4 +1,4 @@
-function tbt=plotCueTriggeredBehavior(data,nameOfCue)
+function tbt=plotCueTriggeredBehavior(data,nameOfCue,excludePawOnWheelTrials)
 
 % nameOfCue should be 'cue' for real cue
 % 'arduino_distractor' for distractor
@@ -151,8 +151,25 @@ times_tbt=times_tbt-repmat(nanmin(times_tbt,[],2),1,size(times_tbt,2));
 timespertrial=nanmean(times_tbt,1);
 % timespertrial=1:length(timespertrial);
 
+% Exclude trials where paw was on wheel while wheel turning
+if excludePawOnWheelTrials==1
+    % Find trials where paw was on wheel while wheel turning
+    plot_cues=[];
+    for i=1:size(cue_tbt,1)
+        presentInd=find(pelletPresented_tbt(i,:)>0.5,1,'first');
+        cueInd=find(cue_tbt(i,:)>0.5,1,'first');
+        pawWasOnWheel=0;
+        if any(paw_from_wheel_tbt(i,presentInd:cueInd)>0.5)
+            pawWasOnWheel=1;
+        else
+            plot_cues=[plot_cues i];
+        end
+    end
+else
+    plot_cues=1:size(cue_tbt,1);
+end
+
 % Plot
-plot_cues=1:size(cue_tbt,1);
 figure();
 ha=tight_subplot(11,1,[0.06 0.03],[0.05 0.05],[0.1 0.03]);
 currha=ha(1);
@@ -228,25 +245,26 @@ event_thresh=0.5;
 
 figure();
 % for i=1:size(cue_tbt,1)
+k=1;
 for i=plot_cues
     % Plot paw from wheel reach events
     event_ind=find(success_pawOnWheel_tbt(i,:)>event_thresh);
     for j=1:length(event_ind)
-        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],'MarkerEdgeColor',success_color,...
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[k k],[],'MarkerEdgeColor',success_color,...
               'MarkerFaceColor',pawwheel_color,...
               'LineWidth',1.5);
     end
     
     event_ind=find(drop_pawOnWheel_tbt(i,:)>event_thresh);
     for j=1:length(event_ind)
-        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],'MarkerEdgeColor',drop_color,...
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[k k],[],'MarkerEdgeColor',drop_color,...
               'MarkerFaceColor',pawwheel_color,...
               'LineWidth',1.5);
     end
     
     event_ind=find(miss_pawOnWheel_tbt(i,:)>event_thresh);
     for j=1:length(event_ind)
-        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],'MarkerEdgeColor',miss_color,...
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[k k],[],'MarkerEdgeColor',miss_color,...
               'MarkerFaceColor',pawwheel_color,...
               'LineWidth',1.5);
     end
@@ -254,13 +272,13 @@ for i=plot_cues
     % Plot reach despite no pellet events
     event_ind=find(reach_wout_pellet_tbt(i,:)>event_thresh);
     for j=1:length(event_ind)
-        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],'MarkerEdgeColor',nopellet_outline,...
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[k k],[],'MarkerEdgeColor',nopellet_outline,...
               'MarkerFaceColor',nopellet_color,...
               'LineWidth',1.5);
     end
     % Plot cue events
     event_ind=find(cue_tbt(i,:)>event_thresh,1,'first');
-    scatter([timespertrial(event_ind) timespertrial(event_ind)],[i i],[],cue_color,'filled');
+    scatter([timespertrial(event_ind) timespertrial(event_ind)],[k k],[],cue_color,'filled');
     hold on;
     % Plot reach start events
 %     event_ind=find(reachStarts_tbt(i,:)>event_thresh);
@@ -270,25 +288,26 @@ for i=plot_cues
     % Plot wheel begins to turn events
     event_ind=find(pelletPresented_tbt(i,:)>event_thresh);
     for j=1:length(event_ind)
-        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],wheel_turns_color,'filled');
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[k k],[],wheel_turns_color,'filled');
     end
     % Plot success events
     event_ind=find(success_tbt(i,:)>event_thresh);
     for j=1:length(event_ind)
-        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],success_color,'filled');
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[k k],[],success_color,'filled');
     end
     % Plot drop events
     event_ind=find(drop_tbt(i,:)>event_thresh);
     for j=1:length(event_ind)
-        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],'MarkerEdgeColor',drop_outline,...
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[k k],[],'MarkerEdgeColor',drop_outline,...
               'MarkerFaceColor',drop_color,...
               'LineWidth',1.5);
     end
     % Plot miss events
     event_ind=find(miss_tbt(i,:)>event_thresh);
     for j=1:length(event_ind)
-        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],'MarkerEdgeColor',miss_outline,...
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[k k],[],'MarkerEdgeColor',miss_outline,...
               'MarkerFaceColor',miss_color,...
               'LineWidth',1.5);
     end
+    k=k+1;
 end
