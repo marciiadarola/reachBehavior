@@ -99,7 +99,7 @@ handles.nFramesBetweenReaches=[];
 handles.didReachForThisChunk=[];
 handles.movieChunk=[];
 handles.startsAtFrame=[];
-handles.framesPerChunk=[];
+handles.framesPerChunk=framesPerChunk;
 handles.allReachesTally=[];
 handles.startedOver=[];
 handles.sizeOfLastChunk=[];
@@ -574,7 +574,7 @@ handles.summedIntensity=[];
 
 % Find reaches in current movie chunk, then move to next movie chunk, etc.
 disp('Find the frame associated with each of the following events for this reach and press matching button while movie is stopped at that frame.'); 
-[reachingStretch,handles.summedIntensity]=findCurrentReaches(allframes,useAsThresh,n_consec,isin,isin3,isin4,perch_pellet_delay_ind,handles.perc10_change);
+[reachingStretch,handles.summedIntensity]=findCurrentReaches(allframes,useAsThresh,n_consec,isin,isin3,isin4,perch_pellet_delay_ind,handles.perc10_change,handles);
 % if isempty(reachingStretch)
 %     % No reaches found for this movie chunk, get next movie chunk
 %     containsReach=0;
@@ -816,7 +816,7 @@ videoFReader=handles.videoFReader;
 movieChunk=handles.movieChunk;
 
 % Find new candidate reach frames
-[reachingStretch,summedIntensity]=findCurrentReaches(allframes,handles.useAsThresh,handles.n_consec,handles.isin,handles.isin3,handles.isin4,handles.perch_pellet_delay_ind,handles.perc10_change);
+[reachingStretch,summedIntensity]=findCurrentReaches(allframes,handles.useAsThresh,handles.n_consec,handles.isin,handles.isin3,handles.isin4,handles.perch_pellet_delay_ind,handles.perc10_change,handles);
 
 % Check if there is any candidate reach in this movie chunk
 if isempty(reachingStretch)
@@ -1054,7 +1054,7 @@ set(handles.text5,'ForegroundColor','r');
 handles.reach=resetReachState(handles.reach);
 handles.reach=resetReachProgress(handles.reach);
 
-function [reachingStretch,summedIntensity]=findCurrentReaches(allframes,useAsThresh,n_consec,isin,isin3,isin4,perch_pellet_delay_ind,perc10_change)
+function [reachingStretch,summedIntensity]=findCurrentReaches(allframes,useAsThresh,n_consec,isin,isin3,isin4,perch_pellet_delay_ind,perc10_change,handles)
 
 % summedIntensity=nan(1,n);
 temp=reshape(allframes,size(allframes,1)*size(allframes,2),size(allframes,3));

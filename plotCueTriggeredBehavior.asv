@@ -29,6 +29,7 @@ paw_from_wheel=data.pawOnWheel;
 success_pawOnWheel=data.success_reachStarts_pawOnWheel;
 drop_pawOnWheel=data.drop_reachStarts_pawOnWheel;
 miss_pawOnWheel=data.miss_reachStarts_pawOnWheel;
+reach_pelletPresent=data.reachStarts_pelletPresent;
 
 % Turn pellet presented into events
 sigmax=max(max(pelletPresented));
@@ -56,6 +57,7 @@ paw_from_wheel_tbt=nan(length(cueInds),max(cueIndITIs)+pointsFromPreviousTrial);
 success_pawOnWheel_tbt=nan(length(cueInds),max(cueIndITIs)+pointsFromPreviousTrial);
 drop_pawOnWheel_tbt=nan(length(cueInds),max(cueIndITIs)+pointsFromPreviousTrial);
 miss_pawOnWheel_tbt=nan(length(cueInds),max(cueIndITIs)+pointsFromPreviousTrial);
+reach_pelletPresent_tbt=nan(length(cueInds),max(cueIndITIs)+pointsFromPreviousTrial);
 
 for i=1:length(cueInds)
     if i==length(cueInds)
@@ -82,6 +84,7 @@ for i=1:length(cueInds)
     success_pawOnWheel_tbt(i,1:length(theseInds))=success_pawOnWheel(theseInds); 
     drop_pawOnWheel_tbt(i,1:length(theseInds))=drop_pawOnWheel(theseInds); 
     miss_pawOnWheel_tbt(i,1:length(theseInds))=miss_pawOnWheel(theseInds); 
+    reach_pelletPresent_tbt(i,1:length(theseInds))=reach_pelletPresent(theseInds); 
 end
 
 % cue_tbt=cue_tbt(:,1:smallestTrial);
@@ -113,6 +116,7 @@ paw_from_wheel_tbt(isnan(paw_from_wheel_tbt))=0;
 success_pawOnWheel_tbt(isnan(success_pawOnWheel_tbt))=0;
 drop_pawOnWheel_tbt(isnan(drop_pawOnWheel_tbt))=0;
 miss_pawOnWheel_tbt(isnan(miss_pawOnWheel_tbt))=0;
+reach_pelletPresent_tbt(isnan(reach_pelletPresent_tbt))=0;
 
 % Take only trials where movie video also available
 % isemptytrials=isnan(nanmean(movieframeinds_tbt,2));
@@ -146,6 +150,7 @@ tbt.paw_from_wheel_tbt=paw_from_wheel_tbt;
 tbt.success_pawOnWheel_tbt=success_pawOnWheel_tbt;
 tbt.drop_pawOnWheel_tbt=drop_pawOnWheel_tbt;
 tbt.miss_pawOnWheel_tbt=miss_pawOnWheel_tbt;
+tbt.reach_pelletPresent_tbt=reach_pelletPresent_tbt;
 
 times_tbt=times_tbt-repmat(nanmin(times_tbt,[],2),1,size(times_tbt,2));
 timespertrial=nanmean(times_tbt,1);
@@ -154,11 +159,17 @@ timespertrial=nanmean(times_tbt,1);
 % Exclude trials where paw was on wheel while wheel turning
 if excludePawOnWheelTrials==1
     % Find trials where paw was on wheel while wheel turning
+    plot_cues=[];
     for i=1:size(cue_tbt,1)
         presentInd=find(pelletPresented_tbt(i,:)>0.5,1,'first');
         cueInd=find(cue_tbt(i,:)>0.5,1,'first');
         pawWasOnWheel=0;
-        if any(paw_from_wheel_tbt(i,presentInd:cueInd)
+        if any(paw_from_wheel_tbt(i,presentInd:cueInd)>0.5)
+            pawWasOnWheel=1;
+        else
+            plot_cues=[plot_cues i];
+        end
+    end
 else
     plot_cues=1:size(cue_tbt,1);
 end
@@ -227,9 +238,9 @@ cue_color='b';
 % reach_color='k';
 success_color='g';
 drop_color='r';
-drop_outline='r';
+drop_outline='none';
 miss_color='c';
-miss_outline='c';
+miss_outline='none';
 nopellet_outline=[0.8 0.8 0.8];
 nopellet_color=[0.8 0.8 0.8];
 wheel_turns_color='k';
@@ -239,25 +250,29 @@ event_thresh=0.5;
 
 figure();
 % for i=1:size(cue_tbt,1)
+k=1;
+timesOfSuccess_givenPellet=[];
+timesOfReach_givenPellet=[];
+timesOfReach_starts=[];
 for i=plot_cues
     % Plot paw from wheel reach events
     event_ind=find(success_pawOnWheel_tbt(i,:)>event_thresh);
     for j=1:length(event_ind)
-        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],'MarkerEdgeColor',success_color,...
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[k k],[],'MarkerEdgeColor',success_color,...
               'MarkerFaceColor',pawwheel_color,...
               'LineWidth',1.5);
     end
     
     event_ind=find(drop_pawOnWheel_tbt(i,:)>event_thresh);
     for j=1:length(event_ind)
-        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],'MarkerEdgeColor',drop_color,...
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[k k],[],'MarkerEdgeColor',drop_color,...
               'MarkerFaceColor',pawwheel_color,...
               'LineWidth',1.5);
     end
     
     event_ind=find(miss_pawOnWheel_tbt(i,:)>event_thresh);
     for j=1:length(event_ind)
-        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],'MarkerEdgeColor',miss_color,...
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[k k],[],'MarkerEdgeColor',miss_color,...
               'MarkerFaceColor',pawwheel_color,...
               'LineWidth',1.5);
     end
@@ -265,41 +280,166 @@ for i=plot_cues
     % Plot reach despite no pellet events
     event_ind=find(reach_wout_pellet_tbt(i,:)>event_thresh);
     for j=1:length(event_ind)
-        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],'MarkerEdgeColor',nopellet_outline,...
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[k k],[],'MarkerEdgeColor',nopellet_outline,...
               'MarkerFaceColor',nopellet_color,...
               'LineWidth',1.5);
     end
     % Plot cue events
     event_ind=find(cue_tbt(i,:)>event_thresh,1,'first');
-    scatter([timespertrial(event_ind) timespertrial(event_ind)],[i i],[],cue_color,'filled');
+    scatter([timespertrial(event_ind) timespertrial(event_ind)],[k k],[],cue_color,'filled');
     hold on;
     % Plot reach start events
 %     event_ind=find(reachStarts_tbt(i,:)>event_thresh);
+    if excludePawOnWheelTrials==1
+        timesOfReach_givenPellet=[timesOfReach_givenPellet timespertrial(reachStarts_tbt(i,:)>event_thresh & paw_from_wheel_tbt(i,:)<event_thresh & reach_pelletPresent_tbt(i,:)>event_thresh)];
+    else
+        timesOfReach_givenPellet=[timesOfReach_givenPellet timespertrial(reachStarts_tbt(i,:)>event_thresh & reach_pelletPresent_tbt(i,:)>event_thresh)];
+    end
+    timesOfReach_starts=[timesOfReach_starts timespertrial(reachStarts_tbt(i,:)>event_thresh)];
 %     for j=1:length(event_ind)
 %         scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],reach_color,'filled');
 %     end
     % Plot wheel begins to turn events
     event_ind=find(pelletPresented_tbt(i,:)>event_thresh);
     for j=1:length(event_ind)
-        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],wheel_turns_color,'filled');
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[k k],[],wheel_turns_color,'filled');
     end
     % Plot success events
     event_ind=find(success_tbt(i,:)>event_thresh);
+    timesOfSuccess_givenPellet=[timesOfSuccess_givenPellet timespertrial(event_ind)];
     for j=1:length(event_ind)
-        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],success_color,'filled');
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[k k],[],success_color,'filled');
     end
     % Plot drop events
     event_ind=find(drop_tbt(i,:)>event_thresh);
     for j=1:length(event_ind)
-        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],'MarkerEdgeColor',drop_outline,...
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[k k],[],'MarkerEdgeColor',drop_outline,...
               'MarkerFaceColor',drop_color,...
               'LineWidth',1.5);
     end
     % Plot miss events
     event_ind=find(miss_tbt(i,:)>event_thresh);
     for j=1:length(event_ind)
-        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],'MarkerEdgeColor',miss_outline,...
+        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[k k],[],'MarkerEdgeColor',miss_outline,...
               'MarkerFaceColor',miss_color,...
               'LineWidth',1.5);
     end
+    k=k+1;
 end
+
+% Plot histogram of reach starts relative to cue
+[n,x]=hist(timesOfReach_starts,20);
+figure();
+plot(x,n);
+ma=max(n);
+hold on;
+temp=nanmean(cue_tbt(plot_cues,:),1);
+plot(timespertrial,(temp./max(temp)),'Color','r');
+title('Histogram of ALL reach starts');
+plot(timespertrial,nanmean(pelletPresented_tbt(plot_cues,:),1),'Color','k');
+
+% Plot probability of reach given pellet present across different trial
+% time bins
+pelletPresentTimes=p_pelletIsAvailable(tbt,event_thresh);
+n_timebins=60;
+timeOfPelletPresented=timespertrial(find(pelletPresented_tbt(1,:)>event_thresh,1,'first'));
+firstNbins=floor(n_timebins*(timeOfPelletPresented/timespertrial(end)));
+firstBins=linspace(0,timeOfPelletPresented,firstNbins);
+timebins=[firstBins linspace(timeOfPelletPresented+(firstBins(2)-firstBins(1)),timespertrial(end),n_timebins-firstNbins)];
+% Get fraction of bins in which pellet was available
+pelletPresentTimes_useTrials=pelletPresentTimes(plot_cues,:);
+pelletIsAvailableInBin=zeros(length(plot_cues),length(timebins)-1);
+indbins=nan(1,length(timebins));
+for i=1:length(timebins)-1
+    [~,mi]=min(abs(timespertrial-timebins(i)));
+    indbins(i)=mi;
+end
+indbins(end)=length(timespertrial);
+for i=1:length(plot_cues)
+    for j=1:length(indbins)-1
+        if pelletPresentTimes_useTrials(i,indbins(j))>0.5
+            % pellet is present in this bin
+            pelletIsAvailableInBin(i,j)=1;
+        else
+            % pellet is absent in this bin
+            pelletIsAvailableInBin(i,j)=0;
+        end
+    end
+end
+ntimes_pellet_available=sum(pelletIsAvailableInBin,1);
+[N,edges]=histcounts(timesOfReach_givenPellet,timebins);
+[N_success,edges_success]=histcounts(timesOfSuccess_givenPellet,timebins);
+figure();
+subplot(2,1,1);
+% Plot histograms
+plot(nanmean([edges(1:end-1)' edges(2:end)'],2),N,'Color','k');
+hold on;
+plot(timespertrial,nanmean(pelletPresented_tbt(plot_cues,:),1),'Color',[0.8 0.8 0.8]);
+plot(timespertrial,nanmean(cue_tbt(plot_cues,:),1),'Color','b');
+plot(nanmean([edges_success(1:end-1)' edges_success(2:end)'],2),N_success,'Color','g');
+plot(nanmean([edges_success(1:end-1)' edges_success(2:end)'],2),ntimes_pellet_available,'Color','m');
+% Plot # of events given pellet present, divided by # of times pellet was
+% available -- this will give the fraction of times for which pellet was
+% available in which mouse produced a reach
+subplot(2,1,2);
+temp=N./ntimes_pellet_available;
+temp(N==0)=0;
+plot(nanmean([edges(1:end-1)' edges(2:end)'],2),temp,'Color','k');
+hold on;
+temp=N_success./ntimes_pellet_available;
+temp(N==0)=0;
+plot(nanmean([edges(1:end-1)' edges(2:end)'],2),temp,'Color','g');
+plot(timespertrial,nanmean(pelletPresented_tbt(plot_cues,:),1),'Color',[0.8 0.8 0.8]);
+plot(timespertrial,nanmean(cue_tbt(plot_cues,:),1),'Color','b');
+disp('done');
+
+end
+
+
+function pelletPresentTimes=p_pelletIsAvailable(tbt,event_thresh)
+
+% tbt.cue_tbt=cue_tbt;
+% tbt.distractor_tbt=distractor_tbt;
+% tbt.pelletLoaded_tbt=pelletLoaded_tbt;
+% tbt.pelletPresented_tbt=pelletPresented_tbt;
+% tbt.reachStarts_tbt=reachStarts_tbt;
+% tbt.reach_ongoing_tbt=reach_ongoing_tbt;
+% tbt.success_tbt=success_tbt;
+% tbt.drop_tbt=drop_tbt;
+% tbt.miss_tbt=miss_tbt;
+% tbt.eating_tbt=eating_tbt;
+% tbt.times_tbt=times_tbt;
+% tbt.movieframeinds_tbt=movieframeinds_tbt;
+% tbt.reach_wout_pellet_tbt=reach_wout_pellet_tbt;
+% tbt.paw_from_wheel_tbt=paw_from_wheel_tbt;
+% tbt.success_pawOnWheel_tbt=success_pawOnWheel_tbt;
+% tbt.drop_pawOnWheel_tbt=drop_pawOnWheel_tbt;
+% tbt.miss_pawOnWheel_tbt=miss_pawOnWheel_tbt;
+% tbt.reach_pelletPresent_tbt=reach_pelletPresent_tbt;
+
+pelletPresentTimes=zeros(size(tbt.cue_tbt));
+for i=1:size(tbt.pelletPresented_tbt,1)
+    pelletPresentedHere=find(tbt.pelletPresented_tbt(i,:)>event_thresh);
+    % If there is a reach with pellet present during or after pellet
+    % presented, then pellet was actually presented
+    % Else if first reach after pellet "presented" is pellet missing, then
+    % there was a problem with pellet loading
+    reachPelletPresent=find(tbt.reach_pelletPresent_tbt(i,:)>event_thresh);
+    reachPelletMissing=find(tbt.reach_wout_pellet_tbt(i,:)>event_thresh);
+    temp=reachPelletPresent>=pelletPresentedHere(1) & reachPelletPresent<pelletPresentedHere(end);
+    if any(temp)
+        % pellet was present on this trial
+        findtemp=find(temp);
+        pelletPresentTimes(i,pelletPresentedHere(1):reachPelletPresent(findtemp(1)))=1;
+    elseif any(reachPelletMissing>=pelletPresentedHere(1) & reachPelletMissing<pelletPresentedHere(end))
+        % pellet was absent on this trial
+    else
+        % assume that pellet was presented, as a default
+        pelletPresentTimes(i,pelletPresentedHere(1):pelletPresentedHere(end))=1;
+    end
+end
+
+end
+
+
+

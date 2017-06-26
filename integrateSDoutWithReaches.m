@@ -48,6 +48,8 @@ movframes=alignment.movieframeinds;
 alignment.reachStarts=restructureEvent(reaches.reachStarts, movframes);
 % End of reach
 alignment.reachEnds=restructureEvent(reaches.pelletTime, movframes);
+% Reach given that pellet was present
+alignment.reachStarts_pelletPresent=restructureEvent(reaches.reachStarts(reaches.pelletPresent==1), movframes);
 % Successful reach (mouse eats pellet) -- initiation of successful reach
 alignment.success_reachStarts=restructureEvent(reaches.reachStarts(reaches.atePellet==1 & reaches.pelletPresent==1 & reaches.pawStartsOnWheel==0), movframes);
 % Drop (paw touches pellet, but mouse drops pellet before eating it) --
