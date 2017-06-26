@@ -70,7 +70,8 @@ nFramesBetweenReaches=5;
 sizeoneback=300;
 discardFirstNFrames=554;
 fps_noreach=60;
-fps_reach=17;
+% fps_reach=17;
+fps_reach=13;
 perch_pellet_delay=0.133; % in seconds
 perch_pellet_delay_ind=floor(perch_pellet_delay/(1/movie_fps)); % in indices wrt fps
 perch_pellet_delay_ind=[perch_pellet_delay_ind-3 perch_pellet_delay_ind-2 perch_pellet_delay_ind-1 perch_pellet_delay_ind perch_pellet_delay_ind+1 perch_pellet_delay_ind+2 perch_pellet_delay_ind+3];
@@ -1067,7 +1068,7 @@ changeBetweenFrames=[reshape(changeBetweenFrames,1,size(changeBetweenFrames,3)) 
     
 all_summedIntensity=zeros(length(perch_pellet_delay_ind),length(pelletIntensity));
 if size(allframes,3)<handles.framesPerChunk
-    disp('Looks like movie is done. Enter at command line, then close all figures to end.');
+    disp('Looks like movie is done. Close all figures to end.');
     pause;
 else
     for j=1:length(perch_pellet_delay_ind)

@@ -14,7 +14,7 @@ handles.pelletMissing=handles.pelletMissing(isnotnaninds);
 
 % Try to align based on distractor LED from movie and Arduino output
 temp_LED=handles.LEDvals;
-threshForOnVsOff=mean(temp_LED);
+threshForOnVsOff=nanmean([max(temp_LED) min(temp_LED)]);
 figure();
 movie_times=0:(1/moviefps)*1000:(length(temp_LED)-1)*((1/moviefps)*1000);
 plot(movie_times,temp_LED,'Color','b');
