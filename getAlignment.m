@@ -1,5 +1,9 @@
 function aligned=getAlignment(out,moviefps,handles)
 
+distractorType='fixed duration';
+distractorDuration=0.25; % in seconds
+% distractorType='random';
+
 % Note that microSD (Arduino) output is timed in ms
 % Whereas video is timed in frames per sec
 
@@ -44,23 +48,84 @@ arduino_times=temptimes(~isnan(temptimes));
 
 % Find alignment
 % First down-sample arduino LED
-arduino_dec=100;
+
+if strcmp(distractorType,'fixed duration')
+    arduino_dec=33;
+    movie_dec=1;
+else
+    arduino_dec=100;
+    movie_dec=3;
+end
+
 arduino_LED=decimate(arduino_LED,arduino_dec);
+arduino_dec_times=decimate(arduino_times,arduino_dec);
 
 testRun_movieLED=double(movie_LED);
-movie_dec=3;
+
 movie_LED=decimate(double(movie_LED),movie_dec);
 movie_times=decimate(movie_times,movie_dec);
 
+% Do an initial alignment
+if strcmp(distractorType,'fixed duration')
+    temp=arduino_LED;
+    arduino_LED(temp>=0.5)=1;
+    arduino_LED(temp<0.5)=0;
+    temp=movie_LED;
+    movie_LED(temp>=0.5)=1;
+    movie_LED(temp<0.5)=0;
+    
+    [pks_arduino,locs_arduino]=findpeaks(arduino_LED);
+    arduino_LED_ITIs=diff(arduino_times(locs_arduino));
+    [pks,locs]=findpeaks(movie_LED);
+    movie_LED_ITIs=diff(movie_times(locs));
+    
+%     figure();
+%     plot(arduino_LED_ITIs,'Color','r');
+%     figure();
+%     plot(movie_LED_ITIs,'Color','b');
+    
+    [X,Y,D]=alignsignals(arduino_LED_ITIs./max(arduino_LED_ITIs),movie_LED_ITIs./max(movie_LED_ITIs));
+    tryinc=0.001;
+    if D>0
+        error('Why does movie start before Arduino?');
+    else
+        movie_peakloc=1;
+        arduino_peakloc=abs(D)+1;
+        movie_peak_indexIntoMovie=locs(movie_peakloc);
+        arduino_peak_indexIntoArduino=locs_arduino(arduino_peakloc);
+        size_of_arduino=length(arduino_LED(locs_arduino(178):locs_arduino(178+length(movie_LED_ITIs))));
+        size_of_movie=length(movie_LED(locs(1):end));
+        guess_best_scale=size_of_arduino/size_of_movie;
+        % Adjust according to guess_best_scale
+        movie_LED=resample(movie_LED,floor(mod(size_of_arduino/size_of_movie,1)*100)+100,100);
+        guess_best_delay=arduino_peak_indexIntoArduino-movie_peak_indexIntoMovie;
+        trydelays=guess_best_delay-50:guess_best_delay+50;
+        % Note that fixed, so now best scale is 1
+        guess_best_scale=1;
+        tryscales=guess_best_scale-0.1:tryinc:guess_best_scale+0.1;
+        backup_movie_LED=movie_LED;
+    end    
+    
+    figure();
+    plot(X,'Color','b');
+    hold on; 
+    plot(Y,'Color','r');
+    
+    figure();
+    plot(arduino_LED,'Color','b');
+    hold on;
+    plot([nan(1,guess_best_delay) movie_LED],'Color','r');
+else
+    maxDelay=length(arduino_LED)-length(movie_LED);
+    trydelays=1:maxDelay;
+    minscale=1; % scale movie wrt arduino time
+    maxscale=2.5;
+    tryinc=0.02;
+    tryscales=minscale:tryinc:maxscale;
+end
+
 % Test signal alignment and scaling
-maxDelay=length(arduino_LED)-length(movie_LED);
-minscale=1; % scale movie wrt arduino time
-maxscale=2.5;
-% tryinc=0.05;
-tryinc=0.02;
-% tryinc=0.01;
-tryscales=minscale:tryinc:maxscale;
-sumdiffs=nan(length(tryscales),maxDelay);
+sumdiffs=nan(length(tryscales),length(trydelays));
 backup_movie_LED=movie_LED;
 backup_arduino_LED=arduino_LED;
 for j=1:length(tryscales)
@@ -70,18 +135,34 @@ for j=1:length(tryscales)
     end
     currscale=tryscales(j);
     movie_LED=resample(backup_movie_LED,floor(currscale*(1/tryinc)),floor((1/tryinc)));
-    for i=1:maxDelay
+    for i=1:length(trydelays)
+        currdelay=trydelays(i);
         if mod(i,500)==0
 %             disp(i);
-        end
-        temp_movie=[nan(1,i) movie_LED];
+        end 
+        temp_movie=[nan(1,currdelay) movie_LED];
         temp_arduino=[arduino_LED nan(1,length(temp_movie)-length(arduino_LED))];
         if length(temp_arduino)>length(temp_movie)
             temp_movie=[temp_movie nan(1,length(temp_arduino)-length(temp_movie))];
+%             sumdiffs(j,i)=nansum(abs(temp_movie-temp_arduino));
+%             temp_temp_movie=temp_movie;
+%             temp_temp_movie(isnan(temp_temp_movie))=0;
+%             temp_temp_arduino=temp_arduino;
+%             temp_temp_arduino(isnan(temp_temp_arduino))=0;
+            sumdiffs(j,i)=nansum(abs(temp_movie-temp_arduino));
+        elseif length(temp_movie)>length(temp_arduino)
+            % This should not happen
+            % Arduino should include movie
+            sumdiffs(j,i)=inf;
+            error('Why is movie longer than Arduino?');
+        else
+            sumdiffs(j,i)=nansum(abs(temp_movie-temp_arduino)); 
         end
-        sumdiffs(j,i)=nansum(abs(temp_movie-temp_arduino));
     end
 end
+sumdiffs(isinf(sumdiffs))=nan;
+ma=max(sumdiffs(:));
+sumdiffs(isnan(sumdiffs))=3*ma;
 [minval,mi]=min(sumdiffs(:));
 [mi_row,mi_col]=ind2sub(size(sumdiffs),mi);
 
@@ -89,10 +170,10 @@ figure();
 imagesc(sumdiffs);
 title('Finding best alignment');
 
-frontShift=mi_col;
+frontShift=trydelays(mi_col);
 scaleBy=tryscales(mi_row);
 resampFac=1/tryinc;
-best_movie=[nan(1,mi_col) resample(backup_movie_LED,tryscales(mi_row)*(1/tryinc),(1/tryinc))];
+best_movie=[nan(1,trydelays(mi_col)) resample(backup_movie_LED,floor(tryscales(mi_row)*(1/tryinc)),floor(1/tryinc))];
 shouldBeLength=length(best_movie);
 best_arduino=[backup_arduino_LED nan(1,length(best_movie)-length(backup_arduino_LED))];
 movieToLength=length(best_arduino);
@@ -108,8 +189,8 @@ plot(best_arduino,'Color','r');
 % disp(length(best_arduino))
 
 % Then re-align sub-sections of movie to arduino code
-alignSegments=750; % in number of indices
-% alignSegments=1000; % in number of indices
+% alignSegments=750; % in number of indices
+alignSegments=250; % in number of indices
 mov_distractor=[];
 arduino_distractor=[];
 firstInd=find(~isnan(best_movie) & ~isnan(best_arduino),1,'first');
@@ -160,7 +241,7 @@ for i=1:length(segmentInds)-1
         else % temp2 has been delayed by D samples
             startAt=tookTheseIndsOfTemp1(1);
         end
-        endAt=length(temp1);        
+        endAt=min([length(temp1) length(temp2)]);        
     else
         if D>0 % temp1 has been delayed by D samples
             startAt=tookTheseIndsOfTemp1(1)+D; 
@@ -247,7 +328,8 @@ aligned.testRunDistractor_movie=testRunDistractor_movie;
 % Re-align movie frame inds based on alignment to non-interped LED vals
 maxNFramesForLEDtoChange=2;
 deriv_LEDvals=[diff(handles.LEDvals) 0];
-deriv_thresh=(nanmean(handles.LEDvals))/(maxNFramesForLEDtoChange+1);
+% deriv_thresh=(nanmean(handles.LEDvals))/(maxNFramesForLEDtoChange+1);
+deriv_thresh=(max(handles.LEDvals)/4)/(maxNFramesForLEDtoChange+1);
 [pks,locs]=findpeaks(deriv_LEDvals);
 peakLocs=locs(pks>deriv_thresh);
 tooclose=diff(peakLocs);
@@ -404,7 +486,7 @@ function outsignal=alignLikeDistractor(signal,scaleThisSignal,decind,frontShift,
 signal=decimate(signal,decind);
 if scaleThisSignal==1
     % Like movie
-    temp=resample(signal,scaleBy*resampFac,resampFac);
+    temp=resample(signal,floor(scaleBy*resampFac),floor(resampFac));
     % cut off ringing artifact
     temp(end-10+1:end)=nan;
     signal=[nan(1,frontShift) temp];

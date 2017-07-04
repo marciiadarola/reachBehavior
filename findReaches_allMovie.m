@@ -148,7 +148,7 @@ end
 
 if isempty(perchdata)
     % Instructions to user
-    continuebutton=questdlg('Pause movie at a frame with both paws on perch. Then press "enter" at command line. Understood?','Instructions 1','Yes','Cancel','Cancel');
+    continuebutton=questdlg('Pause movie at a frame with both paws on perch and, if possible, with pellet in final presented position. Then press "enter" at command line. Understood?','Instructions 1','Yes','Cancel','Cancel');
     switch continuebutton
         case 'Yes'
         case 'Cancel'
@@ -259,7 +259,7 @@ if isempty(perchdata)
     
     % Get pellet zone
     pelletFig=perchZoneGUI(allframes(:,:,currentFrameNumber),'Draw a polygon enclosing the area surrounding but NOT including the pellet. Press "Done" after have defined vertices.');
-    disp('Press "enter" once have defined pellet zone.');
+    disp('Press "enter" once have defined area surrounding but NOT including the pellet.');
     pause;
     pelletVertices=zoneVertices;
     
@@ -884,10 +884,10 @@ if ((~isnan(handles.atePellet(end)) && isempty(reachingStretch)) || (handles.com
     disp('Increasing reach detection threshold');
     
     if ~isempty(handles.summedIntensity)
-        figure();
-        plot(handles.summedIntensity);
-        hold on;
-        line([1 length(handles.summedIntensity)],[handles.useAsThresh handles.useAsThresh],'Color','r');
+%         figure();
+%         plot(handles.summedIntensity);
+%         hold on;
+%         line([1 length(handles.summedIntensity)],[handles.useAsThresh handles.useAsThresh],'Color','r');
     end
 elseif (isnan(handles.atePellet(end)) && handles.computerThinksNoReach==0) && (handles.addIn==0)
     % Last movie did not contain a reach, but 
@@ -896,10 +896,10 @@ elseif (isnan(handles.atePellet(end)) && handles.computerThinksNoReach==0) && (h
     disp('Decreasing reach detection threshold');
     
     if ~isempty(handles.summedIntensity)
-        figure();
-        plot(handles.summedIntensity);
-        hold on;
-        line([1 length(handles.summedIntensity)],[handles.useAsThresh handles.useAsThresh],'Color','r');
+%         figure();
+%         plot(handles.summedIntensity);
+%         hold on;
+%         line([1 length(handles.summedIntensity)],[handles.useAsThresh handles.useAsThresh],'Color','r');
     end
 end
 
