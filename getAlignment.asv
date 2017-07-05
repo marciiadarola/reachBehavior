@@ -186,7 +186,7 @@ plot(best_arduino,'Color','r');
 
 % disp('in original alignment');
 % disp(length(best_arduino))
-
+ 
 % Then re-align sub-sections of movie to arduino code
 % alignSegments=750; % in number of indices
 alignSegments=250; % in number of indices
@@ -195,14 +195,14 @@ arduino_distractor=[];
 firstInd=find(~isnan(best_movie) & ~isnan(best_arduino),1,'first');
 lastBoth=min([find(~isnan(best_movie),1,'last') find(~isnan(best_arduino),1,'last')]);
 segmentInds=firstInd:floor(alignSegments/2):lastBoth;
-allMatchedInds=firstInd-firstInd+1:lastBoth-firstInd+1;
+allMatchedInds=firstInd:lastBoth;
 mov_distractor=[mov_distractor nan(1,firstInd-1)];
 arduino_distractor=[arduino_distractor nan(1,firstInd-1)];
 segmentDelays=nan(1,length(segmentInds));
 addZeros_movie=nan(1,length(segmentInds));
 addZeros_arduino=nan(1,length(segmentInds));
 moveChunks=nan(length(segmentInds),2);
-tookTheseIndsOfTemp1=floor(0.25*alignSegments):floor(0.75*alignSegments);
+tookTheseIndsOfTemp1=floor(0.25*alignSegments):ceil(0.75*alignSegments);
 haveDoneTheseInds=zeros(size(firstInd:lastBoth));
 backup_tookTheseIndsOfTemp1=tookTheseIndsOfTemp1;
 for i=1:length(segmentInds)-1
@@ -224,14 +224,14 @@ for i=1:length(segmentInds)-1
     % Take middle of aligned segments, because alignment at middle tends to
     % be better than alignment at edges
     temp_startInd=find(haveDoneTheseInds==0,1,'first');
-    temp_endInd=temp_startInd+length(backup_tookTheseIndsOfTemp1);
-    currIndices=currInd-firstInd+1:currInd+alignSegments-1-firstInd+1;
-    tookTheseIndsOfTemp1(1)=allMatchedIndsallMatchedInds(temp_startInd);
-    tookTheseIndsOfTemp1(end)=allMatchedInds(temp_endInd);
+    currIndices=currInd:(currInd+alignSegments-1);
+    tookTheseIndsOfTemp1(1)=allMatchedInds(temp_startInd)-currIndices(1)+1;
+    tookTheseIndsOfTemp1(end)=backup_tookTheseIndsOfTemp1(end);
+    temp_endInd=temp_startInd+(tookTheseIndsOfTemp1(end)-tookTheseIndsOfTemp1(1));
     if i==1
-        haveDoneTheseInds(1:allMatchedInds(temp_endInd))=1;
+        haveDoneTheseInds(1:temp_endInd)=1;
     else
-        haveDoneTheseInds(allMatchedInds(temp_startInd):allMatchedInds(temp_endInd))=1;
+        haveDoneTheseInds(temp_startInd:temp_endInd)=1;
     end
     if i==1
         startAt=1;
@@ -243,7 +243,7 @@ for i=1:length(segmentInds)-1
     elseif i==length(segmentInds)-1
         % alignment easily messed up at end -- just use delay from previous
         % segment
-        if segmentDelays(i-1)>0
+        if segmentDelays(i-1)>0 
             temp1=[ones(1,segmentDelays(i-1))*temp1(1) temp1];
         else
             temp2=[ones(1,-segmentDelays(i-1))*temp2(1) temp2];
@@ -284,50 +284,50 @@ aligned.arduino_distractor=arduino_distractor;
 % From Arduino
 
 % Make cue ONLY the *start* of cue
-for i=1:size(out.cueOn,1)
-    temp=zeros(size(out.cueOn(i,:)));
-    temp(isnan(out.cueOn(i,:)))=nan;
-    temp(find(out.cueOn(i,:)>0.5,1,'first'))=1;
-    out.cueOn(i,:)=temp;
-end
+% for i=1:size(out.cueOn,1)
+%     temp=zeros(size(out.cueOn(i,:)));
+%     temp(isnan(out.cueOn(i,:)))=nan;
+%     temp(find(out.cueOn(i,:)>0.5,1,'first'))=1;
+%     out.cueOn(i,:)=temp;
+% end
 
 temp=out.cueOn';
 temp=temp(1:end);
 cue=temp(~isnan(temptimes));
 cue=alignLikeDistractor(cue,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
-aligned.cue=cue;
+aligned.cue=cue./nanmax(cue);
 
 temp=testRunLED';
 temp=temp(1:end);
 testRunDistractor=temp(~isnan(temptimes));
 testRunDistractor=alignLikeDistractor(testRunDistractor,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
-aligned.testRunDistractor=testRunDistractor;
+aligned.testRunDistractor=testRunDistractor./nanmax(testRunDistractor);
 
 temp=out.pelletLoaded';
 temp=temp(1:end);
 pelletLoaded=temp(~isnan(temptimes));
 pelletLoaded=alignLikeDistractor(pelletLoaded,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
-aligned.pelletLoaded=pelletLoaded;
+aligned.pelletLoaded=pelletLoaded./nanmax(pelletLoaded);
 temp=out.pelletPresented';
 temp=temp(1:end);
 pelletPresented=temp(~isnan(temptimes));
 pelletPresented=alignLikeDistractor(pelletPresented,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
-aligned.pelletPresented=pelletPresented;
+aligned.pelletPresented=pelletPresented./nanmax(pelletPresented);
 temp=out.encoderTrialVals';
 temp=temp(1:end);
 encoder=temp(~isnan(temptimes));
 encoder=alignLikeDistractor(encoder,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
-aligned.encoder=encoder;
+aligned.encoder=encoder./nanmax(encoder);
 temp=out.nDropsPerTrial';
 temp=temp(1:end);
 drops=temp(~isnan(temptimes));
 drops=alignLikeDistractor(drops,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
-aligned.drops=drops;
+aligned.drops=drops./nanmax(drops);
 temp=out.nMissesPerTrial';
 temp=temp(1:end);
 misses=temp(~isnan(temptimes));
 misses=alignLikeDistractor(misses,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
-aligned.misses=misses;
+aligned.misses=misses./nanmax(misses);
 timesfromarduino=alignLikeDistractor(double(arduino_times),0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
 aligned.timesfromarduino=timesfromarduino;
 % From movie
@@ -541,7 +541,7 @@ for i=1:length(segmentInds)-1
         else
             % Delay is negative, so arduino was shifted
             currChunk=[ones(1,-segmentDelays(i))*currChunk(1) currChunk];
-        end
+        end 
     end
     currChunk=[currChunk currChunk(end)*ones(1,addZeros(i))];
     currChunk=currChunk(moveChunks(i,1):moveChunks(i,2));

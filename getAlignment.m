@@ -284,35 +284,35 @@ aligned.arduino_distractor=arduino_distractor;
 % From Arduino
 
 % Make cue ONLY the *start* of cue
-% for i=1:size(out.cueOn,1)
-%     temp=zeros(size(out.cueOn(i,:)));
-%     temp(isnan(out.cueOn(i,:)))=nan;
-%     temp(find(out.cueOn(i,:)>0.5,1,'first'))=1;
-%     out.cueOn(i,:)=temp;
-% end
+for i=1:size(out.cueOn,1)
+    temp=zeros(size(out.cueOn(i,:)));
+    temp(isnan(out.cueOn(i,:)))=nan;
+    temp(find(out.cueOn(i,:)>0.5,1,'first'))=1;
+    out.cueOn(i,:)=temp;
+end
 
 temp=out.cueOn';
 temp=temp(1:end);
 cue=temp(~isnan(temptimes));
 cue=alignLikeDistractor(cue,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
-aligned.cue=cue;
+aligned.cue=cue./nanmax(cue);
 
 temp=testRunLED';
 temp=temp(1:end);
 testRunDistractor=temp(~isnan(temptimes));
 testRunDistractor=alignLikeDistractor(testRunDistractor,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
-aligned.testRunDistractor=testRunDistractor;
+aligned.testRunDistractor=testRunDistractor./nanmax(testRunDistractor);
 
 temp=out.pelletLoaded';
 temp=temp(1:end);
 pelletLoaded=temp(~isnan(temptimes));
 pelletLoaded=alignLikeDistractor(pelletLoaded,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
-aligned.pelletLoaded=pelletLoaded;
+aligned.pelletLoaded=pelletLoaded./nanmax(pelletLoaded);
 temp=out.pelletPresented';
 temp=temp(1:end);
 pelletPresented=temp(~isnan(temptimes));
 pelletPresented=alignLikeDistractor(pelletPresented,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
-aligned.pelletPresented=pelletPresented;
+aligned.pelletPresented=pelletPresented./nanmax(pelletPresented);
 temp=out.encoderTrialVals';
 temp=temp(1:end);
 encoder=temp(~isnan(temptimes));

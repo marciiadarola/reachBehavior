@@ -8,8 +8,7 @@ cue=data.(nameOfCue);
 cue=cue*100;
 [pks,locs]=findpeaks(cue);
 % cueInds=find(cue>0.5);
-% cueInds=locs(pks>0.2);
-cueInds=locs(pks>30);
+cueInds=locs(pks>0.2);
 cueIndITIs=diff(cueInds);
 
 % In case of issues with aliasing of instantaneous cue
@@ -20,16 +19,11 @@ mo=mode(timeIncs);
 timeIncs(timeIncs==mo)=nan;
 bettermode=mode(timeIncs); % in ms
 bettermode=bettermode/1000; % in seconds
-checkTheseIntervals=find(cueIndITIs*bettermode>(maxITI*1.5));
+checkTheseIntervals=find(cueIndITIs>maxITI);
 for i=1:length(checkTheseIntervals)
-    indsIntoCue=cueInds(checkTheseIntervals(i))+floor((maxITI/2)./bettermode):cueInds(checkTheseIntervals(i)+1)-floor((maxITI/2)./bettermode);
-    [~,ma]=max(cue(indsIntoCue));
-    cue(indsIntoCue(ma))=100;
-end 
-[pks,locs]=findpeaks(cue);
-% cueInds=find(cue>0.5);
-cueInds=locs(pks>30);
-cueIndITIs=diff(cueInds);
+    [~,ma]=max(cue(locs(checkTheseIntervals(i))+1:locs(checkTheseIntervals(i)+1)-1));
+
+
 smallestTrial=min(cueIndITIs(cueIndITIs>10)); 
 
 % Get data
