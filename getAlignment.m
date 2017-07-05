@@ -236,9 +236,11 @@ for i=1:length(segmentInds)-1
     if i==1
         startAt=1;
         if D>0 % temp1 has been delayed by D samples
-            endAt=tookTheseIndsOfTemp1(end)+D;
-        else % temp2 has been delayed by D samples
+%             endAt=tookTheseIndsOfTemp1(end)+D;
             endAt=tookTheseIndsOfTemp1(end);
+        else % temp2 has been delayed by D samples
+%             endAt=tookTheseIndsOfTemp1(end);
+            endAt=tookTheseIndsOfTemp1(end)-D;
         end
     elseif i==length(segmentInds)-1
         % alignment easily messed up at end -- just use delay from previous
@@ -251,18 +253,24 @@ for i=1:length(segmentInds)-1
         segmentDelays(i)=segmentDelays(i-1);
         D=segmentDelays(i);
         if D>0 % temp1 has been delayed by D samples
-            startAt=tookTheseIndsOfTemp1(1)+D;
-        else % temp2 has been delayed by D samples
+%             startAt=tookTheseIndsOfTemp1(1)+D;
             startAt=tookTheseIndsOfTemp1(1);
+        else % temp2 has been delayed by D samples
+%             startAt=tookTheseIndsOfTemp1(1);
+            startAt=tookTheseIndsOfTemp1(1)-D;
         end
         endAt=min([length(temp1) length(temp2)]);        
     else
         if D>0 % temp1 has been delayed by D samples
-            startAt=tookTheseIndsOfTemp1(1)+D; 
-            endAt=tookTheseIndsOfTemp1(end)+D;
-        else % temp2 has been delayed by D samples
+%             startAt=tookTheseIndsOfTemp1(1)+D; 
+%             endAt=tookTheseIndsOfTemp1(end)+D;
             startAt=tookTheseIndsOfTemp1(1); 
             endAt=tookTheseIndsOfTemp1(end);
+        else % temp2 has been delayed by D samples
+%             startAt=tookTheseIndsOfTemp1(1); 
+%             endAt=tookTheseIndsOfTemp1(end);
+            startAt=tookTheseIndsOfTemp1(1)-D; 
+            endAt=tookTheseIndsOfTemp1(end)-D;
         end
     end
     temp1=temp1(startAt:endAt);
@@ -390,6 +398,8 @@ if length(peakLocs_rescaled)>length(troughLocs_rescaled)
     peakLocs_rescaled=peakLocs_rescaled(1:length(troughLocs_rescaled));
     peakTimes_rescaled=peakTimes_rescaled(1:length(troughLocs_rescaled));
 end
+peakLocs=peakLocs(1:length(troughLocs_rescaled));
+troughLocs=troughLocs(1:length(troughLocs_rescaled));
 k=1;
 for i=1:length(peakLocs)
     up=movieframeinds_raw(peakLocs(i));

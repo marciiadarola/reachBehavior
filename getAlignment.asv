@@ -236,9 +236,11 @@ for i=1:length(segmentInds)-1
     if i==1
         startAt=1;
         if D>0 % temp1 has been delayed by D samples
-            endAt=tookTheseIndsOfTemp1(end)+D;
-        else % temp2 has been delayed by D samples
+%             endAt=tookTheseIndsOfTemp1(end)+D;
             endAt=tookTheseIndsOfTemp1(end);
+        else % temp2 has been delayed by D samples
+%             endAt=tookTheseIndsOfTemp1(end);
+            endAt=tookTheseIndsOfTemp1(end)+D;
         end
     elseif i==length(segmentInds)-1
         % alignment easily messed up at end -- just use delay from previous
@@ -251,18 +253,24 @@ for i=1:length(segmentInds)-1
         segmentDelays(i)=segmentDelays(i-1);
         D=segmentDelays(i);
         if D>0 % temp1 has been delayed by D samples
-            startAt=tookTheseIndsOfTemp1(1)+D;
-        else % temp2 has been delayed by D samples
+%             startAt=tookTheseIndsOfTemp1(1)+D;
             startAt=tookTheseIndsOfTemp1(1);
+        else % temp2 has been delayed by D samples
+%             startAt=tookTheseIndsOfTemp1(1);
+            startAt=tookTheseIndsOfTemp1(1)-D;
         end
         endAt=min([length(temp1) length(temp2)]);        
     else
         if D>0 % temp1 has been delayed by D samples
-            startAt=tookTheseIndsOfTemp1(1)+D; 
-            endAt=tookTheseIndsOfTemp1(end)+D;
-        else % temp2 has been delayed by D samples
+%             startAt=tookTheseIndsOfTemp1(1)+D; 
+%             endAt=tookTheseIndsOfTemp1(end)+D;
             startAt=tookTheseIndsOfTemp1(1); 
             endAt=tookTheseIndsOfTemp1(end);
+        else % temp2 has been delayed by D samples
+%             startAt=tookTheseIndsOfTemp1(1); 
+%             endAt=tookTheseIndsOfTemp1(end);
+            startAt=tookTheseIndsOfTemp1(1)-D; 
+            endAt=tookTheseIndsOfTemp1(end)-D;
         end
     end
     temp1=temp1(startAt:endAt);
@@ -284,12 +292,12 @@ aligned.arduino_distractor=arduino_distractor;
 % From Arduino
 
 % Make cue ONLY the *start* of cue
-% for i=1:size(out.cueOn,1)
-%     temp=zeros(size(out.cueOn(i,:)));
-%     temp(isnan(out.cueOn(i,:)))=nan;
-%     temp(find(out.cueOn(i,:)>0.5,1,'first'))=1;
-%     out.cueOn(i,:)=temp;
-% end
+for i=1:size(out.cueOn,1)
+    temp=zeros(size(out.cueOn(i,:)));
+    temp(isnan(out.cueOn(i,:)))=nan;
+    temp(find(out.cueOn(i,:)>0.5,1,'first'))=1;
+    out.cueOn(i,:)=temp;
+end
 
 temp=out.cueOn';
 temp=temp(1:end);
@@ -317,17 +325,17 @@ temp=out.encoderTrialVals';
 temp=temp(1:end);
 encoder=temp(~isnan(temptimes));
 encoder=alignLikeDistractor(encoder,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
-aligned.encoder=encoder./nanmax(encoder);
+aligned.encoder=encoder;
 temp=out.nDropsPerTrial';
 temp=temp(1:end);
 drops=temp(~isnan(temptimes));
 drops=alignLikeDistractor(drops,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
-aligned.drops=drops./nanmax(drops);
+aligned.drops=drops;
 temp=out.nMissesPerTrial';
 temp=temp(1:end);
 misses=temp(~isnan(temptimes));
 misses=alignLikeDistractor(misses,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
-aligned.misses=misses./nanmax(misses);
+aligned.misses=misses;
 timesfromarduino=alignLikeDistractor(double(arduino_times),0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
 aligned.timesfromarduino=timesfromarduino;
 % From movie
