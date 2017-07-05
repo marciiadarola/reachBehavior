@@ -246,7 +246,7 @@ nopellet_color=[0.8 0.8 0.8];
 wheel_turns_color='k';
 pawwheel_color='y';
 
-event_thresh=0.5;
+event_thresh=0.01;
 
 figure();
 % for i=1:size(cue_tbt,1)
@@ -286,6 +286,9 @@ for i=plot_cues
     end
     % Plot cue events
     event_ind=find(cue_tbt(i,:)>event_thresh,1,'first');
+    if isempty(event_ind)
+        error('no cue for this trial');
+    end
     scatter([timespertrial(event_ind) timespertrial(event_ind)],[k k],[],cue_color,'filled');
     hold on;
     % Plot reach start events

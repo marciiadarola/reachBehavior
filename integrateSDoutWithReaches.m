@@ -2,7 +2,7 @@ function alignment=integrateSDoutWithReaches(reaches,out,moviefps,alignment,save
 
 % Will need to fix some file alignments by lining up cue onsets and offsets
 if isempty(alignment)
-    alignment=getAlignment([],out,[],[],moviefps,[],reaches);
+    alignment=getAlignment(out,moviefps,reaches);
     save([savedir '\alignment.mat'], 'alignment');
 end
 

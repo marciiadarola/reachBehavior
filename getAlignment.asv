@@ -1,7 +1,6 @@
 function aligned=getAlignment(out,moviefps,handles)
 
 distractorType='fixed duration';
-distractorDuration=0.25; % in seconds
 % distractorType='random';
 
 % Note that microSD (Arduino) output is timed in ms
@@ -189,13 +188,14 @@ plot(best_arduino,'Color','r');
 % disp(length(best_arduino))
 
 % Then re-align sub-sections of movie to arduino code
-alignSegments=750; % in number of indices
-% alignSegments=1000; % in number of indices
+% alignSegments=750; % in number of indices
+alignSegments=250; % in number of indices
 mov_distractor=[];
 arduino_distractor=[];
 firstInd=find(~isnan(best_movie) & ~isnan(best_arduino),1,'first');
 lastBoth=min([find(~isnan(best_movie),1,'last') find(~isnan(best_arduino),1,'last')]);
 segmentInds=firstInd:floor(alignSegments/2):lastBoth;
+allMatchedInds=firstInd-firstInd+1:lastBoth-firstInd+1;
 mov_distractor=[mov_distractor nan(1,firstInd-1)];
 arduino_distractor=[arduino_distractor nan(1,firstInd-1)];
 segmentDelays=nan(1,length(segmentInds));
@@ -203,6 +203,8 @@ addZeros_movie=nan(1,length(segmentInds));
 addZeros_arduino=nan(1,length(segmentInds));
 moveChunks=nan(length(segmentInds),2);
 tookTheseIndsOfTemp1=floor(0.25*alignSegments):floor(0.75*alignSegments);
+haveDoneTheseInds=zeros(size(firstInd:lastBoth));
+backup_tookTheseIndsOfTemp1=tookTheseIndsOfTemp1;
 for i=1:length(segmentInds)-1
     currInd=segmentInds(i);
     [temp1,temp2,D]=alignsignals(best_movie(currInd:currInd+alignSegments-1),best_arduino(currInd:currInd+alignSegments-1));
@@ -218,6 +220,18 @@ for i=1:length(segmentInds)-1
     else
         addZeros_movie(i)=0;
         addZeros_arduino(i)=0;
+    end
+    % Take middle of aligned segments, because alignment at middle tends to
+    % be better than alignment at edges
+    temp_startInd=find(haveDoneTheseInds==0,1,'first');
+    temp_endInd=temp_startInd+length(backup_tookTheseIndsOfTemp1);
+    currIndices=currInd-firstInd+1:currInd+alignSegments-1-firstInd+1;
+    tookTheseIndsOfTemp1(1)=allMatchedIndsallMatchedInds(temp_startInd);
+    tookTheseIndsOfTemp1(end)=allMatchedInds(temp_endInd);
+    if i==1
+        haveDoneTheseInds(1:allMatchedInds(temp_endInd))=1;
+    else
+        haveDoneTheseInds(allMatchedInds(temp_startInd):allMatchedInds(temp_endInd))=1;
     end
     if i==1
         startAt=1;

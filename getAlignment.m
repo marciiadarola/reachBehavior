@@ -1,7 +1,6 @@
 function aligned=getAlignment(out,moviefps,handles)
 
 distractorType='fixed duration';
-distractorDuration=0.25; % in seconds
 % distractorType='random';
 
 % Note that microSD (Arduino) output is timed in ms
@@ -187,7 +186,7 @@ plot(best_arduino,'Color','r');
 
 % disp('in original alignment');
 % disp(length(best_arduino))
-
+ 
 % Then re-align sub-sections of movie to arduino code
 % alignSegments=750; % in number of indices
 alignSegments=250; % in number of indices
@@ -196,13 +195,16 @@ arduino_distractor=[];
 firstInd=find(~isnan(best_movie) & ~isnan(best_arduino),1,'first');
 lastBoth=min([find(~isnan(best_movie),1,'last') find(~isnan(best_arduino),1,'last')]);
 segmentInds=firstInd:floor(alignSegments/2):lastBoth;
+allMatchedInds=firstInd:lastBoth;
 mov_distractor=[mov_distractor nan(1,firstInd-1)];
 arduino_distractor=[arduino_distractor nan(1,firstInd-1)];
 segmentDelays=nan(1,length(segmentInds));
 addZeros_movie=nan(1,length(segmentInds));
 addZeros_arduino=nan(1,length(segmentInds));
 moveChunks=nan(length(segmentInds),2);
-tookTheseIndsOfTemp1=floor(0.25*alignSegments):floor(0.75*alignSegments);
+tookTheseIndsOfTemp1=floor(0.25*alignSegments):ceil(0.75*alignSegments);
+haveDoneTheseInds=zeros(size(firstInd:lastBoth));
+backup_tookTheseIndsOfTemp1=tookTheseIndsOfTemp1;
 for i=1:length(segmentInds)-1
     currInd=segmentInds(i);
     [temp1,temp2,D]=alignsignals(best_movie(currInd:currInd+alignSegments-1),best_arduino(currInd:currInd+alignSegments-1));
@@ -219,6 +221,18 @@ for i=1:length(segmentInds)-1
         addZeros_movie(i)=0;
         addZeros_arduino(i)=0;
     end
+    % Take middle of aligned segments, because alignment at middle tends to
+    % be better than alignment at edges
+    temp_startInd=find(haveDoneTheseInds==0,1,'first');
+    currIndices=currInd:(currInd+alignSegments-1);
+    tookTheseIndsOfTemp1(1)=allMatchedInds(temp_startInd)-currIndices(1)+1;
+    tookTheseIndsOfTemp1(end)=backup_tookTheseIndsOfTemp1(end);
+    temp_endInd=temp_startInd+(tookTheseIndsOfTemp1(end)-tookTheseIndsOfTemp1(1));
+    if i==1
+        haveDoneTheseInds(1:temp_endInd)=1;
+    else
+        haveDoneTheseInds(temp_startInd:temp_endInd)=1;
+    end
     if i==1
         startAt=1;
         if D>0 % temp1 has been delayed by D samples
@@ -229,7 +243,7 @@ for i=1:length(segmentInds)-1
     elseif i==length(segmentInds)-1
         % alignment easily messed up at end -- just use delay from previous
         % segment
-        if segmentDelays(i-1)>0
+        if segmentDelays(i-1)>0 
             temp1=[ones(1,segmentDelays(i-1))*temp1(1) temp1];
         else
             temp2=[ones(1,-segmentDelays(i-1))*temp2(1) temp2];
@@ -270,12 +284,12 @@ aligned.arduino_distractor=arduino_distractor;
 % From Arduino
 
 % Make cue ONLY the *start* of cue
-for i=1:size(out.cueOn,1)
-    temp=zeros(size(out.cueOn(i,:)));
-    temp(isnan(out.cueOn(i,:)))=nan;
-    temp(find(out.cueOn(i,:)>0.5,1,'first'))=1;
-    out.cueOn(i,:)=temp;
-end
+% for i=1:size(out.cueOn,1)
+%     temp=zeros(size(out.cueOn(i,:)));
+%     temp(isnan(out.cueOn(i,:)))=nan;
+%     temp(find(out.cueOn(i,:)>0.5,1,'first'))=1;
+%     out.cueOn(i,:)=temp;
+% end
 
 temp=out.cueOn';
 temp=temp(1:end);
@@ -527,7 +541,7 @@ for i=1:length(segmentInds)-1
         else
             % Delay is negative, so arduino was shifted
             currChunk=[ones(1,-segmentDelays(i))*currChunk(1) currChunk];
-        end
+        end 
     end
     currChunk=[currChunk currChunk(end)*ones(1,addZeros(i))];
     currChunk=currChunk(moveChunks(i,1):moveChunks(i,2));
