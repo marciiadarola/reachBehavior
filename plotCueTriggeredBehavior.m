@@ -29,6 +29,16 @@ end
 [pks,locs]=findpeaks(cue);
 % cueInds=find(cue>0.5);
 cueInds=locs(pks>30);
+
+minITI=20;
+cueIndITIs=diff(cueInds);
+checkTheseIntervals=find(cueIndITIs*bettermode<(minITI*0.5));
+if ~isempty(checkTheseIntervals)
+    for i=1:length(checkTheseIntervals)
+        cueInds(checkTheseIntervals(i))=nan;
+    end
+end
+cueInds=cueInds(~isnan(cueInds));
 cueIndITIs=diff(cueInds);
 smallestTrial=min(cueIndITIs(cueIndITIs>10)); 
 
@@ -267,7 +277,7 @@ nopellet_color=[0.8 0.8 0.8];
 wheel_turns_color='k';
 pawwheel_color='y';
 
-event_thresh=0.003;
+event_thresh=0.2;
 
 figure();
 % for i=1:size(cue_tbt,1)
@@ -282,6 +292,7 @@ for i=plot_cues
         scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[k k],[],'MarkerEdgeColor',success_color,...
               'MarkerFaceColor',pawwheel_color,...
               'LineWidth',1.5);
+          hold on;
     end
     
     event_ind=find(drop_pawOnWheel_tbt(i,:)>event_thresh);
@@ -307,9 +318,13 @@ for i=plot_cues
     end
     % Plot cue events
     event_ind=find(cue_tbt(i,:)>event_thresh,1,'first');
+%     event_ind=find(cue_tbt(i,:)>event_thresh);
     if isempty(event_ind)
         error('no cue for this trial');
     end
+%     for j=1:length(event_ind)
+%         scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[k k],[],cue_color,'filled');
+%     end
     scatter([timespertrial(event_ind) timespertrial(event_ind)],[k k],[],cue_color,'filled');
     hold on;
     % Plot reach start events

@@ -189,7 +189,7 @@ plot(best_arduino,'Color','r');
  
 % Then re-align sub-sections of movie to arduino code
 % alignSegments=750; % in number of indices
-alignSegments=250; % in number of indices
+alignSegments=500; % in number of indices
 mov_distractor=[];
 arduino_distractor=[];
 firstInd=find(~isnan(best_movie) & ~isnan(best_arduino),1,'first');
@@ -240,7 +240,7 @@ for i=1:length(segmentInds)-1
             endAt=tookTheseIndsOfTemp1(end);
         else % temp2 has been delayed by D samples
 %             endAt=tookTheseIndsOfTemp1(end);
-            endAt=tookTheseIndsOfTemp1(end)+D;
+            endAt=tookTheseIndsOfTemp1(end)-D;
         end
     elseif i==length(segmentInds)-1
         % alignment easily messed up at end -- just use delay from previous
@@ -347,6 +347,7 @@ movieframeinds_backup=movieframeinds;
 testRunDistractor_movie=alignLikeDistractor(testRun_movieLED,1,movie_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_movie,scaleBy,resampFac,moveChunks);
 aligned.testRunDistractor_movie=testRunDistractor_movie;
 
+
 % Re-align movie frame inds based on alignment to non-interped LED vals
 maxNFramesForLEDtoChange=2;
 deriv_LEDvals=[diff(handles.LEDvals) 0];
@@ -397,6 +398,10 @@ end
 if length(peakLocs_rescaled)>length(troughLocs_rescaled)
     peakLocs_rescaled=peakLocs_rescaled(1:length(troughLocs_rescaled));
     peakTimes_rescaled=peakTimes_rescaled(1:length(troughLocs_rescaled));
+end
+if length(peakLocs_rescaled)~=length(peakLocs)
+    peakLocs
+%     error('different number of distractor LED events before and after rescaling');
 end
 k=1;
 for i=1:length(peakLocs)
