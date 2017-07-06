@@ -84,7 +84,7 @@ if strcmp(distractorType,'fixed duration')
 %     plot(movie_LED_ITIs,'Color','b');
     
     [X,Y,D]=alignsignals(arduino_LED_ITIs./max(arduino_LED_ITIs),movie_LED_ITIs./max(movie_LED_ITIs));
-    tryinc=0.001;
+    tryinc=0.0001;
     if D>0
         error('Why does movie start before Arduino?');
     else
@@ -98,10 +98,11 @@ if strcmp(distractorType,'fixed duration')
         % Adjust according to guess_best_scale
         movie_LED=resample(movie_LED,floor(mod(size_of_arduino/size_of_movie,1)*100)+floor((guess_best_scale*100)/100)*100,100);
         guess_best_delay=arduino_peak_indexIntoArduino-movie_peak_indexIntoMovie;
-        trydelays=guess_best_delay-50:guess_best_delay+50;
+%         trydelays=guess_best_delay-50:guess_best_delay+50;
+        trydelays=guess_best_delay-15:guess_best_delay+15;
         % Note that fixed, so now best scale is 1
         guess_best_scale=1;
-        tryscales=guess_best_scale-0.1:tryinc:guess_best_scale+0.1;
+        tryscales=guess_best_scale-0.02:tryinc:guess_best_scale+0.02;
         backup_movie_LED=movie_LED; 
     end    
     
@@ -188,8 +189,8 @@ plot(best_arduino,'Color','r');
 % disp(length(best_arduino))
  
 % Then re-align sub-sections of movie to arduino code
-% alignSegments=750; % in number of indices
-alignSegments=250; % in number of indices
+alignSegments=750; % in number of indices
+% alignSegments=250; % in number of indices
 mov_distractor=[];
 arduino_distractor=[];
 firstInd=find(~isnan(best_movie) & ~isnan(best_arduino),1,'first');
