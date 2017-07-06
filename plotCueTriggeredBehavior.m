@@ -4,43 +4,32 @@ function tbt=plotCueTriggeredBehavior(data,nameOfCue,excludePawOnWheelTrials)
 % 'arduino_distractor' for distractor
 
 cue=data.(nameOfCue); 
-
-cue=cue*100;
-[pks,locs]=findpeaks(cue);
-% cueInds=find(cue>0.5);
-% cueInds=locs(pks>0.2);
-cueInds=locs(pks>30);
-cueIndITIs=diff(cueInds);
-
 % In case of issues with aliasing of instantaneous cue
 maxITI=30; % in seconds, maximal ITI
+minITI=20; % in seconds, minimal ITI
 % Get time delay
 timeIncs=diff(data.timesfromarduino(data.timesfromarduino~=0));
 mo=mode(timeIncs);
 timeIncs(timeIncs==mo)=nan;
 bettermode=mode(timeIncs); % in ms
 bettermode=bettermode/1000; % in seconds
-checkTheseIntervals=find(cueIndITIs*bettermode>(maxITI*1.5));
-for i=1:length(checkTheseIntervals)
-    indsIntoCue=cueInds(checkTheseIntervals(i))+floor((maxITI/2)./bettermode):cueInds(checkTheseIntervals(i)+1)-floor((maxITI/2)./bettermode);
-    [~,ma]=max(cue(indsIntoCue));
-    cue(indsIntoCue(ma))=100;
-end 
-[pks,locs]=findpeaks(cue);
-% cueInds=find(cue>0.5);
-cueInds=locs(pks>30);
 
-minITI=20;
-cueIndITIs=diff(cueInds);
-checkTheseIntervals=find(cueIndITIs*bettermode<(minITI*0.5));
-if ~isempty(checkTheseIntervals)
-    for i=1:length(checkTheseIntervals)
-        cueInds(checkTheseIntervals(i))=nan;
-    end
-end
-cueInds=cueInds(~isnan(cueInds));
-cueIndITIs=diff(cueInds);
+[cue,cueInds,cueIndITIs]=fixAliasing(cue,maxITI,minITI,bettermode);
+[data.pelletPresented,presentedInds]=fixAliasing(data.pelletPresented,maxITI,minITI,bettermode);
+
 smallestTrial=min(cueIndITIs(cueIndITIs>10)); 
+
+figure();
+plot(cue./nanmax(cue));
+hold on;
+plot(data.pelletPresented./nanmax(data.pelletPresented),'Color','k');
+for i=1:length(cueInds)
+    scatter(cueInds(i),1,[],'r');
+end
+for i=1:length(presentedInds)
+    scatter(presentedInds(i),1,[],[0.5 0.5 0.5]);
+end
+title('Checking cue selection');
 
 % Get data
 distractor=data.arduino_distractor;
@@ -70,7 +59,7 @@ temp(pelletPresented>=sigthresh)=1;
 pelletPresented=temp;
 
 % Trial-by-trial, tbt
-pointsFromPreviousTrial=50;
+pointsFromPreviousTrial=100;
 cue_tbt=nan(length(cueInds),max(cueIndITIs)+pointsFromPreviousTrial);
 distractor_tbt=nan(length(cueInds),max(cueIndITIs)+pointsFromPreviousTrial);
 pelletLoaded_tbt=nan(length(cueInds),max(cueIndITIs)+pointsFromPreviousTrial);
@@ -108,7 +97,8 @@ for i=1:length(cueInds)
     drop_tbt(i,1:length(theseInds))=drop(theseInds);
     miss_tbt(i,1:length(theseInds))=miss(theseInds);
     eating_tbt(i,1:length(theseInds))=eating(theseInds); 
-    times_tbt(i,1:length(theseInds))=timesFromArduino(theseInds); 
+%     times_tbt(i,1:length(theseInds))=timesFromArduino(theseInds); 
+    times_tbt(i,1:length(theseInds))=movieframeinds(theseInds).*bettermode;
     movieframeinds_tbt(i,1:length(theseInds))=movieframeinds(theseInds); 
     reach_wout_pellet_tbt(i,1:length(theseInds))=reach_wout_pellet(theseInds); 
     paw_from_wheel_tbt(i,1:length(theseInds))=paw_from_wheel(theseInds); 
@@ -317,16 +307,18 @@ for i=plot_cues
               'LineWidth',1.5);
     end
     % Plot cue events
+    eventThresh=0.5;
     event_ind=find(cue_tbt(i,:)>event_thresh,1,'first');
 %     event_ind=find(cue_tbt(i,:)>event_thresh);
     if isempty(event_ind)
-        error('no cue for this trial');
+        error('no cue for this trial'); 
     end
 %     for j=1:length(event_ind)
 %         scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[k k],[],cue_color,'filled');
 %     end
     scatter([timespertrial(event_ind) timespertrial(event_ind)],[k k],[],cue_color,'filled');
     hold on;
+    event_thresh=0.2;
     % Plot reach start events
 %     event_ind=find(reachStarts_tbt(i,:)>event_thresh);
     if excludePawOnWheelTrials==1
@@ -339,10 +331,12 @@ for i=plot_cues
 %         scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],reach_color,'filled');
 %     end
     % Plot wheel begins to turn events
+    event_thresh=0.5;
     event_ind=find(pelletPresented_tbt(i,:)>event_thresh);
     for j=1:length(event_ind)
         scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[k k],[],wheel_turns_color,'filled');
     end
+    event_thresh=0.2;
     % Plot success events
     event_ind=find(success_tbt(i,:)>event_thresh);
     timesOfSuccess_givenPellet=[timesOfSuccess_givenPellet timespertrial(event_ind)];
@@ -481,5 +475,37 @@ end
 
 end
 
+function [cue,cueInds,cueIndITIs]=fixAliasing(cue,maxITI,minITI,bettermode)
 
+cue=cue*100;
+
+[pks,locs]=findpeaks(cue);
+cueInds=locs(pks>30);
+cueInds=[1 cueInds length(cue)]; % in case aliasing problem is at edges
+cueIndITIs=diff(cueInds);
+checkTheseIntervals=find(cueIndITIs*bettermode>(maxITI*1.5));
+for i=1:length(checkTheseIntervals)
+    indsIntoCue=cueInds(checkTheseIntervals(i))+floor((maxITI/2)./bettermode):cueInds(checkTheseIntervals(i)+1)-floor((maxITI/2)./bettermode);
+    if any(cue(indsIntoCue)>0.001)
+        [~,ma]=max(cue(indsIntoCue)); 
+        cue(indsIntoCue(ma))=100;
+    end
+end 
+
+[pks,locs]=findpeaks(cue);
+cueInds=locs(pks>30);
+cueIndITIs=diff(cueInds);
+checkTheseIntervals=find(cueIndITIs*bettermode<(minITI*0.5));
+if ~isempty(checkTheseIntervals)
+    for i=1:length(checkTheseIntervals)
+        cue(cueInds(checkTheseIntervals(i)))=0;
+        cueInds(checkTheseIntervals(i))=nan; 
+    end
+end
+cueInds=cueInds(~isnan(cueInds));
+cueIndITIs=diff(cueInds);
+
+cue=cue./nanmax(cue);
+
+end
 
