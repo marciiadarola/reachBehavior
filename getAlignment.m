@@ -189,8 +189,9 @@ plot(best_arduino,'Color','r');
 % disp(length(best_arduino))
  
 % Then re-align sub-sections of movie to arduino code
-alignSegments=750; % in number of indices
+% alignSegments=750; % in number of indices
 % alignSegments=250; % in number of indices
+alignSegments=600; % in number of indices
 mov_distractor=[];
 arduino_distractor=[];
 firstInd=find(~isnan(best_movie) & ~isnan(best_arduino),1,'first');
