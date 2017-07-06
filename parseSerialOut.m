@@ -125,7 +125,7 @@ out.distractorStart=distractorStart;
 out.cueStart=cueStart;
 out.encoderPosition=encoderPosition;
 out.ITIs=ITIs;
-maxITI=max(ITIs);
+maxITI=max(ITIs)+1;
 
 % Re-structure data as trial-by-trial
 timesPerTrial=0:1:maxITI; % in ms
@@ -162,6 +162,9 @@ for i=1:length(ITIs)
     % Change times to wrt start of this trial
 %     relevantEventLogTimes=relevantEventLogTimes-eventLogTimes(startIndsIntoEventLog(i));
 %     timesPerTrial=eventLogTimes(startIndsIntoEventLog(i))+backup_timesPerTrial;   
+    if length(timesPerTrial)>size(allTrialTimes,2)
+        disp('error in size');
+    end
     allTrialTimes(i,1:length(timesPerTrial))=timesPerTrial;
     trialStartTimes=[trialStartTimes eventLogTimes(startIndsIntoEventLog(i))];
     timeSoFar=timeSoFar+currITI;
