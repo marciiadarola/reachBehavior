@@ -1,6 +1,16 @@
-function allAnalysis(savehandles)
+function allAnalysis(nameOfMicroSD,nameOfVideoFile)
+           
+endoffname=regexp(nameOfMicroSD,'\');            
+out=parseSerialOut(nameOfMicroSD,[nameOfMicroSD(1:endoffname(end)) 'parsedOutput.mat']);
 
+endoffname=regexp(nameOfVideoFile,'\.');          
+a=load([nameOfVideoFile(1:endoffname(end)-1) '_savehandles.mat']);
+savehandles=a.savehandles;
 
-out=parseSerialOut('C:\Users\Kim\Documents\MATLAB\20170322\MicroSD_Output.txt','C:\Users\Kim\Documents\MATLAB\20170322\parsedOutput.mat');
 aligned=getAlignment(out,30,savehandles);
-finaldata=integrateSDoutWithReaches(savehandles,out,30,aligned,'C:\Users\Kim\Documents\MATLAB\20170322\good processed data');
+
+endoffname=regexp(nameOfMicroSD,'\');       
+[status]=mkdir([nameOfMicroSD(1:endoffname(end)) '\processed_data']);
+finaldata=integrateSDoutWithReaches(savehandles,out,30,aligned,[nameOfMicroSD(1:endoffname(end)) '\processed_data']);
+
+tbt=plotCueTriggeredBehavior(finaldata,'cue',1);

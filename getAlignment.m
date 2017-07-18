@@ -402,42 +402,50 @@ if length(peakLocs_rescaled)>length(troughLocs_rescaled)
     peakTimes_rescaled=peakTimes_rescaled(1:length(troughLocs_rescaled));
 end
 k=1;
+donotdoalign=0;
 for i=1:length(peakLocs)
     up=movieframeinds_raw(peakLocs(i));
     down=movieframeinds_raw(troughLocs(i));
     [~,mi_up]=min(abs(peakTimes_rescaled-up));
     [~,mi_down]=min(abs(troughTimes_rescaled-down));
+    if k>length(troughLocs_rescaled)
+        donotdoalign=1;
+        break
+    end
     rawmovieinds_onto_rescaled(peakLocs_rescaled(k):troughLocs_rescaled(k))=linspace(up,down,troughLocs_rescaled(k)-peakLocs_rescaled(k)+1);
     k=k+1;
 end
-% Fill in nans accordingly
-firstnan=find(isnan(rawmovieinds_onto_rescaled),1,'first');
-temp=rawmovieinds_onto_rescaled;
-temp(1:firstnan)=nan;
-firstnotnan=find(~isnan(temp),1,'first');
-safety_counter=1;
-rawframestart=movieframeinds_raw(1);
-while ~isempty(firstnan)
-    if safety_counter>20*10^4
-        break
-    end
-    if isempty(rawmovieinds_onto_rescaled(firstnotnan))
-        temp=linspace(rawframestart,movieframeinds_raw(end),length(rawmovieinds_onto_rescaled)-firstnan+2);
-        rawmovieinds_onto_rescaled(firstnan:length(rawmovieinds_onto_rescaled))=temp(2:end);
-        break
-    end
-    temp=linspace(rawframestart,rawmovieinds_onto_rescaled(firstnotnan),firstnotnan-firstnan+2);
-    rawmovieinds_onto_rescaled(firstnan:firstnotnan-1)=temp(2:end-1);
-    % Increment
+if donotdoalign==0
+    % Fill in nans accordingly
     firstnan=find(isnan(rawmovieinds_onto_rescaled),1,'first');
-    rawframestart=rawmovieinds_onto_rescaled(firstnan-1);
     temp=rawmovieinds_onto_rescaled;
     temp(1:firstnan)=nan;
     firstnotnan=find(~isnan(temp),1,'first');
-    safety_counter=safety_counter+1;
+    safety_counter=1;
+    rawframestart=movieframeinds_raw(1);
+    while ~isempty(firstnan)
+        if safety_counter>20*10^4
+            break
+        end
+        if isempty(rawmovieinds_onto_rescaled(firstnotnan))
+            temp=linspace(rawframestart,movieframeinds_raw(end),length(rawmovieinds_onto_rescaled)-firstnan+2);
+            rawmovieinds_onto_rescaled(firstnan:length(rawmovieinds_onto_rescaled))=temp(2:end);
+            break
+        end
+        temp=linspace(rawframestart,rawmovieinds_onto_rescaled(firstnotnan),firstnotnan-firstnan+2);
+        rawmovieinds_onto_rescaled(firstnan:firstnotnan-1)=temp(2:end-1);
+        % Increment
+        firstnan=find(isnan(rawmovieinds_onto_rescaled),1,'first');
+        rawframestart=rawmovieinds_onto_rescaled(firstnan-1);
+        temp=rawmovieinds_onto_rescaled;
+        temp(1:firstnan)=nan;
+        firstnotnan=find(~isnan(temp),1,'first');
+        safety_counter=safety_counter+1;
+    end
+    aligned.movieframeinds=rawmovieinds_onto_rescaled;
+else
+    aligned.movieframeinds=movieframeinds_backup;
 end
-aligned.movieframeinds=rawmovieinds_onto_rescaled;
-% aligned.movieframeinds=movieframeinds_backup;
 
 % Plot results
 figure();

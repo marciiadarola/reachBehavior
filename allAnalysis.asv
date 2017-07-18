@@ -1,0 +1,17 @@
+function allAnalysis(nameOfMicroSD,nameOfVideoFile)
+
+
+            
+            
+endoffname=regexp(nameOfMicroSD,'\');            
+out=parseSerialOut(nameOfMicroSD,[filename(1:endoffname(end)) 'parsedOutput.mat']);
+
+endoffname=regexp(nameOfVideoFile,'\.');          
+a=load([filename(1:endoffname(end)-1) '_savehandles.mat']);
+savehandles=a.savehandles;
+
+aligned=getAlignment(out,30,savehandles);
+
+endoffname=regexp(nameOfMicroSD,'\');       
+mkdir([endoffname '\processed data'
+finaldata=integrateSDoutWithReaches(savehandles,out,30,aligned,'C:\Users\Kim\Documents\MATLAB\20170322\good processed data');
