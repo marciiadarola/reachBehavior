@@ -723,7 +723,7 @@ end
 function finishFunction(handles)
 
 if ~isfield(handles,'useAsThresh')
-%     delete(hObject);
+    delete(hObject);
     return
 end
  
@@ -771,11 +771,6 @@ savehandles.lookedAtFrame=handles.lookedAtFrame;
 savehandles.perc10_change=handles.perc10_change;
 savehandles.logReachN=handles.logReachN;
 savehandles.allframes=handles.allframes;
-savehandles.EOF=handles.EOF;
-savehandles.endoffname=handles.endoffname;
-savehandles.computerThinksNoReach=handles.computerThinksNoReach;
-savehandles.summedIntensity=handles.summedIntensity;
-
 
 if ~isfield(handles,'endoffname')
     handles.endoffname=[];

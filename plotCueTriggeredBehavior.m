@@ -269,6 +269,7 @@ pawwheel_color='y';
 
 event_thresh=0.2;
 
+
 figure();
 % for i=1:size(cue_tbt,1)
 k=1;
@@ -316,7 +317,7 @@ for i=plot_cues
 %     for j=1:length(event_ind)
 %         scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[k k],[],cue_color,'filled');
 %     end
-    scatter([timespertrial(event_ind) timespertrial(event_ind)],[k k],[],cue_color,'filled');
+    scatter([timespertrial(event_ind)-0.2 timespertrial(event_ind)-0.2],[k k],[],cue_color,'filled');
     hold on;
     event_thresh=0.2;
     % Plot reach start events
@@ -334,7 +335,7 @@ for i=plot_cues
     event_thresh=0.5;
     event_ind=find(pelletPresented_tbt(i,:)>event_thresh);
     for j=1:length(event_ind)
-        scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[k k],[],wheel_turns_color,'filled');
+        scatter([timespertrial(event_ind(j))-0.2 timespertrial(event_ind(j))-0.2],[k k],[],wheel_turns_color,'filled');
     end
     event_thresh=0.2;
     % Plot success events
@@ -371,6 +372,8 @@ plot(timespertrial,temp.*(ma/max(temp)),'Color','r');
 title('Histogram of all reach starts');
 temp=nanmean(pelletPresented_tbt(plot_cues,:),1);
 plot(timespertrial,temp.*(ma/max(temp)),'Color','k');
+
+return
 
 % Plot probability of reach given pellet present across different trial
 % time bins
@@ -495,7 +498,7 @@ end
 [pks,locs]=findpeaks(cue);
 cueInds=locs(pks>30);
 cueIndITIs=diff(cueInds);
-checkTheseIntervals=find(cueIndITIs*bettermode<(minITI*0.5));
+checkTheseIntervals=find(cueIndITIs*bettermode<(minITI*0.75));
 if ~isempty(checkTheseIntervals)
     for i=1:length(checkTheseIntervals)
         cue(cueInds(checkTheseIntervals(i)))=0;
