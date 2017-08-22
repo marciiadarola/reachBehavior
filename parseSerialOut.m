@@ -1,4 +1,7 @@
-function out=parseSerialOut(filename,outfile)
+function out=parseSerialOut(filename,outfile,control)
+
+% control is true if this is a control where pellet not loaded every time,
+% else control is false
 
 % filename specifies a text file, the serial output from Arduino written to
 % microSD card
@@ -172,6 +175,8 @@ for i=1:length(ITIs)
     curr=relevantEventLogTimes(relevantEventLog==loaderWriteCode);
     if length(curr)>1 % Should have only loaded pellet once
         error('Why has pellet been loaded more than once?');
+    elseif isempty(curr) && control==true
+        % Pellet not loaded this trial
     else
         [~,mi]=min(abs(timesPerTrial-curr)); % Find closest time
         pelletLoaded(i,mi(1))=1; % Loaded here

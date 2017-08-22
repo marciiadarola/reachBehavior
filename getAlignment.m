@@ -102,7 +102,8 @@ if strcmp(distractorType,'fixed duration')
         trydelays=guess_best_delay-15:guess_best_delay+15;
         % Note that fixed, so now best scale is 1
         guess_best_scale=1;
-        tryscales=guess_best_scale-0.003:tryinc:guess_best_scale+0.003;
+%         tryscales=guess_best_scale-0.003:tryinc:guess_best_scale+0.003;
+        tryscales=guess_best_scale-0.05:tryinc:guess_best_scale+0.05;
         backup_movie_LED=movie_LED; 
     end    
     
