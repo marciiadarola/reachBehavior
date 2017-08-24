@@ -1,6 +1,6 @@
 function plotExptOutput(tbt,excludePawOnWheelTrials)
 
-addTimeFromCueMax=0.125+0.033;
+addTimeFromCueMax=0.2; % Because made cue the *start* of cue, and takes a little time for filtered signal to rise
 nbins=100; % bins for final histogram
 
 cue_tbt=tbt.cue_tbt;

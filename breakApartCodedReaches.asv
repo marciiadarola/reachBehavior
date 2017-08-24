@@ -1,0 +1,11 @@
+function [part1,part2]=breakApartCodedReaches(savehandles,breakAtIndex)
+
+f=fieldnames(savehandles);
+for i=1:length(f)
+    part1.(f{i})=savehandles.(f{i});
+    part2.(f{i})=savehandles.(f{i});
+end
+
+part1.reachStarts=part1.reachStarts(part1.reachStarts<=breakAtIndex);
+part1.pelletTouched=part1.pelletTouched(part1.pelletTouched<=breakAtIndex);
+part1.pelletTouched=part1.pelletTouched(part1.pelletTouched<=breakAtIndex);

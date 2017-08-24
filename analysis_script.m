@@ -13,6 +13,10 @@ endoffname=regexp(nameOfVideoFile,'\.');
 a=load([nameOfVideoFile(1:endoffname(end)-1) '_savehandles.mat']);
 savehandles=a.savehandles;
 
+%% Break apart coded reaches?
+[part1,part2]=breakApartCodedReaches(savehandles,10199);
+savehandles=part1;
+
 %% Do alignment of Arduino and movie data
 aligned=getAlignment(out,30,savehandles,isInSecondHalf);
 
@@ -23,4 +27,8 @@ finaldata=integrateSDoutWithReaches(savehandles,out,30,aligned,[nameOfVideoFile(
 
 %% Make data figures
 tbt=plotCueTriggeredBehavior(finaldata,'cue',1);
-save([nameOfVideoFile(1:endofVfname(end)-1) '_processed_data\tbt.mat'],tbt);
+save([nameOfVideoFile(1:endofVfname(end)-1) '_processed_data\tbt.mat'],'tbt');
+
+%% Combine trial-by-trial data cross video files
+% tbt=combineExptPieces('C:\Users\Kim\Documents\MATLAB\Final analysis\20170503');
+% plotExptOutput(tbt,1);
