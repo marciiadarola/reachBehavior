@@ -115,12 +115,12 @@ if strcmp(distractorType,'fixed duration')
         % Adjust according to guess_best_scale
         movie_LED=resample(movie_LED,floor(mod(size_of_arduino/size_of_movie,1)*100)+floor((guess_best_scale*100)/100)*100,100);
         guess_best_delay=arduino_peak_indexIntoArduino-movie_peak_indexIntoMovie;
-        trydelays=guess_best_delay-50:guess_best_delay+50;
+        trydelays=guess_best_delay-75:guess_best_delay+40;
 %         trydelays=guess_best_delay-15:guess_best_delay+15;
         % Note that fixed, so now best scale is 1
         guess_best_scale=1;
 %         tryscales=guess_best_scale-0.003:tryinc:guess_best_scale+0.003;
-        tryscales=guess_best_scale-0:tryinc:guess_best_scale+0.01;
+        tryscales=guess_best_scale-0.01:tryinc:guess_best_scale+0.02;
         backup_movie_LED=movie_LED; 
     end    
     
@@ -227,7 +227,11 @@ haveDoneTheseInds=zeros(size(firstInd:lastBoth));
 backup_tookTheseIndsOfTemp1=tookTheseIndsOfTemp1;
 for i=1:length(segmentInds)-1
     currInd=segmentInds(i);
-    [temp1,temp2,D]=alignsignals(best_movie(currInd:currInd+alignSegments-1),best_arduino(currInd:currInd+alignSegments-1));
+    if currInd+alignSegments-1>length(best_movie) || currInd+alignSegments-1>length(best_arduino)
+        [temp1,temp2,D]=alignsignals(best_movie(currInd:end),best_arduino(currInd:end));
+    else
+        [temp1,temp2,D]=alignsignals(best_movie(currInd:currInd+alignSegments-1),best_arduino(currInd:currInd+alignSegments-1));
+    end
     segmentDelays(i)=D;
     if length(temp1)>length(temp2)
         addZeros_arduino(i)=length(temp1)-length(temp2);
@@ -563,7 +567,11 @@ firstInd=segmentInds(1);
 outsignal=[outsignal zeros(1,firstInd-1)];
 for i=1:length(segmentInds)-1
     currInd=segmentInds(i);
-    currChunk=signal(currInd:currInd+alignSegments-1);
+    if currInd+alignSegments-1>length(signal)
+        currChunk=signal(currInd:end);
+    else
+        currChunk=signal(currInd:currInd+alignSegments-1);
+    end
     if scaleThisSignal==1
         % Like movie
         if segmentDelays(i)>0
