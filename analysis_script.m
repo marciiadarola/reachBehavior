@@ -15,7 +15,7 @@ savehandles=a.savehandles;
 
 %% Break apart coded reaches?
 [part1,part2]=breakApartCodedReaches(savehandles,7547);
-savehandles=part1;
+savehandles=part2;
 
 %% Do alignment of Arduino and movie data
 aligned=getAlignment(out,30,savehandles,isInSecondHalf);
