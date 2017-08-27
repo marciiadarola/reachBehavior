@@ -179,7 +179,6 @@ for i=plot_cues
         timesOfReach_givenPellet=[timesOfReach_givenPellet timespertrial(reachStarts_tbt(i,:)>event_thresh & reach_pelletPresent_tbt(i,:)>event_thresh)];
     end
     timesOfReach_starts=[timesOfReach_starts timespertrial(reachStarts_tbt(i,:)>event_thresh)-currcuetime];
-%     timesOfReach_starts=[timesOfReach_starts timespertrial(reachStarts_tbt(i,:)>event_thresh)];
 %     for j=1:length(event_ind)
 %         scatter([timespertrial(event_ind(j)) timespertrial(event_ind(j))],[i i],[],reach_color,'filled');
 %     end
@@ -217,7 +216,7 @@ end
 temp=nanmean(cue_tbt(plot_cues,:),1);
 [~,mi]=max(temp);
 cuetime=timespertrial(mi);
-[n,x]=hist(timesOfReach_starts+cuetime,nbins);
+% [n,x]=hist(timesOfReach_starts+cuetime,nbins);
 % [n,x]=hist(timesOfReach_starts,nbins);
 figure();
 plot(x,n);

@@ -77,7 +77,7 @@ if strcmp(distractorType,'fixed duration')
     arduino_LED_ITIs=diff(arduino_times(locs_arduino));
     [pks,locs]=findpeaks(movie_LED);
     movie_LED_ITIs=diff(movie_times(locs));
-    disp(movie_times(locs(68)));
+%     disp(locs(33));
     
 %     figure();
 %     plot(arduino_LED_ITIs,'Color','r');
@@ -101,6 +101,7 @@ if strcmp(distractorType,'fixed duration')
             X=arduino_LED_ITIs./max(arduino_LED_ITIs);
         end
     end
+%     tryinc=0.000025;
     tryinc=0.0001;
     if D>0
         error('Why does movie start before Arduino?');
@@ -120,7 +121,7 @@ if strcmp(distractorType,'fixed duration')
         % Note that fixed, so now best scale is 1
         guess_best_scale=1;
 %         tryscales=guess_best_scale-0.003:tryinc:guess_best_scale+0.003;
-        tryscales=guess_best_scale+0.01:tryinc:guess_best_scale+0.01;
+        tryscales=guess_best_scale-0.01:tryinc:guess_best_scale+0.07;
         backup_movie_LED=movie_LED; 
     end    
     
@@ -227,7 +228,11 @@ haveDoneTheseInds=zeros(size(firstInd:lastBoth));
 backup_tookTheseIndsOfTemp1=tookTheseIndsOfTemp1;
 for i=1:length(segmentInds)-1
     currInd=segmentInds(i);
-    [temp1,temp2,D]=alignsignals(best_movie(currInd:currInd+alignSegments-1),best_arduino(currInd:currInd+alignSegments-1));
+    if currInd+alignSegments-1>length(best_movie) || currInd+alignSegments-1>length(best_arduino)
+        [temp1,temp2,D]=alignsignals(best_movie(currInd:end),best_arduino(currInd:end));
+    else
+        [temp1,temp2,D]=alignsignals(best_movie(currInd:currInd+alignSegments-1),best_arduino(currInd:currInd+alignSegments-1));
+    end
     segmentDelays(i)=D;
     if length(temp1)>length(temp2)
         addZeros_arduino(i)=length(temp1)-length(temp2);
@@ -426,7 +431,8 @@ for i=1:length(peakLocs)
     down=movieframeinds_raw(troughLocs(i));
     [~,mi_up]=min(abs(peakTimes_rescaled-up));
     [~,mi_down]=min(abs(troughTimes_rescaled-down));
-    if k>length(troughLocs_rescaled)
+%     if (k>length(troughLocs_rescaled)) || (k>length(peakLocs_rescaled))
+    if (k>length(troughLocs_rescaled)) 
         donotdoalign=1;
         break
     end
@@ -562,7 +568,11 @@ firstInd=segmentInds(1);
 outsignal=[outsignal zeros(1,firstInd-1)];
 for i=1:length(segmentInds)-1
     currInd=segmentInds(i);
-    currChunk=signal(currInd:currInd+alignSegments-1);
+    if currInd+alignSegments-1>length(signal)
+        currChunk=signal(currInd:end);
+    else
+        currChunk=signal(currInd:currInd+alignSegments-1);
+    end
     if scaleThisSignal==1
         % Like movie
         if segmentDelays(i)>0

@@ -484,7 +484,7 @@ cue=cue*100;
 
 [pks,locs]=findpeaks(cue);
 cueInds=locs(pks>30);
-cueInds=[1 cueInds length(cue)]; % in case aliasing problem is at edges
+% cueInds=[1 cueInds length(cue)]; % in case aliasing problem is at edges
 cueIndITIs=diff(cueInds);
 checkTheseIntervals=find(cueIndITIs*bettermode>(maxITI*1.5));
 for i=1:length(checkTheseIntervals)
