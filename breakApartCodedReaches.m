@@ -45,4 +45,4 @@ part2.perchRegimeVals=part2.perchRegimeVals(breakAtIndex:end);
 part2.pelletRegimeVals=part2.pelletRegimeVals(breakAtIndex:end);
 part2.pelletStopVals=part2.pelletStopVals(breakAtIndex:end);
 
-part2.discardFirstNFrames=+savehandles.discardFirstNFrames+breakAtIndex-1;
+part2.discardFirstNFrames=savehandles.discardFirstNFrames+breakAtIndex-1;

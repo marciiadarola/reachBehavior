@@ -77,7 +77,7 @@ if strcmp(distractorType,'fixed duration')
     arduino_LED_ITIs=diff(arduino_times(locs_arduino));
     [pks,locs]=findpeaks(movie_LED);
     movie_LED_ITIs=diff(movie_times(locs));
-%     disp(locs(33));
+%     disp(locs(41));
     
 %     figure();
 %     plot(arduino_LED_ITIs,'Color','r');
@@ -116,12 +116,12 @@ if strcmp(distractorType,'fixed duration')
         % Adjust according to guess_best_scale
         movie_LED=resample(movie_LED,floor(mod(size_of_arduino/size_of_movie,1)*100)+floor((guess_best_scale*100)/100)*100,100);
         guess_best_delay=arduino_peak_indexIntoArduino-movie_peak_indexIntoMovie;
-        trydelays=guess_best_delay-300:guess_best_delay+300;
+        trydelays=guess_best_delay-500:guess_best_delay+50;
 %         trydelays=guess_best_delay-15:guess_best_delay+15;
         % Note that fixed, so now best scale is 1
         guess_best_scale=1;
 %         tryscales=guess_best_scale-0.003:tryinc:guess_best_scale+0.003;
-        tryscales=guess_best_scale-0.001:tryinc:guess_best_scale+0.001;
+        tryscales=guess_best_scale+0.035:tryinc:guess_best_scale+0.04;
         backup_movie_LED=movie_LED; 
     end    
     
@@ -372,6 +372,14 @@ movieframeinds_backup=movieframeinds;
 testRunDistractor_movie=alignLikeDistractor(testRun_movieLED,1,movie_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_movie,scaleBy,resampFac,moveChunks);
 aligned.testRunDistractor_movie=testRunDistractor_movie;
 
+% In case looking at second half of savehandles
+f=fieldnames(aligned);
+temp=aligned.movie_distractor;
+for i=1:length(f)
+    curr=aligned.(f{i});
+    aligned.(f{i})=curr(~isnan(temp));
+end
+movieframeinds=movieframeinds(~isnan(temp));
 
 % Re-align movie frame inds based on alignment to non-interped LED vals
 maxNFramesForLEDtoChange=2;
@@ -434,6 +442,7 @@ for i=1:length(peakLocs)
 %     if (k>length(troughLocs_rescaled)) || (k>length(peakLocs_rescaled))
     if (k>length(troughLocs_rescaled)) 
         donotdoalign=1;
+        disp('donotdoalign');
         break
     end
     rawmovieinds_onto_rescaled(peakLocs_rescaled(k):troughLocs_rescaled(k))=linspace(up,down,troughLocs_rescaled(k)-peakLocs_rescaled(k)+1);
