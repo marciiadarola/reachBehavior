@@ -116,12 +116,12 @@ if strcmp(distractorType,'fixed duration')
         % Adjust according to guess_best_scale
         movie_LED=resample(movie_LED,floor(mod(size_of_arduino/size_of_movie,1)*100)+floor((guess_best_scale*100)/100)*100,100);
         guess_best_delay=arduino_peak_indexIntoArduino-movie_peak_indexIntoMovie;
-        trydelays=guess_best_delay-500:guess_best_delay+50;
+        trydelays=guess_best_delay-50:guess_best_delay+50;
 %         trydelays=guess_best_delay-15:guess_best_delay+15;
         % Note that fixed, so now best scale is 1
         guess_best_scale=1;
 %         tryscales=guess_best_scale-0.003:tryinc:guess_best_scale+0.003;
-        tryscales=guess_best_scale+0.035:tryinc:guess_best_scale+0.04;
+        tryscales=guess_best_scale-0.01:tryinc:guess_best_scale+0.02;
         backup_movie_LED=movie_LED; 
     end    
     
@@ -441,6 +441,7 @@ for i=1:length(peakLocs)
     [~,mi_down]=min(abs(troughTimes_rescaled-down));
 %     if (k>length(troughLocs_rescaled)) || (k>length(peakLocs_rescaled))
     if (k>length(troughLocs_rescaled)) 
+        break
         donotdoalign=1;
         disp('donotdoalign');
         break

@@ -1,0 +1,7 @@
+function splitTrialsByPelletPresent(tbt)
+
+pointsFromPreviousTrial=100; % should match value in plotCueTriggeredBehavior.m
+
+for i=1:size(tbt.cue_tbt,1)
+    firstReachInd=find(tbt.reachStarts_tbt(i,pointsFromPreviousTrial:end)>0.5,1,'first');
+    if tbt.reach_wout_pellet_tbt

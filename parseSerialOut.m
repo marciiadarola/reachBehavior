@@ -283,7 +283,7 @@ if showExampleTrial==1
     subplot(4,1,3);
     plot(timesPerTrial,nanmean(cueOn,1));
     subplot(4,1,4);
-    plot(timesPerTrial,distractorOn(9,:));
+    plot(timesPerTrial,distractorOn(1,:));
 end
 
 fclose(fid);
