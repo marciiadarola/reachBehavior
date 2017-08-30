@@ -1,6 +1,6 @@
 %% Which experiment to analyze
-nameOfMicroSD='C:\Users\Kim\Documents\MATLAB\Final analysis\bl_2_2 20170519\OUTPUT.txt';
-nameOfVideoFile='C:\Users\Kim\Documents\MATLAB\Final analysis\bl_2_2 20170519\1980-05-28 12-12-05-C.avi';
+nameOfMicroSD='C:\Users\Kim\Documents\MATLAB\Final analysis\bl_4_new 20170815\OUTPUT.txt';
+nameOfVideoFile='C:\Users\Kim\Documents\MATLAB\Final analysis\bl_4_new 20170815\1980-08-24 11-39-20-C.avi';
 control=false; % if this is a control where pellet not loaded every time
 isInSecondHalf=0; % if this movie is in the second half of arduino output file
 
@@ -14,8 +14,8 @@ a=load([nameOfVideoFile(1:endoffname(end)-1) '_savehandles.mat']);
 savehandles=a.savehandles;
 
 %% Break apart coded reaches?
-[part1,part2]=breakApartCodedReaches(savehandles,8636);
-savehandles=part1;
+% [part1,part2]=breakApartCodedReaches(savehandles,8636);
+% savehandles=part2;
 
 %% Do alignment of Arduino and movie data
 aligned=getAlignment(out,30,savehandles,isInSecondHalf);

@@ -3,8 +3,6 @@ function out=parseSerialOut(filename,outfile,control)
 % control is true if this is a control where pellet not loaded every time,
 % else control is false
 
-noEncoder=1;
-
 % filename specifies a text file, the serial output from Arduino written to
 % microSD card
 
@@ -212,9 +210,7 @@ for i=1:length(ITIs)
     end
     % Enter encoder position per trial
     if length(ITIs)~=length(encoderPosition) % should be same length
-        if ~(noEncoder==1)
-            error('Number of trials should equal number of encoder position values');
-        end
+        error('Number of trials should equal number of encoder position values');
     else
         encoderTrialVals(i,:)=encoderPosition(i);
     end
@@ -264,7 +260,7 @@ for i=1:length(ITIs)
             if startsOn==1
                 cueOn(i,1:mi(1)-1)=1;
                 if falseCueStateChange==0
-                    falseCueOn(i,1:mi(1)-1)=1;
+                    falseCueOn(i,mi(1):end)=0;
                 end
             end
             startsOn=0;
@@ -274,9 +270,7 @@ for i=1:length(ITIs)
     end
     % Enter number of drops per trial
     if length(ITIs)~=length(trialDropCount) % should be same length
-        if ~(noEncoder==1)
-            error('Number of trials should equal number of trial drop counts');
-        end
+        error('Number of trials should equal number of trial drop counts');
     else
         if i==1
             beforeDrops=0;
@@ -287,9 +281,7 @@ for i=1:length(ITIs)
     end
     % Enter number of misses per trial
     if length(ITIs)~=length(trialMissCount) % should be same length
-        if ~(noEncoder==1)
-            error('Number of trials should equal number of trial miss counts');
-        end
+        error('Number of trials should equal number of trial miss counts');
     else
         if i==1
             beforeDrops=0;
@@ -304,7 +296,6 @@ out.timesPerTrial=timesPerTrial;
 out.pelletPresented=pelletPresented;
 out.encoderTrialVals=encoderTrialVals;
 out.cueOn=cueOn;
-out.falseCueOn=falseCueOn;
 out.distractorOn=distractorOn;
 out.nDropsPerTrial=nDropsPerTrial;
 out.nMissesPerTrial=nMissesPerTrial;

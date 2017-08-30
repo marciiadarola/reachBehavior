@@ -101,8 +101,8 @@ if strcmp(distractorType,'fixed duration')
             X=arduino_LED_ITIs./max(arduino_LED_ITIs);
         end
     end
-    tryinc=0.000025;
-%     tryinc=0.0001;
+%     tryinc=0.000025;
+    tryinc=0.0001;
     if D>0
         error('Why does movie start before Arduino?');
     else
@@ -116,12 +116,12 @@ if strcmp(distractorType,'fixed duration')
         % Adjust according to guess_best_scale
         movie_LED=resample(movie_LED,floor(mod(size_of_arduino/size_of_movie,1)*100)+floor((guess_best_scale*100)/100)*100,100);
         guess_best_delay=arduino_peak_indexIntoArduino-movie_peak_indexIntoMovie;
-        trydelays=guess_best_delay-200:guess_best_delay+200;
+        trydelays=guess_best_delay-50:guess_best_delay+50;
 %         trydelays=guess_best_delay-15:guess_best_delay+15;
         % Note that fixed, so now best scale is 1
         guess_best_scale=1;
 %         tryscales=guess_best_scale-0.003:tryinc:guess_best_scale+0.003;
-        tryscales=guess_best_scale-0:tryinc:guess_best_scale+0.05;
+        tryscales=guess_best_scale-0.01:tryinc:guess_best_scale+0.02;
         backup_movie_LED=movie_LED; 
     end    
     
@@ -326,9 +326,9 @@ end
 if isfield(out,'falseCueOn')
     for i=1:size(out.falseCueOn,1)
         temp=zeros(size(out.falseCueOn(i,:)));
-        temp(isnan(out.falseCueOn(i,:)))=nan;
-        temp(find(out.falseCueOn(i,:)>0.5,1,'first'))=1;
-        out.falseCueOn(i,:)=temp;
+        temp(isnan(out.cueOn(i,:)))=nan;
+        temp(find(out.cueOn(i,:)>0.5,1,'first'))=1;
+        out.cueOn(i,:)=temp;
     end
 end
 
@@ -338,14 +338,6 @@ cue=temp(~isnan(temptimes));
 cue=alignLikeDistractor(cue,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks); 
 aligned.cue=cue./nanmax(cue);
 
-if isfield(out,'falseCueOn')
-    temp=out.falseCueOn';
-    temp=temp(1:end);
-    falseCueOn=temp(~isnan(temptimes));
-    falseCueOn=alignLikeDistractor(falseCueOn,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks);
-    aligned.falseCueOn=cue./nanmax(falseCueOn);
-end
-    
 temp=testRunLED';
 temp=temp(1:end);
 testRunDistractor=temp(~isnan(temptimes));
