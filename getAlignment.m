@@ -77,7 +77,7 @@ if strcmp(distractorType,'fixed duration')
     arduino_LED_ITIs=diff(arduino_times(locs_arduino));
     [pks,locs]=findpeaks(movie_LED);
     movie_LED_ITIs=diff(movie_times(locs));
-%     disp(locs(41));
+%     disp(locs(36));
     
 %     figure();
 %     plot(arduino_LED_ITIs,'Color','r');
@@ -101,8 +101,8 @@ if strcmp(distractorType,'fixed duration')
             X=arduino_LED_ITIs./max(arduino_LED_ITIs);
         end
     end
-    tryinc=0.000025;
-%     tryinc=0.0001;
+%     tryinc=0.000025;
+    tryinc=0.0001;
     if D>0
         error('Why does movie start before Arduino?');
     else
@@ -121,7 +121,7 @@ if strcmp(distractorType,'fixed duration')
         % Note that fixed, so now best scale is 1
         guess_best_scale=1;
 %         tryscales=guess_best_scale-0.003:tryinc:guess_best_scale+0.003;
-        tryscales=guess_best_scale-0.01:tryinc:guess_best_scale+0.02;
+        tryscales=guess_best_scale+0.003:tryinc:guess_best_scale+0.015;
         backup_movie_LED=movie_LED; 
     end    
     

@@ -1,7 +1,7 @@
 %% Which experiment to analyze
-nameOfMicroSD='C:\Users\Kim\Documents\MATLAB\Final analysis\bl_2_2 20170518\OUTPUT.txt';
-nameOfVideoFile='C:\Users\Kim\Documents\MATLAB\Final analysis\bl_2_2 20170518\1980-05-27 11-22-19-C.avi';
-control=true; % if this is a control where pellet not loaded every time
+nameOfMicroSD='C:\Users\Kim\Documents\MATLAB\Final analysis\bl_2_2 20170519\OUTPUT.txt';
+nameOfVideoFile='C:\Users\Kim\Documents\MATLAB\Final analysis\bl_2_2 20170519\1980-05-28 12-12-05-C.avi';
+control=false; % if this is a control where pellet not loaded every time
 isInSecondHalf=0; % if this movie is in the second half of arduino output file
 
 %% Get data from Arduino output file        
@@ -14,8 +14,8 @@ a=load([nameOfVideoFile(1:endoffname(end)-1) '_savehandles.mat']);
 savehandles=a.savehandles;
 
 %% Break apart coded reaches?
-% [part1,part2]=breakApartCodedReaches(savehandles,17000);
-% savehandles=part2;
+[part1,part2]=breakApartCodedReaches(savehandles,8636);
+savehandles=part1;
 
 %% Do alignment of Arduino and movie data
 aligned=getAlignment(out,30,savehandles,isInSecondHalf);
@@ -30,5 +30,5 @@ tbt=plotCueTriggeredBehavior(finaldata,'cue',1);
 save([nameOfVideoFile(1:endofVfname(end)-1) '_processed_data\tbt.mat'],'tbt');
 
 %% Combine trial-by-trial data cross video files
-tbt=combineExptPieces('C:\Users\Kim\Documents\MATLAB\Final analysis\bl_2_2 20170518');
+tbt=combineExptPieces('C:\Users\Kim\Documents\MATLAB\Final analysis\bl_2_2 20170519');
 [n,x]=plotExptOutput(tbt,1);

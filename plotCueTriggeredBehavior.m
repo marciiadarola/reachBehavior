@@ -82,8 +82,8 @@ reach_pelletPresent_tbt=nan(length(cueInds),max(cueIndITIs)+pointsFromPreviousTr
 for i=1:length(cueInds)
     if i==length(cueInds)
         theseInds=cueInds(i)-pointsFromPreviousTrial:length(cue);
-%     elseif i==1
-%         theseInds=1:cueInds(i+1)-1;
+    elseif i==1
+        theseInds=1:cueInds(i+1)-1;
     else
         theseInds=cueInds(i)-pointsFromPreviousTrial:cueInds(i+1)-1;
     end

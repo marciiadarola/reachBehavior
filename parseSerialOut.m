@@ -179,7 +179,11 @@ for i=1:length(ITIs)
         % Pellet not loaded this trial
     else
         [~,mi]=min(abs(timesPerTrial-curr)); % Find closest time
-        pelletLoaded(i,mi(1))=1; % Loaded here
+        if ~isempty(mi)
+            pelletLoaded(i,mi(1))=1; % Loaded here
+        else
+            continue
+        end
     end
     % Find time when pellet wheel begins to turn
     curr=relevantEventLogTimes(relevantEventLog==pelletsWriteCode);
