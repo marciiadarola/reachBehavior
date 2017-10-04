@@ -343,7 +343,7 @@ if isfield(out,'falseCueOn')
     temp=temp(1:end);
     falseCueOn=temp(~isnan(temptimes));
     falseCueOn=alignLikeDistractor(falseCueOn,0,arduino_dec,frontShift,shouldBeLength,movieToLength,alignSegments,segmentInds,segmentDelays,addZeros_arduino,scaleBy,resampFac,moveChunks);
-    aligned.falseCueOn=cue./nanmax(falseCueOn);
+    aligned.falseCueOn=falseCueOn./nanmax(falseCueOn);
 end
     
 temp=testRunLED';

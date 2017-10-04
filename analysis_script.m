@@ -1,6 +1,6 @@
 %% Which experiment to analyze
-nameOfMicroSD='C:\Users\Kim\Documents\MATLAB\Final analysis\bl_4_new 20170815\OUTPUT.txt';
-nameOfVideoFile='C:\Users\Kim\Documents\MATLAB\Final analysis\bl_4_new 20170815\1980-08-24 11-39-20-C.avi';
+nameOfMicroSD='C:\Users\Kim\Documents\MATLAB\Final analysis\bl_4_new 20170817\OUTPUT.txt';
+nameOfVideoFile='C:\Users\Kim\Documents\MATLAB\Final analysis\bl_4_new 20170817\1980-08-26 15-26-34-C.avi';
 control=false; % if this is a control where pellet not loaded every time
 isInSecondHalf=0; % if this movie is in the second half of arduino output file
 
@@ -30,5 +30,5 @@ tbt=plotCueTriggeredBehavior(finaldata,'cue',1);
 save([nameOfVideoFile(1:endofVfname(end)-1) '_processed_data\tbt.mat'],'tbt');
 
 %% Combine trial-by-trial data cross video files
-tbt=combineExptPieces('C:\Users\Kim\Documents\MATLAB\Final analysis\bl_2_2 20170519');
+tbt=combineExptPieces('C:\Users\Kim\Documents\MATLAB\Final analysis\bl_4_new 20170622');
 [n,x]=plotExptOutput(tbt,1);

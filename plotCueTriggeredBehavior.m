@@ -78,6 +78,7 @@ success_pawOnWheel_tbt=nan(length(cueInds),max(cueIndITIs)+pointsFromPreviousTri
 drop_pawOnWheel_tbt=nan(length(cueInds),max(cueIndITIs)+pointsFromPreviousTrial);
 miss_pawOnWheel_tbt=nan(length(cueInds),max(cueIndITIs)+pointsFromPreviousTrial);
 reach_pelletPresent_tbt=nan(length(cueInds),max(cueIndITIs)+pointsFromPreviousTrial);
+    
 
 for i=1:length(cueInds)
     if i==length(cueInds)
