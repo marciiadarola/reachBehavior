@@ -375,7 +375,7 @@ if isempty(perchdata)
     handles.perchRegimeVals=[handles.perchRegimeVals summedIntensity_perch];  
     
     % Get change between frames
-    changeBetweenFrames=nanmean(nanmean(diff(allframes,1,3),1),2);
+    changeBetweenFrames=nanmean(nanmean(abs(diff(allframes,1,3)),1),2);
     changeBetweenFrames=[reshape(changeBetweenFrames,1,size(changeBetweenFrames,3)) 0];
     handles.changeBetweenFrames=[handles.changeBetweenFrames changeBetweenFrames];
     
@@ -444,7 +444,7 @@ if isempty(perchdata)
                 handles.pelletStopVals=[handles.pelletStopVals tempie];
                 
                 % Get change between frames
-                changeBetweenFrames=nanmean(nanmean(diff(allframes,1,3),1),2);
+                changeBetweenFrames=nanmean(nanmean(abs(diff(allframes,1,3)),1),2);
                 changeBetweenFrames=[reshape(changeBetweenFrames,1,size(changeBetweenFrames,3)) 0];
                 handles.changeBetweenFrames=[handles.changeBetweenFrames changeBetweenFrames];
 
@@ -473,7 +473,7 @@ if isempty(perchdata)
     summedIntensity_perch=sum(temp(isin,:),1);
     
     % Get change between frames
-    changeBetweenFrames=nanmean(nanmean(diff(allframes,1,3),1),2);
+    changeBetweenFrames=nanmean(nanmean(abs(diff(allframes,1,3)),1),2);
     changeBetweenFrames=[reshape(changeBetweenFrames,1,size(changeBetweenFrames,3)) 0];
     
     all_summedIntensity=zeros(length(perch_pellet_delay_ind),length(pelletIntensity));
@@ -867,7 +867,7 @@ tempie=sum(temp(handles.isin5,:),1);
 handles.pelletStopVals=[handles.pelletStopVals tempie];
 
 % Get change between frames
-changeBetweenFrames=nanmean(nanmean(diff(allframes,1,3),1),2);
+changeBetweenFrames=nanmean(nanmean(abs(diff(allframes,1,3)),1),2);
 changeBetweenFrames=[reshape(changeBetweenFrames,1,size(changeBetweenFrames,3)) 0];
 if isempty(changeBetweenFrames)
     finishFunction(handles);
@@ -1163,7 +1163,7 @@ pelletIntensity=sum(temp(isin3,:),1);
 summedIntensity_perch=sum(temp(isin,:),1);
 eatIntensity=sum(temp(isin4,:),1);
 
-changeBetweenFrames=nanmean(nanmean(diff(allframes,1,3),1),2);
+changeBetweenFrames=nanmean(nanmean(abs(diff(allframes,1,3)),1),2);
 changeBetweenFrames=[reshape(changeBetweenFrames,1,size(changeBetweenFrames,3)) 0];
     
 all_summedIntensity=zeros(length(perch_pellet_delay_ind),length(pelletIntensity));
