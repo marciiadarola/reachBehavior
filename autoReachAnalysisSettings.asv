@@ -1,0 +1,15 @@
+function settings=autoReachAnalysisSettings()
+
+% For getReaches.m
+% user-set constants
+settings.reach.maxReachFrequency=6; % in Hz, the maximum frequency at which mouse can reach
+settings.reach.movie_fps=30; % movie frame rate, in frames per second
+settings.reach.reachThresh=5; % after non-parametric transformation of reachData
+settings.reach.holdThreshold=10; % in seconds -- if any reach lasts longer than 10 s, this is not a reach -- this is a hold
+settings.reach.plotOutput=1; % if 1, plot output of reach analysis, else do not plot
+
+% For getPelletInPlace.m
+settings.pellet.definitePelletThresh=60; % percentile above which pellet is definitely well-positioned
+
+% For getChewing.m
+settings.chew.added_path='C:\Users\Kim\Documents\MATLAB\chronux_2_11';

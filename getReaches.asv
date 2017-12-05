@@ -84,30 +84,19 @@ out.raw.reachInds=reachInds;
 for i=1:length(reachBegins)
     isInStretch=find(reachInds>=reachBegins(i) & reachInds<=reachEnds(i));
     if length(isInStretch)>1
-        % Consolidate reach beginnings and endings
-        % Set reach ending for this reach to be the ending of the last
-        % reach in stretch
-        reachEnds(i)=max(reachEnds(isInStretch));
         % More than one reach peak in this stretch -- take first
-        % Set later reaches to nan
         reachInds(isInStretch(2:end))=nan;
-        reachBegins(isInStretch(2:end))=nan;
-        reachEnds(isInStretch(2:end))=nan;
     end
 end
 reachInds=reachInds(~isnan(reachInds));
-reachBegins=reachBegins(~isnan(reachBegins));
-reachEnds=reachEnds(~isnan(reachEnds));
-reachPeaks(~ismember(1:length(isReach),reachInds) & ~isnan(reachPeaks))=0;
-currReachWidth(~ismember(1:length(isReach),reachInds) & ~isnan(currReachWidth))=0;
+reachPeaks(
 
 % Consolidate reaches
 out.firstReachInds=reachInds;
 out.isReach=isReach;
 out.reachPeaks=reachPeaks;
-out.currReachWidth=currReachWidth;
-out.reachBegins=reachBegins;
-out.reachEnds=reachEnds;
+out.reachPeaks(~ismember(1:length(isReach),out.firstReachInds))=0;
+
 
 out.isHold=isHold;
 out.holdStarts=holdStarts;

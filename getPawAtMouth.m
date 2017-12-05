@@ -1,10 +1,12 @@
 function out=getPawAtMouth(eatData)
 
-% Settings
-pawAtMouthThresh=15;
-maxPawAtMouthFreq=5; % in Hz, the maximum frequency at which mouse can repeatedly raise paw to mouth
-movie_fps=30; % movie frame rate in frames per second
-plotOutput=1; % if 1, plot output, else do not plot
+% user-defined settings
+settings=autoReachAnalysisSettings();
+pawAtMouthThresh=settings.paw.pawAtMouthThresh;
+maxPawAtMouthFreq=settings.paw.maxPawAtMouthFreq; 
+movie_fps=settings.movie_fps; 
+plotOutput=settings.paw.plotOutput; 
+
 
 minRaisePeriod=1/maxPawAtMouthFreq; % in seconds
 movieFramePeriod=1/movie_fps; % in seconds
