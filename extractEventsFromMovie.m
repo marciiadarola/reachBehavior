@@ -1,4 +1,6 @@
-function [out,zoneVals,reaches,pellets,eat,paw]=extractEventsFromMovie(zonesFile, movieFile)
+function [out,zoneVals,reaches,pellets,eat,paw,fidget,settings]=extractEventsFromMovie(zonesFile, movieFile)
+
+settings=autoReachAnalysisSettings(); % get current settings for this analysis
 
 % Read intensity in user-defined zones over course of movie
 zoneVals=readIntensityValues(zonesFile, movieFile);
@@ -15,4 +17,7 @@ eat=getChewing(zoneVals.eatZone);
 % Get paw at mouth data
 paw=getPawAtMouth(zoneVals.eatZone);
 
-[~,out]=codeEvents(reaches,pellets,eat,paw,zoneVals.perchZone);
+% Get fidgeting in perch zone data
+fidget=getFidget(zoneVals.perchZone);
+
+[~,out]=codeEvents(reaches,pellets,eat,paw,fidget);

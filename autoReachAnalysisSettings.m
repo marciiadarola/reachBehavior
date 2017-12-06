@@ -7,7 +7,6 @@ settings.movie_fps=30; % movie frame rate in frames per second
 
 % For getReaches.m
 settings.reach.maxReachFrequency=6; % in Hz, the maximum frequency at which mouse can reach
-settings.reach.movie_fps=30; % movie frame rate, in frames per second
 settings.reach.reachThresh=5; % after non-parametric transformation of reachData
 settings.reach.holdThreshold=10; % in seconds -- if any reach lasts longer than 10 s, this is not a reach -- this is a hold
 settings.reach.plotOutput=1; % if 1, plot output of reach analysis, else do not plot
@@ -30,6 +29,10 @@ settings.chew.plotOutput=1; % if 1, plot output, else do not plot
 settings.paw.pawAtMouthThresh=15; % intensity threshold for determining when paw is raised to mouth
 settings.paw.maxPawAtMouthFreq=5; % in Hz, the maximum frequency at which mouse can repeatedly raise paw to mouth
 settings.paw.plotOutput=1; % if 1, plot output, else do not plot 
+
+% For getFidget.m
+settings.fidget.perchThresh=2; % after non-parametric transformation of perchData
+settings.fidget.plotOutput=1; % if 1, plot output, else do not plot 
 
 % For codeEvents.m
 settings.pelletSettledForTime=0.066; % time in seconds for pellet to be at proper reach position, before reach begins

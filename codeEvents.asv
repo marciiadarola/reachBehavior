@@ -96,7 +96,6 @@ end
 
 % For each reach, get the reach beginning based on perch zone fidgeting
 % (rather than change in intensity in reach zone)
-reachFidgetBegins=nan(size(reachBegins));
 for i=1:length(reachInds)
     currBegin=reachBegins(i);
     for j=currBegin:-1:1
@@ -105,7 +104,8 @@ for i=1:length(reachInds)
             break
         end
     end
-    reachFidgetBegins(i)=j;    
+    fidgetBegin=j;
+    
 end
     
 out.reachTypes=reachTypes;
@@ -113,6 +113,5 @@ out.pelletThere=pelletThere;
 out.reachFromPerch=reachFromPerch;
 out.raisedPaw=raisedPaw;
 out.atePellet=atePellet;
-out.reachFidgetBegins=reachFidgetBegins;
 
 end

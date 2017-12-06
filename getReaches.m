@@ -6,7 +6,7 @@ out.rawData=reachData;
 % user-set constants
 settings=autoReachAnalysisSettings();
 maxReachFrequency=settings.reach.maxReachFrequency; % in Hz, the maximum frequency at which mouse can reach
-movie_fps=settings.reach.movie_fps; % movie frame rate, in frames per second
+movie_fps=settings.movie_fps; % movie frame rate, in frames per second
 reachThresh=settings.reach.reachThresh; % after non-parametric transformation of reachData
 holdThreshold=settings.reach.holdThreshold; % in seconds -- if any reach lasts longer than 10 s, this is not a reach -- this is a hold
 plotOutput=settings.reach.plotOutput; % if 1, plot output, else do not plot

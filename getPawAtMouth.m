@@ -38,4 +38,7 @@ if plotOutput==1
    hold on;
    plot(out.isPawAtMouth.*max(eatZoneData),'Color','r');
    plot(out.raisePeaks.*max(eatZoneData),'Color','k');
+   leg={'z-scored eat zone intensity','paw at mouth','peak time of paw at mouth'};
+   title('Paw At Mouth Classification');
+   legend(leg);
 end
