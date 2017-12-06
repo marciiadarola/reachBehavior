@@ -1,4 +1,4 @@
-function out=getChewing(eatData, movie_fps, chewFrequency, chewingThresh)
+function out=getChewing(eatData)
 
 % Note that isChewing only returns 1 for long bouts of chewing consistent with
 % pellet consumption, ignoring vacuous chewing
@@ -11,17 +11,15 @@ addpath(genpath(added_path));
 
 movie_fps=settings.movie_fps;
 chewFrequency=settings.chew.chewFrequency;
-chewingThresh=
-
-settings.chew.added_path='C:\Users\Kim\Documents\MATLAB\chronux_2_11'; % path to Chronux
-settings.chew.chewFrequency=[4 6]; % frequency range at which mouse chews in Hz
-settings.chew.chewingThresh=5;
+chewingThresh=settings.chew.chewingThresh;
+chewingWindow=settings.chew.chewingWindow;
+plotOutput=settings.chew.plotOutput;
 
 params.Fs=settings.movie_fps;
 params.tapers=settings.chew.tapers;
 params.fpass=settings.chew.fpass; % in Hz
 
-[S,t,f]=mtspecgramc(eatData(~isnan(eatData)),[7 1],params);
+[S,t,f]=mtspecgramc(eatData(~isnan(eatData)),chewingWindow,params);
 chewingpower=nanmean(S(:,f>=chewFrequency(1) & f<=chewFrequency(2)),2);
 chewingpower=nonparamZscore(chewingpower);
 
@@ -36,6 +34,20 @@ out.chewingpower=chewingpower;
 
 % Remove path to Chronux
 rmpath(genpath(added_path));
+
+if plotOutput==1
+   figure();
+   plot(eatData,'Color','k');
+   temp=zeros(size(eatData));
+   temp(isnan(eatData))=nan;
+   temp(out.isChewing==true)=1;
+   temp(temp==1)=max(eatData);
+   temp(temp==0)=min(eatData);
+   hold on; 
+   plot(temp,'Color','r');
+   plot((chewingInFrames-min(chewingInFrames)).*
+    
+end
 
 end
 

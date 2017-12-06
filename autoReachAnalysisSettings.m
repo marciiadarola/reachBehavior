@@ -24,9 +24,10 @@ settings.chew.tapers=[10 12]; % Chronux mtspecgramc tapers to use for identifyin
 settings.chew.fpass=[2 15]; % in Hz, the range for Chronux mtspecgramc
 settings.chew.chewingWindow=[7 1]; % in seconds, first element: window for Chronux mtspecgramc to use to calculate power at chewing frequency
                                    % in seconds, second element: step for Chronux mtspecgramc to use to slide window across data
-
+settings.chew.plotOutput=1; % if 1, plot output, else do not plot
+                                   
 % For pawAtMouth.m
-settings.paw.pawAtMouthThresh=15; % intensity threshold for determining when paw is raised to mouse
+settings.paw.pawAtMouthThresh=15; % intensity threshold for determining when paw is raised to mouth
 settings.paw.maxPawAtMouthFreq=5; % in Hz, the maximum frequency at which mouse can repeatedly raise paw to mouth
 settings.paw.plotOutput=1; % if 1, plot output, else do not plot 
 

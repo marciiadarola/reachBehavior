@@ -1,7 +1,7 @@
 function out=getChewing(eatData)
 
 % Note that isChewing only returns 1 for long bouts of chewing consistent with
-% pellet consumption, ignoring vacuous chewing
+% pellet consumption, usually ignoring short bouts of vacuous chewing
 
 % Add path to Chronux
 % user-defined settings
@@ -13,6 +13,7 @@ movie_fps=settings.movie_fps;
 chewFrequency=settings.chew.chewFrequency;
 chewingThresh=settings.chew.chewingThresh;
 chewingWindow=settings.chew.chewingWindow;
+plotOutput=settings.chew.plotOutput;
 
 params.Fs=settings.movie_fps;
 params.tapers=settings.chew.tapers;
@@ -33,6 +34,25 @@ out.chewingpower=chewingpower;
 
 % Remove path to Chronux
 rmpath(genpath(added_path));
+
+if plotOutput==1
+   figure();
+   plot(eatData,'Color','k');
+   temp=zeros(size(eatData));
+   temp(isnan(eatData))=nan;
+   temp(out.isChewing==true)=1;
+   temp(temp==1)=max(eatData);
+   temp(temp==0)=min(eatData);
+   hold on; 
+   plot(temp,'Color','r');
+   temp=(chewingInFrames-min(chewingInFrames))./max(chewingInFrames); % scaled from 0 to 1
+   temp=temp.*(max(eatData)-min(eatData));
+   temp=temp+min(eatData);
+   plot(temp,'Color','g');
+   leg={'eat zone intensity','is chewing','chewing power'};
+   title('Chewing Classification');
+   legend(leg);
+end
 
 end
 
