@@ -13,7 +13,8 @@ settings.reach.holdThreshold=10; % in seconds -- if any reach lasts longer than 
 settings.reach.plotOutput=1; % if 1, plot output of reach analysis, else do not plot
 
 % For getPelletInPlace.m
-settings.pellet.definitePelletThresh=60; % percentile above which pellet is definitely well-positioned
+settings.pellet.nScaledMAD=3; % how many scaled median absolute deviations away from median for data point to be called an outlier
+settings.pellet.plotOutput=1; % if 1, plot output, else do not plot
 
 % For getChewing.m
 settings.chew.added_path='C:\Users\Kim\Documents\MATLAB\chronux_2_11'; % path to Chronux

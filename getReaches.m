@@ -101,7 +101,6 @@ reachEnds=reachEnds(~isnan(reachEnds));
 reachPeaks(~ismember(1:length(isReach),reachInds) & ~isnan(reachPeaks))=0;
 currReachWidth(~ismember(1:length(isReach),reachInds) & ~isnan(currReachWidth))=0;
 
-% Consolidate reaches
 out.firstReachInds=reachInds;
 out.isReach=isReach;
 out.reachPeaks=reachPeaks;
@@ -120,6 +119,9 @@ if plotOutput==1
    plot(out.isReach.*max(reachData),'Color','r');
    plot(out.reachPeaks.*max(reachData),'Color','k');
    plot(out.isHold.*max(reachData),'Color','g');
+   leg={'reach zone intensity','is reaching','reach peak','is holding'};
+   title('Reach Classification');
+   legend(leg);
 end
 
 end
