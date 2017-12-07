@@ -1,6 +1,8 @@
 function [out,zoneVals,reaches,pellets,eat,paw,fidget,settings]=extractEventsFromMovie(zonesFile, movieFile)
 
 settings=autoReachAnalysisSettings(); % get current settings for this analysis
+settings.zonesFile=zonesFile;
+settings.movieFile=movieFile;
 
 % Read intensity in user-defined zones over course of movie
 zoneVals=readIntensityValues(zonesFile, movieFile);

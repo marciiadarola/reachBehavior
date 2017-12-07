@@ -7,8 +7,8 @@ settings.movie_fps=30; % movie frame rate in frames per second
 
 % For getReaches.m
 settings.reach.maxReachFrequency=6; % in Hz, the maximum frequency at which mouse can reach
-settings.reach.reachThresh=5; % after non-parametric transformation of reachData
-settings.reach.holdThreshold=10; % in seconds -- if any reach lasts longer than 10 s, this is not a reach -- this is a hold
+settings.reach.reachThresh=5; % after non-parametric Z score transformation of reachData, threshold for determining mouse reach
+settings.reach.holdThreshold=5; % in seconds -- if any reach lasts longer than 10 s, this is not a reach -- this is a hold
 settings.reach.plotOutput=1; % if 1, plot output of reach analysis, else do not plot
 
 % For getPelletInPlace.m
@@ -26,7 +26,7 @@ settings.chew.chewingWindow=[7 1]; % in seconds, first element: window for Chron
 settings.chew.plotOutput=1; % if 1, plot output, else do not plot
                                    
 % For pawAtMouth.m
-settings.paw.pawAtMouthThresh=15; % intensity threshold for determining when paw is raised to mouth
+settings.paw.pawAtMouthThresh=5; % in non-parametric Z score metrics, intensity threshold for determining when paw is raised to mouth
 settings.paw.maxPawAtMouthFreq=5; % in Hz, the maximum frequency at which mouse can repeatedly raise paw to mouth
 settings.paw.plotOutput=1; % if 1, plot output, else do not plot 
 
@@ -43,4 +43,4 @@ settings.grabType=2; % note that grab type should always be overwritten as eithe
 settings.eatType=3;
 settings.dropType=4;
 settings.timeFromReachToMouth=1; % in seconds, reach is only "successful" if paw is raised to mouth within this time window
-settings.timeFromReachToChew=2; % in seconds, reach is only "succesful" if chewing within this time window
+settings.timeFromReachToChew=4; % in seconds, reach is only "succesful" if chewing within this time window

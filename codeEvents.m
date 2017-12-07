@@ -8,6 +8,9 @@ function [reachTypes,out]=codeEvents(reaches,pelletInPlace,eat,pawMouth,fidget)
 % Eat: grab and paws at mouth
 % Drop: grab but no paws at mouth
 
+% Note that "drops" while the wheel turns are more likely "misses" -- but
+% will need to fix this after alignment to Arduino data
+
 % user-defined settings
 settings=autoReachAnalysisSettings();
 pelletSettledForTime=settings.pelletSettledForTime; % time in seconds for pellet to be at proper reach position, before reach begins
@@ -38,8 +41,21 @@ reachFromPerch=nan(1,length(reachInds));
 raisedPaw=nan(1,length(reachInds));
 atePellet=nan(1,length(reachInds));
 for i=1:length(reachInds)
+    if (reachBegins(i)-1<1) || (reachEnds(i)+1>length(pelletInPlace.pelletPresent))
+        % reach is at beginning or end, skip
+        continue
+    end
+    
     % Is a pellet available before this reach begins?
-    if all(pelletInPlace.pelletPresent(reachBegins(i)-pelletSettledForInds-1:reachBegins(i)-1)==1)
+    if reachBegins(i)-pelletSettledForInds-1<1
+        if all(pelletInPlace.pelletPresent(1:reachBegins(i)-1)==1)
+            % yes
+            pelletThere(i)=1;
+        else
+            % no
+            pelletThere(i)=0;
+        end
+    elseif all(pelletInPlace.pelletPresent(reachBegins(i)-pelletSettledForInds-1:reachBegins(i)-1)==1)
         % yes
         pelletThere(i)=1;
     else
@@ -48,7 +64,15 @@ for i=1:length(reachInds)
     end
     
     % Does reach begin from perch?
-    if any(reaches.isReach(reachBegins(i)-fromPerchInds-1:reachBegins(i)-1)==1)
+    if reachBegins(i)-fromPerchInds-1<1
+        if any(reaches.isReach(1:reachBegins(i)-1)==1)
+            % no
+            reachFromPerch(i)=0;
+        else
+            % yes
+            reachFromPerch(i)=1;
+        end
+    elseif any(reaches.isReach(reachBegins(i)-fromPerchInds-1:reachBegins(i)-1)==1)
         % no
         reachFromPerch(i)=0;
     else
@@ -71,7 +95,14 @@ for i=1:length(reachInds)
     end
     
     % Did mouse raise paw to mouth?
-    if any(pawMouth.isPawAtMouth(reachEnds(i):reachEnds(i)+reachToMouthInds)==1)
+    if reachEnds(i)+reachToMouthInds>length(pawMouth.isPawAtMouth)
+        if any(pawMouth.isPawAtMouth(reachEnds(i):end)==1)
+            % yes
+            raisedPaw(i)=1;
+        else
+            raisedPaw(i)=0;
+        end
+    elseif any(pawMouth.isPawAtMouth(reachEnds(i):reachEnds(i)+reachToMouthInds)==1)
         % yes
         raisedPaw(i)=1;
     else
@@ -79,7 +110,14 @@ for i=1:length(reachInds)
     end
      
     % Did mouse eat after this reach?
-    if any(eat.isChewing(reachEnds(i):reachEnds(i)+reachToChewInds)==1)
+    if reachEnds(i)+reachToChewInds>length(eat.isChewing)
+        if any(eat.isChewing(reachEnds(i):end)==1)
+            % yes
+            atePellet(i)=1;
+        else
+            atePellet(i)=0;
+        end
+    elseif any(eat.isChewing(reachEnds(i):reachEnds(i)+reachToChewInds)==1)
         % yes
         atePellet(i)=1;
     else
