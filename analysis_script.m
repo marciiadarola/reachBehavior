@@ -1,12 +1,13 @@
+% See arduinoSettings.m to set experiment details
+
 %% Which experiment to analyze
-nameOfMicroSD='C:\Users\Kim\Documents\MATLAB\Final analysis\bl_4_new 20170817\OUTPUT.txt';
-nameOfVideoFile='C:\Users\Kim\Documents\MATLAB\Final analysis\bl_4_new 20170817\1980-08-26 15-26-34-C.avi';
-control=false; % if this is a control where pellet not loaded every time
+nameOfMicroSD='C:\Users\Kim\Documents\MATLAB\20171204\OUTPUT.txt';
+nameOfVideoFile='C:\Users\Kim\Documents\MATLAB\20171204\2011-09-01 15-46-59-C.avi';
 isInSecondHalf=0; % if this movie is in the second half of arduino output file
 
 %% Get data from Arduino output file        
 endoffname=regexp(nameOfMicroSD,'\');            
-out=parseSerialOut(nameOfMicroSD,[nameOfMicroSD(1:endoffname(end)) 'parsedOutput.mat'],control);
+out=parseSerialOut(nameOfMicroSD,[nameOfMicroSD(1:endoffname(end)) 'parsedOutput.mat']);
 
 %% Load user-classified reach data from movie
 endoffname=regexp(nameOfVideoFile,'\.');          
