@@ -2,8 +2,9 @@ function aligned=getAlignment(out,moviefps,handles,isInSecondHalf)
 
 distractorType='fixed duration';
 % distractorType='random';
-% distractor_duration=250; % in ms
-% distractor_freq=1/(distractor_duration/1000);
+distractor_duration=250; % in ms
+distractor_duration=distractor_duration/1000;
+distractor_ind=distractor_duration/moviefps;
 
 % Note that microSD (Arduino) output is timed in ms
 % Whereas video is timed in frames per sec
@@ -19,11 +20,7 @@ handles.pelletMissing=handles.pelletMissing(isnotnaninds);
 
 % Try to align based on distractor LED from movie and Arduino output
 temp_LED=handles.LEDvals;
-% Fnorm=(0.5*distractor_freq)/(moviefps/2);
-% df=designfilt('highpassfir','FilterOrder',30,'CutoffFrequency',Fnorm);
-% D=mean(grpdelay(df));
-% temp_LED=filter(df,[temp_LED zeros(1,D)]);
-% temp_LED=temp_LED(D+1:end);
+Fnorm
 threshForOnVsOff=nanmean([max(temp_LED) min(temp_LED)]);
 figure();
 movie_times=0:(1/moviefps)*1000:(length(temp_LED)-1)*((1/moviefps)*1000);

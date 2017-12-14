@@ -30,6 +30,6 @@ finaldata=integrateSDoutWithReaches(savehandles,out,30,aligned,[nameOfVideoFile(
 tbt=plotCueTriggeredBehavior(finaldata,'cue',1);
 save([nameOfVideoFile(1:endofVfname(end)-1) '_processed_data\tbt.mat'],'tbt');
 
-%% Combine trial-by-trial data cross video files
+%% Combine trial-by-trial data across video files
 tbt=combineExptPieces('C:\Users\Kim\Documents\MATLAB\Final analysis\bl_4_new 20170622');
 [n,x]=plotExptOutput(tbt,1);
