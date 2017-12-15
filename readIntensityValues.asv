@@ -54,11 +54,11 @@ for i=1:maxFrames
         end
         out.(zones(j).analysisField)=sum(temp(zones(j).isin,:),1);
     end
-    frame=intensityFromRGB(frame);
-    frame=reshape(frame,size(frame,1)*size(frame,2),1);
     if i==1
         out.changeBetweenFrames(i)=0;
     else
+        temp=intensityFromRGB(frame);
+        temp=reshape(temp,size(frame,1)*size(frame,2),1);
         out.changeBetweenFrames(i)=nansum(nansum(abs(frame-lastFrame),1),2);
     end
     lastFrame=frame;
