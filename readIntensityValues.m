@@ -52,7 +52,7 @@ for i=1:maxFrames
             temp=frame(:,:,3);
             temp=reshape(temp,size(frame,1)*size(frame,2),1);
         end
-        out.(zones(j).analysisField)=sum(temp(zones(j).isin,:),1);
+        out.(zones(j).analysisField)(i)=sum(temp(zones(j).isin,:),1);
     end
     frame=intensityFromRGB(frame);
     frame=reshape(frame,size(frame,1)*size(frame,2),1);

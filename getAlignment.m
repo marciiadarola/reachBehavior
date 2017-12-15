@@ -33,7 +33,8 @@ line([0 (length(temp_LED)-1)*((1/moviefps)*1000)],[threshForOnVsOff threshForOnV
 title('Threshold for distinguishing LED on vs off');
 
 % Get when LED was on in movie vs off
-movie_LED=temp_LED>threshForOnVsOff;
+movie_LED=single(temp_LED>threshForOnVsOff);
+movie_LED(isnan(temp_LED))=nan;
 
 % Find best alignment of distractor LED in movie and Arduino output -- note
 % different sampling rates
@@ -56,7 +57,9 @@ arduino_times=temptimes(~isnan(temptimes));
 % First down-sample arduino LED
 
 if strcmp(distractorType,'fixed duration')
-    arduino_dec=33;
+%     arduino_dec=33;
+%     movie_dec=1;
+    arduino_dec=3;
     movie_dec=1;
 else
     arduino_dec=100;
@@ -128,7 +131,7 @@ if strcmp(distractorType,'fixed duration')
         % Note that fixed, so now best scale is 1
         guess_best_scale=1;
 %         tryscales=guess_best_scale-0.003:tryinc:guess_best_scale+0.003;
-        tryscales=guess_best_scale-0.05:tryinc:guess_best_scale+0.05;
+        tryscales=guess_best_scale-0.01:tryinc:guess_best_scale+0.01;
 %         tryscales=guess_best_scale-0:tryinc:guess_best_scale+0.05;
         backup_movie_LED=movie_LED; 
     end    

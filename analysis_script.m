@@ -3,7 +3,7 @@
 %% Which experiment to analyze
 nameOfMicroSD='C:\Users\Kim\Documents\MATLAB\20171204\OUTPUT.txt';
 nameOfVideoFile='C:\Users\Kim\Documents\MATLAB\20171204\2011-09-01 15-46-59-C.avi';
-isInSecondHalf=1; % if this movie is in the second half of arduino output file
+isInSecondHalf=true; % if this movie is in the second half of arduino output file
 
 %% Get data from Arduino output file        
 endoffname=regexp(nameOfMicroSD,'\');            

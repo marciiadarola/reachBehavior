@@ -4,6 +4,7 @@ function settings=autoReachAnalysisSettings()
 
 % For all
 settings.movie_fps=30; % movie frame rate in frames per second
+settings.saveZoneData=1; % if 1, save zone data extracted from movie
 
 % For getReaches.m
 settings.reach.maxReachFrequency=6; % in Hz, the maximum frequency at which mouse can reach
