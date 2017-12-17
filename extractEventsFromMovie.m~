@@ -48,6 +48,13 @@ fidget=getFidget(zoneVals.perchZone);
 
 [~,out]=codeEvents(reaches,pellets,eat,paw,fidget);
 
+% Make frame numbers here match movie's frame numbers
+% by adding back discardFirstNFrames
+nreaches=length(out.reachTypes);
+exceptFields={'reachTypes'};
+%out=addNFramestoData(out, nreaches, settings.discardFirstNFrames, exceptFields);
+%reaches=addNFramestoData(reaches, nreaches, settings.discardFirstNFrames, {});
+
 % Save output
 if settings.saveZoneData==1
     endoffname=regexp(movieFile,'\.');
@@ -57,6 +64,17 @@ if settings.saveZoneData==1
     save([movieFile(1:endoffname(end)-1) '_eat.mat'],'eat');
     save([movieFile(1:endoffname(end)-1) '_paw.mat'],'paw');
     save([movieFile(1:endoffname(end)-1) '_fidget.mat'],'fidget');
+end
+
+end
+
+function data=addNFramestoData(data, n, addFrames, exceptFields)
+
+f=fieldnames(data);
+for i=1:length(f)
+    if length(data.(f{i}))==n && nanmax(data.(f{i}))>1 && ~ismember(f{i},exceptFields)
+        data.(f{i})=data.(f{i})+addFrames;
+    end
 end
 
 end

@@ -21,7 +21,7 @@ for i=1:length(reaches.reachBegins)
     nextPelletGone=currBegin-1+nextPelletGone;
     % If mouse eats pellet, log time when mouse raises paw to mouth
     if out.reachTypes(i)==settings.eatType
-        savehandles.eatTime(i)=nextPawAtMouth;      
+        savehandles.eatTime(i)=nextPawAtMouth;       
     else
         % Drop or miss
         % Time when pellet is gone or animal raises paw to mouth,
@@ -37,4 +37,23 @@ end
 savehandles.LEDvals=zoneVals.LEDZone;
 savehandles.pelletMissing=out.pelletThere==0;
 savehandles.pawStartsOnWheel=out.reachFromPerch==0; 
+
+% Make frame numbers here match movie's frame numbers
+% by adding back discardFirstNFrames
+nreaches=length(savehandles.reachStarts);
+exceptFields={};
+savehandles=addNFramestoData(savehandles, nreaches, settings.discardFirstNFrames, exceptFields);
+
+end
+
+function data=addNFramestoData(data, n, addFrames, exceptFields)
+
+f=fieldnames(data);
+for i=1:length(f)
+    if length(data.(f{i}))==n && nanmax(data.(f{i}))>1 && ~ismember(f{i},exceptFields)
+        data.(f{i})=data.(f{i})+addFrames;
+    end
+end
+
+end
     
