@@ -33,11 +33,11 @@ currHoldLength=0;
 holdStarts=zeros(1,length(reachData));
 for i=1:length(isHold)-(holdIndsThresh-1)
     if all(reachData(i:i+(holdIndsThresh-1))>reachThresh)
-        isHold(i:i+(holdsIndsThresh-1))=1;
+        isHold(i:i+(holdIndsThresh-1))=1;
         currHoldLength=currHoldLength+1;
     else
         if currHoldLength>0
-            holdLengths(i+1-currHoldLength:i+(holdsIndsThresh-1))=currHoldLength+holdIndsThresh-1;
+            holdLengths(i+1-currHoldLength:i+(holdIndsThresh-1))=currHoldLength+holdIndsThresh-1;
             holdStarts(i+1-currHoldLength)=1;
             currHoldLength=0;
         end

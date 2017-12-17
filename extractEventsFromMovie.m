@@ -34,3 +34,15 @@ paw=getPawAtMouth(zoneVals.eatZone);
 fidget=getFidget(zoneVals.perchZone);
 
 [~,out]=codeEvents(reaches,pellets,eat,paw,fidget);
+
+% Save output
+if settings.saveZoneData==1
+    endoffname=regexp(movieFile,'\.');
+    save([movieFile(1:endoffname(end)-1) '_events.mat'],'out');
+    save([movieFile(1:endoffname(end)-1) '_reaches.mat'],'reaches');
+    save([movieFile(1:endoffname(end)-1) '_pellets.mat'],'pellets');
+    save([movieFile(1:endoffname(end)-1) '_eat.mat'],'eat');
+    save([movieFile(1:endoffname(end)-1) '_paw.mat'],'paw');
+    save([movieFile(1:endoffname(end)-1) '_fidget.mat'],'fidget');
+    save([movieFile(1:endoffname(end)-1) '_settings.mat'],'settings');
+end

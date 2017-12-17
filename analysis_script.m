@@ -27,6 +27,7 @@ endofVfname=regexp(nameOfVideoFile,'\.');
 finaldata=integrateSDoutWithReaches(savehandles,out,30,aligned,[nameOfVideoFile(1:endofVfname(end)-1) '_processed_data']);
 
 %% Make data figures    
+endofVfname=regexp(nameOfVideoFile,'\.');     
 tbt=plotCueTriggeredBehavior(finaldata,'cue',1);
 save([nameOfVideoFile(1:endofVfname(end)-1) '_processed_data\tbt.mat'],'tbt');
 
