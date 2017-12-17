@@ -3,7 +3,7 @@ function savehandles=reformatAutoClassifyOutput(out,zoneVals,reaches,pellets,eat
 % Reformats the output of automated classification to match structure of
 % output of manual classification
 
-savehandles.discardFirstNFrames=0;
+savehandles.discardFirstNFrames=settings.discardFirstNFrames;
 savehandles.filename=settings.movieFile;
 % savehandles.reachStarts=reaches.reachBegins;
 savehandles.reachStarts=out.reachFidgetBegins;

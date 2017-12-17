@@ -18,6 +18,19 @@ if settings.saveZoneData==1 && readZoneVals==1
     save([movieFile(1:endoffname(end)-1) '_zoneVals.mat'],'zoneVals');
 end
 
+% Save analysis settings
+if settings.saveZoneData==1
+    endoffname=regexp(movieFile,'\.');
+    save([movieFile(1:endoffname(end)-1) '_settings.mat'],'settings');
+end
+
+% Discard first n frames
+f=fieldnames(zoneVals);
+for i=1:length(f)
+    temp=zoneVals.(f{i});
+    zoneVals.(f{i})=temp(settings.discardFirstNFrames+1:end);
+end
+
 % Get reach data
 reaches=getReaches(zoneVals.reachZone);
 
@@ -44,5 +57,4 @@ if settings.saveZoneData==1
     save([movieFile(1:endoffname(end)-1) '_eat.mat'],'eat');
     save([movieFile(1:endoffname(end)-1) '_paw.mat'],'paw');
     save([movieFile(1:endoffname(end)-1) '_fidget.mat'],'fidget');
-    save([movieFile(1:endoffname(end)-1) '_settings.mat'],'settings');
 end
