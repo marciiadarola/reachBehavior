@@ -26,7 +26,11 @@ for i=1:length(reaches.reachBegins)
         % Drop or miss
         % Time when pellet is gone or animal raises paw to mouth,
         % whichever comes first
-        savehandles.eatTime(i)=min([nextPawAtMouth nextPelletGone]);
+        if isempty(nextPawAtMouth) && isempty(nextPelletGone)
+            savehandles.eatTime(i)=nan;
+        else
+            savehandles.eatTime(i)=min([nextPawAtMouth nextPelletGone]);
+        end
     end
 end
 

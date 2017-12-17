@@ -226,7 +226,7 @@ for i=1:length(ITIs)
     curr=relevantEventLogTimes(relevantEventLog==loaderWriteCode);
     if length(curr)>1 % Should have only loaded pellet once
         error('Why has pellet been loaded more than once?');
-    elseif isempty(curr) && control==true
+    elseif isempty(curr) && control==0
         % Pellet not loaded this trial
     else
         [~,mi]=min(abs(timesPerTrial-curr)); % Find closest time

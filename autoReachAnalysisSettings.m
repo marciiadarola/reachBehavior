@@ -17,7 +17,7 @@ settings.pellet.nScaledMAD=3; % how many scaled median absolute deviations away 
 settings.pellet.plotOutput=1; % if 1, plot output, else do not plot
 
 % For getChewing.m
-settings.chew.added_path='C:\Users\Kim\Documents\MATLAB\chronux_2_11'; % path to Chronux
+settings.chew.added_path='/Users/kim/Documents/MATLAB/chronux_2_11'; % path to Chronux
 settings.chew.chewFrequency=[4 6]; % frequency range at which mouse chews in Hz
 settings.chew.chewingThresh=5; % in non-parametric Z score metrics, threshold for power in chewing frequency range above which mouse is chewing
 settings.chew.tapers=[10 12]; % Chronux mtspecgramc tapers to use for identifying chewing at chewFrequency

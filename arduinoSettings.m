@@ -2,11 +2,11 @@ function settings=arduinoSettings()
 
 % For parseSerialOut.m
 
-settings.loadEveryTrial=1; % if 1, pellet is loaded exactly once per trial, else set to 0
+settings.loadEveryTrial=0; % if 1, pellet is loaded exactly once per trial, else set to 0
 settings.usingopto=1; % if 1, using opto
 settings.noEncoder=1; % no encoder on behavior rig
 
-settings.maxITI=13000; % maximum duration of trial in ms
+settings.maxITI=20000; % maximum duration of trial in ms
 settings.showExampleTrial=1; % 1 if want to show example trial
 
 % State of behavior rig on 12/6/2017

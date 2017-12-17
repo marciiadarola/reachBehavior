@@ -1,8 +1,8 @@
 % See arduinoSettings.m to set experiment details
 
 %% Which experiment to analyze
-nameOfMicroSD='C:\Users\Kim\Documents\MATLAB\20171204\OUTPUT.txt';
-nameOfVideoFile='C:\Users\Kim\Documents\MATLAB\20171204\2011-09-01 15-46-59-C.avi';
+% nameOfMicroSD='C:\Users\Kim\Documents\MATLAB\20171204\OUTPUT.txt';
+nameOfVideoFile='/Users/kim/Documents/MATLAB/reaching_data/20171204/1980-12-13 12-56-28.avi';
 isInSecondHalf=true; % if this movie is in the second half of arduino output file
 
 %% Get data from Arduino output file        
