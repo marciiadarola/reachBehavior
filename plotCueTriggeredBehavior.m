@@ -6,7 +6,7 @@ function tbt=plotCueTriggeredBehavior(data,nameOfCue,excludePawOnWheelTrials)
 cue=data.(nameOfCue); 
 % In case of issues with aliasing of instantaneous cue
 maxITI=30; % in seconds, maximal ITI
-minITI=20; % in seconds, minimal ITI
+minITI=2; % in seconds, minimal ITI
 % Get time delay
 timeIncs=diff(data.timesfromarduino(data.timesfromarduino~=0));
 mo=mode(timeIncs);
@@ -481,10 +481,11 @@ end
 
 function [cue,cueInds,cueIndITIs]=fixAliasing(cue,maxITI,minITI,bettermode)
 
-cue=cue*100;
+% cue=cue*100;
+cue=nonparamZscore(cue); % non-parametric Z score
 
 [pks,locs]=findpeaks(cue);
-cueInds=locs(pks>30);
+cueInds=locs(pks>(1*10^35));
 % cueInds=[1 cueInds length(cue)]; % in case aliasing problem is at edges
 cueIndITIs=diff(cueInds);
 checkTheseIntervals=find(cueIndITIs*bettermode>(maxITI*1.5));
@@ -492,12 +493,13 @@ for i=1:length(checkTheseIntervals)
     indsIntoCue=cueInds(checkTheseIntervals(i))+floor((maxITI/2)./bettermode):cueInds(checkTheseIntervals(i)+1)-floor((maxITI/2)./bettermode);
     if any(cue(indsIntoCue)>0.001)
         [~,ma]=max(cue(indsIntoCue)); 
-        cue(indsIntoCue(ma))=100;
+        cue(indsIntoCue(ma))=max(cue);
     end
 end 
 
 [pks,locs]=findpeaks(cue);
-cueInds=locs(pks>30);
+% cueInds=locs(pks>30);
+cueInds=locs(pks>(1*10^35));
 cueIndITIs=diff(cueInds);
 checkTheseIntervals=find(cueIndITIs*bettermode<(minITI*0.75));
 if ~isempty(checkTheseIntervals)
