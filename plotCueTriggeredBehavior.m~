@@ -5,7 +5,7 @@ function tbt=plotCueTriggeredBehavior(data,nameOfCue,excludePawOnWheelTrials)
 
 cue=data.(nameOfCue); 
 % Look for blocks of different trial lengths
-blockITIThresh=10; % in seconds, difference between short and long trials
+blockITIThresh=15; % in seconds, difference between short and long trials
 % In case of issues with aliasing of instantaneous cue
 maxITI=30; % in seconds, maximal ITI
 minITI=2; % in seconds, minimal ITI
@@ -281,18 +281,12 @@ timesOfReach_givenPellet=[];
 timesOfReach_starts=[];
 for i=plot_cues
     % Plot block marker
+    blockITIThresh
     eventThresh=0.5;
     event_ind_cue=find(cue_tbt(i,:)>event_thresh,1,'first');
     event_thresh=0.5;
-    event_ind_pellet=find(pelletPresented_tbt(i,:)>event_thresh);
-    if event_ind_pellet(end)>length(timespertrial) || event_ind_cue>length(timespertrial)
-    elseif (timespertrial(event_ind_pellet(end))-timespertrial(event_ind_cue))>blockITIThresh
-        % Slow block
-    else
-        % Fast block
-        line([0 timespertrial(end)],[k k],'Color',[0.9 0.9 0.9],'LineWidth',10);
-    end
-        
+    event_ind_pellet=find(pelletPresented_tbt(i,:)>event_thresh); 
+    
         
         
     % Plot paw from wheel reach events
