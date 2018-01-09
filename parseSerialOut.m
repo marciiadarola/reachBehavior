@@ -28,6 +28,7 @@ uint8 dropWriteCode;
 uint8 missWriteCode;
 uint8 optoWriteCode;
 uint8 interlockWriteCode;
+uint8 solenoidWriteCode;
 
 loaderWriteCode = settings.loaderWriteCode;
 pelletsWriteCode = settings.pelletsWriteCode;
@@ -39,6 +40,7 @@ dropWriteCode = settings.dropWriteCode;
 missWriteCode = settings.missWriteCode;
 interlockWriteCode = settings.interlockWriteCode;
 beginTrialWrite = settings.beginTrialWrite;
+solenoidWriteCode = settings.solenoidWriteCode;
 
 maxITI=settings.maxITI; % maximum duration of trial in ms
 showExampleTrial=settings.showExampleTrial;
@@ -53,6 +55,7 @@ cueStart=[]; % 1 if cue is starting, 0 if cue is stopping
 optoStart=[]; % 1 if opto is starting, 0 if opto is stopping
 falseCueStart=[]; % 1 if false cue is starting, 0 if false cue is stopping
 distractorStart=[]; % 1 if distractor is starting, 0 if distractor is stopping
+solenoidStart=[]; % 1 if solenoid turns on, 0 if solenoid turns off
 trialDropCount=[]; % counts up pellets dropped during trial
 trialMissCount=[]; % counts up pellets missed during trial
 
@@ -151,6 +154,16 @@ while cline~=-1
             else
                 error('unrecognized distractor code info');
             end
+        case solenoidWriteCode % solenoid turns on or off
+            eventLog=[eventLog eventWriteCode];
+            eventLogTimes=[eventLogTimes eventTime];
+            if strcmp(eventInfo,'S')
+                solenoidStart=[solenoidStart 1];
+            elseif strcmp(eventInfo,'E')
+                solenoidStart=[solenoidStart 0];
+            else
+                error('unrecognized solenoid code info');
+            end
         case dropWriteCode % dropped pellet count
             trialDropCount=[trialDropCount eventInfo];
         case missWriteCode % missed pellet count
@@ -168,6 +181,7 @@ out.eventLogTimes=eventLogTimes;
 out.trialDropCount=trialDropCount;
 out.trialMissCount=trialMissCount;
 out.distractorStart=distractorStart;
+out.solenoidStart=solenoidStart;
 out.cueStart=cueStart;
 out.falseCueStart=falseCueStart;
 out.encoderPosition=encoderPosition;
@@ -187,11 +201,13 @@ cueOn=zeros(length(ITIs),length(timesPerTrial));
 optoOn=zeros(length(ITIs),length(timesPerTrial));
 falseCueOn=zeros(length(ITIs),length(timesPerTrial));
 distractorOn=zeros(length(ITIs),length(timesPerTrial));
+solenoidOn=zeros(length(ITIs),length(timesPerTrial));
 nDropsPerTrial=nan(length(ITIs),length(timesPerTrial));
 nMissesPerTrial=nan(length(ITIs),length(timesPerTrial));
 allTrialTimes=nan(length(ITIs),length(timesPerTrial));
 startIndsIntoEventLog=find(eventLog==beginTrialWrite);
 all_distractorEvents=find(eventLog==distractorWriteCode);
+all_solenoidEvents=find(eventLog==solenoidWriteCode);
 all_cueEvents=find(eventLog==cueWriteCode);
 all_optoEvents=find(eventLog==optoWriteCode);
 all_interlockEvents=find(eventLog==interlockWriteCode);
@@ -276,6 +292,28 @@ for i=1:length(ITIs)
             distractorOn(i,mi(1):end)=0;
             if startsOn==1
                 distractorOn(i,1:mi(1)-1)=1;
+            end
+            startsOn=0;
+        else
+            error('stateChange value should be 0 or 1');
+        end
+    end
+    % Find time of solenoid on
+    curr_solenoidEvents=find(isCurrentTrial==1 & eventLog==solenoidWriteCode);
+    indsIntoLedStarts=find(ismember(all_solenoidEvents,curr_solenoidEvents));
+    curr=relevantEventLogTimes(relevantEventLog==solenoidWriteCode);
+    startsOn=1;
+    for j=1:length(curr) % iterate through changes in solenoid state
+        stateChange=solenoidStart(indsIntoLedStarts(j));
+        if stateChange==1 % solenoid is turning on
+            startsOn=0;
+            mi=findClosestTime(timesPerTrial,curr(j)); % Find closest time
+            solenoidOn(i,mi(1):end)=1;
+        elseif stateChange==0 % solenoid is turning off
+            mi=findClosestTime(timesPerTrial,curr(j)); % Find closest time
+            solenoidOn(i,mi(1):end)=0;
+            if startsOn==1
+                solenoidOn(i,1:mi(1)-1)=1;
             end
             startsOn=0;
         else
@@ -388,23 +426,55 @@ out.optoOn=optoOn;
 out.interlockSamples=interlockSamples;
 out.falseCueOn=falseCueOn;
 out.distractorOn=distractorOn;
+out.solenoidOn=solenoidOn;
 out.nDropsPerTrial=nDropsPerTrial;
 out.nMissesPerTrial=nMissesPerTrial;
 out.allTrialTimes=allTrialTimes;
 out.trialStartTimes=trialStartTimes;
 out.interlockSamples=interlockSamples;
 
+% Pad with nans at the end of each trial
+% Important for experiments with trials of different lengths
+f=fieldnames(out);
+for i=1:length(f)
+    if strcmp(f{i},'allTrialTimes')
+    else
+        temp=out.(f{i});
+        temp(isnan(allTrialTimes))=nan;
+        out.(f{i})=temp;
+    end
+end
+
+% Fix any components that are turned off when trial begins (so that not on
+% during pellet presentation, e.g., distractor LED)
+% These components/event types/fields are specified in settings.zeroBeginning
+% Will turn off any "on" periods that begin at the beginning of trial
+f=settings.zeroBeginning;
+for i=1:length(f)
+    temp=out.(f{i});
+    for j=1:size(temp,1)
+        if temp(j,1)>0.5 % first time for this trial is on
+            foff=find(temp(j,:)<0.5,1,'first'); % find the first time when off
+            % set all at beginning, until first off, to off
+            temp(j,1:foff-1)=0;
+        end
+    end
+    out.(f{i})=temp;
+end    
+
 timesPerTrial=backup_timesPerTrial;
 if showExampleTrial==1
     figure();
-    subplot(4,1,1);
-    plot(timesPerTrial,nanmean(pelletLoaded,1));
-    subplot(4,1,2);
-    plot(timesPerTrial,nanmean(pelletPresented,1));
-    subplot(4,1,3);
-    plot(timesPerTrial,nanmean(cueOn,1));
-    subplot(4,1,4);
-    plot(timesPerTrial,distractorOn(1,:));
+    subplot(5,1,1);
+    plot(timesPerTrial,nanmean(out.pelletLoaded,1));
+    subplot(5,1,2);
+    plot(timesPerTrial,nanmean(out.pelletPresented,1));
+    subplot(5,1,3);
+    plot(timesPerTrial,nanmean(out.cueOn,1));
+    subplot(5,1,4);
+    plot(timesPerTrial,nanmean(out.distractorOn,1));
+    subplot(5,1,5);
+    plot(timesPerTrial,nanmean(out.solenoidOn,1));
 end
 
 fclose(fid);

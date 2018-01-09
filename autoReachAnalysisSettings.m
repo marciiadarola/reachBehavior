@@ -1,14 +1,26 @@
-function settings=autoReachAnalysisSettings()
+function settings=autoReachAnalysisSettings(varargin)
 
 % user-set constants
+
+persistent discardFirstNFrames
+
+if ~isempty(varargin)
+    discardFirstNFrames=varargin{1}; % number of frames to discard at beginning of movie
+end
 
 % For all
 settings.movie_fps=30; % movie frame rate in frames per second
 settings.saveZoneData=1; % if 1, save zone data extracted from movie
-settings.discardFirstNFrames=3734; % number of frames to discard at beginning of movie
+settings.discardFirstNFrames=discardFirstNFrames; % number of frames to discard at beginning of movie
 
 % For getReaches.m
 settings.reach.maxReachFrequency=6; % in Hz, the maximum frequency at which mouse can reach
+settings.reach.reachThresh=5; % after non-parametric Z score transformation of reachData, threshold for determining mouse reach
+settings.reach.holdThreshold=5; % in seconds -- if any reach lasts longer than 10 s, this is not a reach -- this is a hold
+settings.reach.plotOutput=1; % if 1, plot output of reach analysis, else do not plot
+
+% For getLicks.m
+settings.reach.maxReachFrequency=20; % in Hz, the maximum frequency at which mouse can reach
 settings.reach.reachThresh=5; % after non-parametric Z score transformation of reachData, threshold for determining mouse reach
 settings.reach.holdThreshold=5; % in seconds -- if any reach lasts longer than 10 s, this is not a reach -- this is a hold
 settings.reach.plotOutput=1; % if 1, plot output of reach analysis, else do not plot
@@ -20,7 +32,8 @@ settings.pellet.plotOutput=1; % if 1, plot output, else do not plot
 % For getChewing.m
 settings.chew.added_path='/Users/kim/Documents/MATLAB/chronux_2_11'; % path to Chronux
 settings.chew.chewFrequency=[4 6]; % frequency range at which mouse chews in Hz
-settings.chew.chewingThresh=5; % in non-parametric Z score metrics, threshold for power in chewing frequency range above which mouse is chewing
+% settings.chew.chewingThresh=5; % in non-parametric Z score metrics, threshold for power in chewing frequency range above which mouse is chewing
+settings.chew.chewingThresh=1.5; % for lick expt: in non-parametric Z score metrics, threshold for power in chewing frequency range above which mouse is chewing
 settings.chew.tapers=[10 12]; % Chronux mtspecgramc tapers to use for identifying chewing at chewFrequency
 settings.chew.fpass=[2 15]; % in Hz, the range for Chronux mtspecgramc
 settings.chew.chewingWindow=[7 1]; % in seconds, first element: window for Chronux mtspecgramc to use to calculate power at chewing frequency
@@ -28,7 +41,8 @@ settings.chew.chewingWindow=[7 1]; % in seconds, first element: window for Chron
 settings.chew.plotOutput=1; % if 1, plot output, else do not plot
                                    
 % For pawAtMouth.m
-settings.paw.pawAtMouthThresh=5; % in non-parametric Z score metrics, intensity threshold for determining when paw is raised to mouth
+% settings.paw.pawAtMouthThresh=5; % in non-parametric Z score metrics, intensity threshold for determining when paw is raised to mouth
+settings.paw.pawAtMouthThresh=1.5; % for lick expt: in non-parametric Z score metrics, intensity threshold for determining when paw is raised to mouth
 settings.paw.maxPawAtMouthFreq=5; % in Hz, the maximum frequency at which mouse can repeatedly raise paw to mouth
 settings.paw.plotOutput=1; % if 1, plot output, else do not plot 
 

@@ -20,7 +20,7 @@ isReach=reachData>reachThresh;
 
 % Find peaks
 [~,reachPeakLocs,reachWidths]=findpeaks(reachData,'MinPeakDistance',minIndsBetweenReach,'MinPeakHeight',reachThresh,'WidthReference','halfheight');
-reachPeaks=zeros(size(reachData));
+reachPeaks=zeros(size(reachData)); 
 reachPeaks(reachPeakLocs)=1;
 currReachWidth=zeros(size(reachData));
 currReachWidth(reachPeakLocs)=reachWidths;

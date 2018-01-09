@@ -10,6 +10,9 @@ savehandles.reachStarts=out.reachFidgetBegins;
 savehandles.pelletTouched=(out.reachTypes==settings.grabType) | (out.reachTypes==settings.eatType) | (out.reachTypes==settings.dropType);
 savehandles.pelletTime=find(reaches.reachPeaks==1);
 savehandles.atePellet=out.reachTypes==settings.eatType;
+if isfield(eat,'licks')
+    savehandles.lickStarts=eat.licks.reachBegins;
+end
 
 % Find savehandles.eatTime as the time for each reach when mouse raises paw
 % to mouth or drops pellet
@@ -35,6 +38,15 @@ for i=1:length(reaches.reachBegins)
 end
 
 savehandles.LEDvals=zoneVals.LEDZone;
+% Take these fields from zoneVals for alignment
+alignSet=alignmentSettings();
+for i=1:length(alignSet.alignField)
+    if alignSet.alignField(i).fromarduino==0
+        % These are from movie
+        savehandles.(alignSet.alignField(i).name)=zoneVals.(alignSet.alignField(i).name);
+    end
+end
+
 savehandles.pelletMissing=out.pelletThere==0;
 savehandles.pawStartsOnWheel=out.reachFromPerch==0; 
 
@@ -43,6 +55,12 @@ savehandles.pawStartsOnWheel=out.reachFromPerch==0;
 nreaches=length(savehandles.reachStarts);
 exceptFields={};
 savehandles=addNFramestoData(savehandles, nreaches, settings.discardFirstNFrames, exceptFields);
+% Also add back discardFirstNFrames for licks
+if isfield(savehandles,'lickStarts')
+    nreaches=length(savehandles.lickStarts);
+    exceptFields={};
+    savehandles=addNFramestoData(savehandles, nreaches, settings.discardFirstNFrames, exceptFields);
+end
 
 end
 

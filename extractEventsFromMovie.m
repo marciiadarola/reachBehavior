@@ -2,7 +2,7 @@ function [out,zoneVals,reaches,pellets,eat,paw,fidget,settings]=extractEventsFro
 
 settings=autoReachAnalysisSettings(); % get current settings for this analysis
 settings.zonesFile=zonesFile;
-settings.movieFile=movieFile;
+settings.movieFile=movieFile; 
 
 % Read intensity in user-defined zones over course of movie
 if isempty(zoneVals)
@@ -46,7 +46,13 @@ paw=getPawAtMouth(zoneVals.eatZone);
 % Get fidgeting in perch zone data
 fidget=getFidget(zoneVals.perchZone);
 
-[~,out]=codeEvents(reaches,pellets,eat,paw,fidget);
+% Get licking
+if isfield(zoneVals,'lickZone')
+    licks=getLicks(zoneVals.lickZone);
+    eat.licks=licks;
+end
+
+[~,out]=codeEvents(reaches,pellets,eat,paw,fidget); 
 
 % Save output
 if settings.saveZoneData==1
