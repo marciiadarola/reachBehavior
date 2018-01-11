@@ -8,36 +8,44 @@ nPartFile=breakFileIntoTimeChunks(filename);
 
 % Parse each file segment
 endoffname=regexp(filename,'.txt');
-out=cell(1,nPartFile);
+outParts=cell(1,nPartFile);
 for i=1:nPartFile
-    out{i}=parseSerialOut([filename(1:endoffname-1) '_part' num2str(i) '.txt'],outfile);
+    outParts{i}=parseSerialOut([filename(1:endoffname-1) '_part' num2str(i) '.txt'],outfile);
 end
 
 % Concatenate outputs
-f=fieldnames(out{1});
+f=fieldnames(outParts{1});
 for i=1:length(f)
-    all.(f{i})=[];
+    out.(f{i})=[];
 end
 for i=1:nPartFile
-    temp1=out{i};
+    temp=outParts{i};
     for j=1:length(f)    
-        temp2=all.(f{i})
-    all.(f{i})=concatField(out{1}.(f),out{2}.(f));
+        out.(f{j})=concatField(out.(f{j}),temp.(f{j}));
+    end
 end
 
+% Check that allTrialTimes are a monotonically increasing function, even
+% after concatenating multiple sections of OUTPUT.txt
+for i=2:size(out.allTrialTimes,1)
+    if min(out.allTrialTimes(i,:))<max(out.allTrialTimes(i-1,:))
+        % Time goes backward
+        % Fix this
+        
+
 % Save data
-save(outfile,'all');
+save(outfile,'out');
 
 end
 
 function out=concatField(data1, data2)
 
-if (size(data2,1)==1) & (size(data2,2)==1)
+if (size(data2,1)==1) & (size(data2,2)==1) & (size(data1,1)==1) & (size(data1,2)==1)
     out=[data1 data2];
-elseif (size(data2,1)==1) & (size(data2,2)>1)
+elseif (size(data2,1)==1) & (size(data2,2)>1) & (size(data1,1)==1)
     % 1D data
     out=[data1 data2];
-elseif (size(data2,1)>1) & (size(data2,2)==1)
+elseif (size(data2,1)>1) & (size(data2,2)==1) & (size(data1,2)==1)
     % 1D data
     out=[data1; data2];
 else

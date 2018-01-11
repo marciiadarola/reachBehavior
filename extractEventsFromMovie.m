@@ -52,6 +52,9 @@ if isfield(zoneVals,'lickZone')
     eat.licks=licks;
 end
 
+% Remove "eating" classification while mouse is licking
+eat=removeLicksFromEat(eat);
+
 [~,out]=codeEvents(reaches,pellets,eat,paw,fidget); 
 
 % Save output

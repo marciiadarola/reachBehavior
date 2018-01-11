@@ -25,6 +25,16 @@ for i=1:nPartFile
     end
 end
 
+% Check that allTrialTimes are a monotonically increasing function, even
+% after concatenating multiple sections of OUTPUT.txt
+for i=2:size(out.allTrialTimes,1)
+    if min(out.allTrialTimes(i,:))<max(out.allTrialTimes(i-1,:))
+        % Time goes backward
+        % Fix this
+        out.allTrialTimes(i:end,:)=out.allTrialTimes(i:end,:)-min(out.allTrialTimes(i,:))+1+max(out.allTrialTimes(i-1,:));
+    end
+end
+
 % Save data
 save(outfile,'out');
 
@@ -32,12 +42,12 @@ end
 
 function out=concatField(data1, data2)
 
-if (size(data2,1)==1) & (size(data2,2)==1)
+if (size(data2,1)==1) & (size(data2,2)==1) & (size(data1,1)==1) & (size(data1,2)==1)
     out=[data1 data2];
-elseif (size(data2,1)==1) & (size(data2,2)>1)
+elseif (size(data2,1)==1) & (size(data2,2)>1) & (size(data1,1)==1)
     % 1D data
     out=[data1 data2];
-elseif (size(data2,1)>1) & (size(data2,2)==1)
+elseif (size(data2,1)>1) & (size(data2,2)==1) & (size(data1,2)==1)
     % 1D data
     out=[data1; data2];
 else
