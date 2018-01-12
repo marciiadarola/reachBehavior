@@ -36,6 +36,13 @@ out.chewingpower=chewingpower;
 rmpath(genpath(added_path));
 
 if plotOutput==1
+   figure(); 
+   plot(settings.discardFirstNFrames:settings.discardFirstNFrames+length(out.chewingInFrames)-1,out.chewingInFrames,'Color','k');
+   hold on;
+   line([settings.discardFirstNFrames settings.discardFirstNFrames+length(out.chewingInFrames)-1],[chewingThresh chewingThresh],'Color','r');
+   title('Threshold for chewing classification');
+   pause;
+    
    figure();
    plot(eatData,'Color','k');
    temp=zeros(size(eatData));
