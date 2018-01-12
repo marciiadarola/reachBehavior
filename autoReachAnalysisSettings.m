@@ -60,4 +60,6 @@ settings.grabType=2; % note that grab type should always be overwritten as eithe
 settings.eatType=3;
 settings.dropType=4;
 settings.timeFromReachToMouth=1; % in seconds, reach is only "successful" if paw is raised to mouth within this time window
-settings.timeFromReachToChew=4; % in seconds, reach is only "succesful" if chewing within this time window
+settings.timeFromReachToChew=7; % in seconds, reach is only "succesful" if chewing within this time window, note that min ITI is 9 seconds, given loader wheel
+% 8 to 9 seconds is best for licking and reaching expt, but used 4 seconds
+% for reaching alone
