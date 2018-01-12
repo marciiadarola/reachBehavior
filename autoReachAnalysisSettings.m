@@ -39,6 +39,7 @@ settings.chew.fpass=[2 15]; % in Hz, the range for Chronux mtspecgramc
 settings.chew.chewingWindow=[7 1]; % in seconds, first element: window for Chronux mtspecgramc to use to calculate power at chewing frequency
                                    % in seconds, second element: step for Chronux mtspecgramc to use to slide window across data
 settings.chew.plotOutput=1; % if 1, plot output, else do not plot
+settings.chew.minTimeToChewPellet=4; % in seconds, the minimum time it takes mouse to eat pellet (e.g., vs chewing Ensure)
                                    
 % For pawAtMouth.m
 % settings.paw.pawAtMouthThresh=5; % in non-parametric Z score metrics, intensity threshold for determining when paw is raised to mouth
