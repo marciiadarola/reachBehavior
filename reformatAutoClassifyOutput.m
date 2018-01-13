@@ -43,7 +43,13 @@ alignSet=alignmentSettings();
 for i=1:length(alignSet.alignField)
     if alignSet.alignField(i).fromarduino==0
         % These are from movie
-        savehandles.(alignSet.alignField(i).name)=zoneVals.(alignSet.alignField(i).name);
+        if isfield(zoneVals,alignSet.alignField(i).name)
+            savehandles.(alignSet.alignField(i).name)=zoneVals.(alignSet.alignField(i).name);
+        elseif isfield(eat,alignSet.alignField(i).name)
+            savehandles.(alignSet.alignField(i).name)=eat.(alignSet.alignField(i).name);
+        else
+            disp(['Do not recognize source of field ' alignSet.alignField(i).name]);
+        end
     end
 end
 
