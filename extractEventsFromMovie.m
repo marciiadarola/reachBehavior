@@ -55,6 +55,11 @@ end
 % Remove "eating" classification while mouse is licking
 % eat=removeLicksFromEat(eat);
 
+% Check if mouse is grooming
+if settings.checkForGrooming==1
+    eat=checkForGrooming(eat,settings);
+end
+
 [~,out]=codeEvents(reaches,pellets,eat,paw,fidget); 
 
 % Save output

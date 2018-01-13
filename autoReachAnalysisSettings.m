@@ -40,7 +40,11 @@ settings.chew.chewingWindow=[7 1]; % in seconds, first element: window for Chron
                                    % in seconds, second element: step for Chronux mtspecgramc to use to slide window across data
 settings.chew.plotOutput=1; % if 1, plot output, else do not plot
 % settings.chew.minTimeToChewPellet=8; % in seconds, the minimum time it takes mouse to eat pellet (e.g., vs chewing Ensure)
-                                   
+                                  
+% Check whether chewing is actually grooming?
+settings.checkForGrooming=1; % 1 if want user to do this check, 0 otherwise
+settings.removeGroomingFromEating=1; % 1 if want grooming stretches to be removed as eating stretches, 0 otherwise
+
 % For pawAtMouth.m
 % settings.paw.pawAtMouthThresh=5; % in non-parametric Z score metrics, intensity threshold for determining when paw is raised to mouth
 settings.paw.pawAtMouthThresh=1.5; % for lick expt: in non-parametric Z score metrics, intensity threshold for determining when paw is raised to mouth
