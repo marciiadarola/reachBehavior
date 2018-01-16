@@ -58,6 +58,7 @@ end
 % Check if mouse is grooming
 if settings.checkForGrooming==1
     eat=checkForGrooming(eat,settings);
+    pause;
 end
 
 [~,out]=codeEvents(reaches,pellets,eat,paw,fidget); 
