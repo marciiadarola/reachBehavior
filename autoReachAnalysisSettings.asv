@@ -31,16 +31,14 @@ settings.pellet.plotOutput=1; % if 1, plot output, else do not plot
 
 % For getChewing.m
 settings.chew.added_path='/Users/kim/Documents/MATLAB/chronux_2_11'; % path to Chronux
-% settings.chew.chewFrequency=[4 6]; % frequency range at which mouse chews in Hz
-settings.chew.chewFrequency=[5.5 7.7]; % frequency range at which mouse chews in Hz
+settings.chew.chewFrequency=[4 6]; % frequency range at which mouse chews in Hz
 % settings.chew.chewingThresh=5; % in non-parametric Z score metrics, threshold for power in chewing frequency range above which mouse is chewing
-settings.chew.chewingThresh=0.9; % for lick expt: in non-parametric Z score metrics, threshold for power in chewing frequency range above which mouse is chewing
-% settings.chew.tapers=[10 12]; % Chronux mtspecgramc tapers to use for identifying chewing at chewFrequency
-settings.chew.tapers=[5 7]; % Chronux mtspecgramc tapers to use for identifying chewing at chewFrequency
+settings.chew.chewingThresh=1.2; % for lick expt: in non-parametric Z score metrics, threshold for power in chewing frequency range above which mouse is chewing
+settings.chew.tapers=[10 12]; % Chronux mtspecgramc tapers to use for identifying chewing at chewFrequency
 settings.chew.fpass=[2 15]; % in Hz, the range for Chronux mtspecgramc
 % settings.chew.chewingWindow=[7 1]; % in seconds, first element: window for Chronux mtspecgramc to use to calculate power at chewing frequency
 %                                    % in seconds, second element: step for Chronux mtspecgramc to use to slide window across data
-settings.chew.chewingWindow=[5 0.25]; % in seconds, first element: window for Chronux mtspecgramc to use to calculate power at chewing frequency
+settings.chew.chewingWindow=[7 1]; % in seconds, first element: window for Chronux mtspecgramc to use to calculate power at chewing frequency
                                    % in seconds, second element: step for Chronux mtspecgramc to use to slide window across data
 settings.chew.plotOutput=1; % if 1, plot output, else do not plot
 % settings.chew.minTimeToChewPellet=8; % in seconds, the minimum time it takes mouse to eat pellet (e.g., vs chewing Ensure)
