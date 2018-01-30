@@ -6,6 +6,7 @@ function savehandles=reformatAutoClassifyOutput(out,zoneVals,reaches,pellets,eat
 savehandles.discardFirstNFrames=settings.discardFirstNFrames;
 savehandles.filename=settings.movieFile;
 savehandles.reachStarts=reaches.reachBegins;
+savehandles.reachFidgetBegins=out.reachFidgetBegins;
 % savehandles.reachStarts=out.reachFidgetBegins;
 savehandles.pelletTouched=(out.reachTypes==settings.grabType) | (out.reachTypes==settings.eatType) | (out.reachTypes==settings.dropType);
 savehandles.pelletTime=find(reaches.reachPeaks==1);
