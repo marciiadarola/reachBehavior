@@ -15,6 +15,7 @@ settings.beginTrialWrite=0;
 settings.loaderWriteCode=1;
 settings.pelletsWriteCode=2;
 settings.optoWriteCode=3;
+% settings.optoWriteCode=15;
 settings.cueWriteCode=4;
 settings.distractorWriteCode=5;
 settings.interlockWriteCode=6;

@@ -5,6 +5,7 @@ out.rawData=reachData;
 
 % user-set constants
 settings=autoReachAnalysisSettings();
+userDefine=settings.reach.userDefinedThresh; % 1 for user to manually define threshold for reach, instead of automated method
 maxReachFrequency=settings.reach.maxReachFrequency; % in Hz, the maximum frequency at which mouse can reach
 movie_fps=settings.movie_fps; % movie frame rate, in frames per second
 reachThresh=settings.reach.reachThresh; % after non-parametric transformation of reachData
@@ -15,7 +16,14 @@ minReachPeriod=1/maxReachFrequency; % in seconds
 movieFramePeriod=1/movie_fps; % in seconds
 minIndsBetweenReach=floor(minReachPeriod/movieFramePeriod);
 
-reachData=nonparamZscore(reachData); % non-parametric Z score
+if userDefine==1
+    figure(); 
+    plot(reachData);
+    title('Raw reach data');
+    reachThresh=input('Enter threshold for reach detection. Values above this threshold will be considered a reach. ');
+else
+    reachData=nonparamZscore(reachData); % non-parametric Z score
+end
 isReach=reachData>reachThresh;
 
 % Find peaks
