@@ -88,10 +88,10 @@ for i=1:size(cue,1)
         if temp-cueDurationInds<1 || temp+cueDurationInds>size(cueZone,2)
             continue
         end
-        if nanmean(cueZone(i,temp-cueDurationInds:temp))<nanmean(cueZone(i,temp+cueDurationInds)) % this is beginning of cue
+        if nanmean(cueZone(i,temp-cueDurationInds:temp))<nanmean(cueZone(i,temp:temp+cueDurationInds)) % this is beginning of cue
             % leave alone
         else % this is end of cue
-            fi(i)=temp-cueDurationInds;
+            fi(i)=temp-(cueDurationInds-2);
         end
         realign_check(i,:)=cueZone(i,fi(i)-cueDurationInds:fi(i)+cueDurationInds); % this is with fixed temp
     end
@@ -131,6 +131,11 @@ end
 figure(); 
 plot(realign_tbt.(useAsCue)');
 title('Re-aligned cues');
+
+% Make cue uniform across trials, now that aligned
+realign_tbt.(useAsCue)=repmat(nanmean(realign_tbt.(useAsCue),1),size(realign_tbt.(useAsCue),1),1);
+[~,ma]=max(nanmean(realign_tbt.(useAsCue),1));
+
 
 figure();
 plot(realign_check');

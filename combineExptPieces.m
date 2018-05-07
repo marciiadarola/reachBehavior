@@ -57,6 +57,19 @@ end
 
 alltbt=realignToCue_usingCueZone(alltbt,useAsCue,cueDuration);
 
+% Set all reaches to 1's
+f=fieldnames(alltbt);
+for i=1:length(f)
+    if ~isempty(strfind(f{i},'reach'))
+        temp=alltbt.(f{i});
+        temp(temp>0)=1;
+        alltbt.(f{i})=temp;
+    end
+end
+
+alltbt.reachStarts_noPawOnWheel=alltbt.reachStarts;
+alltbt.reachStarts_noPawOnWheel(alltbt.pawOnWheel==1)=0;
+
 function realign_tbt=realignToCue_usingCueZone(tbt,useAsCue,cueDuration)
 
 % was each cue detection at the beginning or end of cue?
@@ -133,7 +146,10 @@ plot(realign_tbt.(useAsCue)');
 title('Re-aligned cues');
 
 % Make cue uniform across trials, now that aligned
-realign_tbt.(useAsCue)=repmat(nanmean(realign_tbt.(useAsCue),1),size(realign_tbt.(useAsCue),1),1);
+av=nanmean(realign_tbt.(useAsCue),1);
+ma=max(av);
+av(av<ma)=0;
+realign_tbt.(useAsCue)=repmat(av,size(realign_tbt.(useAsCue),1),1);
 
 figure();
 plot(realign_check');
