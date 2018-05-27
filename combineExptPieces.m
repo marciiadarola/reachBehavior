@@ -1,4 +1,4 @@
-function alltbt=combineExptPieces(expt_dir,useAsCue,cueDuration)
+function alltbt=combineExptPieces(expt_dir,useAsCue,cueDuration,doRealign)
 
 ls=dir(expt_dir);
 j=1;
@@ -55,9 +55,11 @@ for i=1:length(tbt)
     end
 end
 
-alltbt=realignToCue_usingCueZone(alltbt,useAsCue,cueDuration);
+if doRealign==1
+    alltbt=realignToCue_usingCueZone(alltbt,useAsCue,cueDuration);
+end
 
-% Set all reaches to 1's
+% % Set all reaches to 1's
 f=fieldnames(alltbt);
 for i=1:length(f)
     if ~isempty(strfind(f{i},'reach'))
