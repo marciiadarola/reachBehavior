@@ -1,4 +1,4 @@
-function alltbt=combineExptPieces(expt_dir,useAsCue,cueDuration,doRealign)
+function [alltbt,allmetadata]=combineExptPieces(expt_dir,useAsCue,cueDuration,doRealign)
 
 ls=dir(expt_dir);
 j=1;
@@ -22,7 +22,17 @@ for i=1:length(ls)
     end
 end
 
-for i=1:le
+metadata=cell(1,length(tbt));
+for i=1:length(tbt)
+    metadata{i}.mouseid=mouseid(i).*ones(size(tbt{i}.times,1),1);
+    metadata{i}.sessid=sessid(i).*ones(size(tbt{i}.times,1),1);
+    metadata{i}.sess_datetime=cell(size(tbt{i}.times,1),1);
+    for j=1:length(metadata{i}.sess_datetime)
+        metadata{i}.sess_datetime{j}=sess_datetime{i};
+    end
+    % Fix
+    metadata{i}.sess_datetime=fixChineseDVRDatetime(metadata{i}.sess_datetime);
+end
 
 if isempty(tbt)
     disp('No tbt data saved in this directory');
@@ -34,12 +44,22 @@ for i=1:length(f)
     alltbt.(f{i})=[];
 end
 
+f_meta=fieldnames(metadata{1});
+for i=1:length(f_meta)
+    allmetadata.(f_meta{i})=[];
+end
+
 for i=1:length(tbt)
     curr_tbt=tbt{i};
+    curr_metadata=metadata{i};
     if i==1
         % first tbt
         for j=1:length(f)
             alltbt.(f{j})=curr_tbt.(f{j});
+        end
+        % first metadata
+        for j=1:length(f_meta)
+            allmetadata.(f_meta{j})=curr_metadata.(f_meta{j});
         end
     else
         if size(alltbt.(f{1}),2)<size(curr_tbt.(f{1}),2)
@@ -60,6 +80,11 @@ for i=1:length(tbt)
         for j=1:length(f)
             if isfield(curr_tbt,f{j})
                 alltbt.(f{j})=[alltbt.(f{j}); curr_tbt.(f{j})];
+            end
+        end
+        for j=1:length(f_meta)
+            if isfield(curr_metadata,f_meta{j})
+                allmetadata.(f_meta{j})=[allmetadata.(f_meta{j}); curr_metadata.(f_meta{j})];
             end
         end
     end
@@ -85,6 +110,9 @@ alltbt.reachStarts_noPawOnWheel=alltbt.reachStarts;
 alltbt.reachStarts_noPawOnWheel(alltbt.pawOnWheel>0.05)=0;
 
 function realign_tbt=realignToCue_usingCueZone(tbt,useAsCue,cueDuration)
+
+settings=RTanalysis_settings;
+lowThresh=settings.lowThresh;
 
 % was each cue detection at the beginning or end of cue?
 cueDurationInds=floor(cueDuration/mode(diff(nanmean(tbt.times,1))));

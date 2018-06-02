@@ -107,9 +107,14 @@ for i=1:length(f)
 end
 
 alltbt.reachStarts_noPawOnWheel=alltbt.reachStarts;
-alltbt.reachStarts_noPawOnWheel(alltbt.pawOnWheel>0.05)=0;
+settings=RTanalysis_settings;
+lowThresh=settings.lowThresh;
+alltbt.reachStarts_noPawOnWheel(alltbt.pawOnWheel>lowThresh)=0;
 
 function realign_tbt=realignToCue_usingCueZone(tbt,useAsCue,cueDuration)
+
+settings=RTanalysis_settings;
+lowThresh=settings.lowThresh;
 
 % was each cue detection at the beginning or end of cue?
 cueDurationInds=floor(cueDuration/mode(diff(nanmean(tbt.times,1))));
@@ -130,7 +135,7 @@ end
 realign_check=nan(size(cue,1),2*cueDurationInds+1);
 fi=nan(1,size(cue,1));
 for i=1:size(cue,1)
-    temp=find(cue(i,:)>0.5,1,'first');
+    temp=find(cue(i,:)>lowThresh,1,'first');
     % if cue is missing from this trial, drop this trial
     if isempty(temp)
         fi(i)=nan;
