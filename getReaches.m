@@ -121,7 +121,7 @@ out.holdStarts=holdStarts;
 out.holdLengths=holdLengths;
 
 if plotOutput==1
-   figure(); 
+   f=figure(); 
    plot(reachData);
    hold on;
    plot(out.isReach.*max(reachData),'Color','r');
@@ -130,6 +130,9 @@ if plotOutput==1
    leg={'reach zone intensity','is reaching','reach peak','is holding'};
    title('Reach Classification');
    legend(leg);
+   if settings.isOrchestra==1
+       out.fig=f;
+   end
 end
 
 end

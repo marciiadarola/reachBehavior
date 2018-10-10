@@ -67,22 +67,6 @@ end
 [~,out]=codeEvents(reaches,pellets,eat,paw,fidget); 
 
 % Save output
-if settings.isOrchestra==1
-    % save figures
-    endoffname=regexp(movieFile,'\.');
-    savefig(reaches.fig,[movieFile(1:endoffname(end)-1) '_reachesFig.fig'],'compact');
-    savefig(pellets.fig,[movieFile(1:endoffname(end)-1) '_pelletsFig.fig'],'compact');
-    savefig(eat.fig1,[movieFile(1:endoffname(end)-1) '_eatFig1.fig'],'compact');
-    savefig(eat.fig2,[movieFile(1:endoffname(end)-1) '_eatFig2.fig'],'compact');
-    savefig(paw.fig,[movieFile(1:endoffname(end)-1) '_pawFig.fig'],'compact');
-    savefig(fidget.fig,[movieFile(1:endoffname(end)-1) '_fidgetFig.fig'],'compact');   
-    close all
-    reaches.fig=[];
-    pellets.fig=[];
-    eat.fig=[];
-    paw.fig=[];
-    fidget.fig=[];
-end
 if settings.saveZoneData==1
     endoffname=regexp(movieFile,'\.');
     save([movieFile(1:endoffname(end)-1) '_events.mat'],'out');
@@ -91,6 +75,11 @@ if settings.saveZoneData==1
     save([movieFile(1:endoffname(end)-1) '_eat.mat'],'eat');
     save([movieFile(1:endoffname(end)-1) '_paw.mat'],'paw');
     save([movieFile(1:endoffname(end)-1) '_fidget.mat'],'fidget');
+end
+if settings.isOrchestra==1
+    % save figures
+    endoffname=regexp(movieFile,'\.');
+    savefig(reaches.fig,[movieFile(1:endoffname(end)-1) '_reachesFig.fig'],
 end
 
 end

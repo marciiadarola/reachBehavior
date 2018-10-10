@@ -12,6 +12,7 @@ end
 settings.movie_fps=30; % movie frame rate in frames per second
 settings.saveZoneData=1; % if 1, save zone data extracted from movie
 settings.discardFirstNFrames=discardFirstNFrames; % number of frames to discard at beginning of movie
+settings.isOrchestra=1; % if running this code on Harvard O2 server, set this to 1, else 0
 
 % For getReaches.m
 settings.reach.userDefinedThresh=0; % set to 1 if want user to manually define threshold for reach, instead of automated method
@@ -27,7 +28,7 @@ settings.lick.holdThreshold=5; % in seconds -- if any reach lasts longer than 10
 settings.lick.plotOutput=1; % if 1, plot output of reach analysis, else do not plot
 
 % For getPelletInPlace.m
-settings.pellet.userDefinedThresh=1; % set to 1 if want user to manually define threshold for pellet present, instead of automated method
+settings.pellet.userDefinedThresh=0; % set to 1 if want user to manually define threshold for pellet present, instead of automated method
 settings.pellet.subtractReachZone=0; % set to 1 if mouse tends to leave paw on wheel in pellet zone
 settings.pellet.nScaledMAD=3; % how many scaled median absolute deviations away from median for data point to be called an outlier
 % settings.pellet.nScaledMAD=2; % how many scaled median absolute deviations away from median for data point to be called an outlier

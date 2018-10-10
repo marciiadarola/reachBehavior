@@ -30,7 +30,7 @@ end
 out.pelletPresent=pelletPresent;
 
 if plotOutput==1
-    figure();
+    f=figure();
     plot(pelletData,'Color','k');
     temp=pelletPresent;
     temp(temp==1)=nanmax(pelletData);
@@ -40,6 +40,9 @@ if plotOutput==1
     leg={'pellet zone intensity','pellet present'};
     title('Pellet Present Classification');
     legend(leg);
+    if settings.isOrchestra==1
+       out.fig=f;
+   end
 end
 
 end
