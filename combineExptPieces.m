@@ -172,8 +172,8 @@ lowThresh=settings.lowThresh;
 alltbt.reachStarts_noPawOnWheel(alltbt.pawOnWheel>lowThresh)=0;
 
 % If optoThresh is specified, re-get opto on
-if isfield(metadata,'optoThresh')
-    alltbt.optoOn=alltbt.optoZone>repmat(metadata.optoThresh,1,size(alltbt.optoZone,2));
+if isfield(allmetadata,'optoThresh')
+    alltbt.optoOn=alltbt.optoZone>repmat(allmetadata.optoThresh,1,size(alltbt.optoZone,2));
 end
 
 
