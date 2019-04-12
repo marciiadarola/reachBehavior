@@ -2,11 +2,17 @@ function [alltbt,allmetadata]=combineExptPieces(expt_dir,useAsCue,cueDuration,do
 
 % cueDuration in seconds
 
+% Only add in data that definitely has these fields
+tryForFields={'pelletPresent'};
+
 % Also read in data from these files if they exist
 tryForFiles={'optoOnHere', 'nth_session','optoThresh'};
 for i=1:length(tryForFiles)
     tryFilesOut.(tryForFiles{i})=[];
 end
+
+% check for text file "humanchecked"
+check_for_human=0; % if this is 1
 
 ls=dir(expt_dir);
 j=1;
@@ -16,11 +22,20 @@ mouseid=[];
 sessid=[];
 sess_datetime=[];
 prevname=[];
+mouseid_w_name=[];
 k=0;
+l=1;
 for i=1:length(ls)
     thisname=ls(i).name;
     thisisdir=ls(i).isdir;
     if ~isempty(regexp(thisname,'processed_data')) && thisisdir==1
+        
+        if check_for_human==1
+            if exist([expt_dir '\' thisname '\humanchecked.txt'], 'file')==2
+            else
+                continue
+            end
+        end
         
 %         a=load([expt_dir '\' thisname '\tbt_resampled.mat']);
         a=load([expt_dir '\' thisname '\tbt.mat']);
@@ -46,32 +61,51 @@ for i=1:length(ls)
             end
         end
         
-        if isempty(prevname)
+        if l==1
             k=k+1;
+            sessid(j)=k;
         else
+            is_existing_session=1;
             r=regexp(thisname,' ');
-            if isempty(regexp(prevname,thisname(1:r-1)))
-                k=k+1; % new date
-            else
-                % dates match -- in same session if mouse id is the same
-                if j~=1
-                    if isnan(mouseid(j)) && isnan(mouseid(j-1))
-                        % assume all the same mouse
-                    elseif mouseid(j)~=mouseid(j-1)
-                        % different mice
-                        k=k+1;
-                    else
-                        % same mice, same date : thus, same session
+            prevsessnumber=nan;
+            for countnames=1:length(all_prev_names)
+                prevname=all_prev_names{countnames};
+                if isempty(regexp(prevname,thisname(1:r-1)))
+                    is_existing_session=0; % new date
+                else
+                    % dates match -- in same session if mouse id is the same
+                    if j~=1
+                        if isnan(mouseid(j)) && isnan(mouseid_w_name(countnames))
+                            % assume all the same mouse
+                        elseif mouseid(j)~=mouseid_w_name(countnames)
+                            % different mice
+                            is_existing_session=0;
+                        else
+                            % same mice, same date : thus, same session
+                            is_existing_session=1;
+                            prevsessnumber=sessid_w_name(countnames);
+                            break
+                        end
                     end
                 end
             end
+            if is_existing_session==0
+                % new session
+                k=k+1;
+                sessid(j)=k;
+            else
+                sessid(j)=prevsessnumber;
+            end
         end
         
-        sessid(j)=k;
+        all_prev_names{l}=thisname;
+        mouseid_w_name(l)=mouseid(j);
+        sessid_w_name(l)=sessid(j);
+        l=l+1;
+        
         r=regexp(thisname,'C');
         sess_datetime{j}=thisname(1:r-2);
         j=j+1;
-        prevname=thisname;
     end
 end
 
@@ -135,6 +169,17 @@ for i=1:length(tbt)
                     curr_tbt.(f{j})=[curr_tbt.(f{j}) nan(size(curr_tbt.(f{j}),1),expandBy)];
                 end
             end
+        end
+        % skip data lacking tryForFields
+        lackingField=0;
+        for j=1:length(tryForFields)
+            if ~isfield(curr_tbt,tryForFields{j})
+                % don't add in this data
+                lackingField=1;
+            end
+        end
+        if lackingField==1
+            continue
         end
         % concat
         for j=1:length(f)
