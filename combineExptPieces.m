@@ -31,7 +31,7 @@ for i=1:length(ls)
     if ~isempty(regexp(thisname,'processed_data')) && thisisdir==1
         
         if check_for_human==1
-            if exist([expt_dir '\' thisname '\humanchecked.txt'], 'file')==2
+            if exist([expt_dir '\' thisname '\humanchecked_afterResampleFix.txt'], 'file')==2
             else
                 continue
             end

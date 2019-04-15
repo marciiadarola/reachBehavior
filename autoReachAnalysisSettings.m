@@ -30,8 +30,8 @@ settings.lick.plotOutput=1; % if 1, plot output of reach analysis, else do not p
 % For getPelletInPlace.m
 settings.pellet.userDefinedThresh=1; % set to 1 if want user to manually define threshold for pellet present, instead of automated method
 settings.pellet.subtractReachZone=0; % set to 1 if mouse tends to leave paw on wheel in pellet zone
-settings.pellet.nScaledMAD=3; % how many scaled median absolute deviations away from median for data point to be called an outlier
-% settings.pellet.nScaledMAD=2; % how many scaled median absolute deviations away from median for data point to be called an outlier
+% settings.pellet.nScaledMAD=3; % how many scaled median absolute deviations away from median for data point to be called an outlier
+settings.pellet.nScaledMAD=1.75; % how many scaled median absolute deviations away from median for data point to be called an outlier
 settings.pellet.plotOutput=1; % if 1, plot output, else do not plot
 
 % For getChewing.m
