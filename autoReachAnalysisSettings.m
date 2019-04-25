@@ -23,7 +23,7 @@ settings.reach.plotOutput=1; % if 1, plot output of reach analysis, else do not 
 
 % For getLicks.m
 settings.lick.maxReachFrequency=20; % in Hz, the maximum frequency at which mouse can reach
-settings.lick.reachThresh=2; % after non-parametric Z score transformation of reachData, threshold for determining mouse reach
+settings.lick.reachThresh=1; % after non-parametric Z score transformation of reachData, threshold for determining mouse reach
 settings.lick.holdThreshold=5; % in seconds -- if any reach lasts longer than 10 s, this is not a reach -- this is a hold
 settings.lick.plotOutput=1; % if 1, plot output of reach analysis, else do not plot
 
